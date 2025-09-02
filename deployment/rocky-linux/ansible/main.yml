@@ -1,0 +1,65 @@
+---
+# 🐱 Purrr.love Rocky Linux Deployment
+# Ansible playbook for traditional server deployment
+
+- name: Deploy Purrr.love to Rocky Linux
+  hosts: purrr_love_servers
+  become: yes
+  vars:
+    app_name: "purrr-love"
+    app_user: "purrr"
+    app_group: "purrr"
+    app_home: "/var/www/purrr-love"
+    app_port: 80
+    php_version: "8.1"
+    mysql_root_password: "{{ vault_mysql_root_password }}"
+    mysql_app_password: "{{ vault_mysql_app_password }}"
+    app_environment: "production"
+    
+  pre_tasks:
+    - name: Update system packages
+      dnf:
+        update_cache: yes
+        state: latest
+      
+    - name: Install EPEL repository
+      dnf:
+        name: epel-release
+        state: present
+        
+    - name: Install additional repositories
+      dnf:
+        name:
+          - https://rpms.remirepo.net/enterprise/remi-release-8.rpm
+        state: present
+
+  roles:
+    - role: system_setup
+    - role: web_server
+    - role: database
+    - role: php_setup
+    - role: application_deploy
+    - role: security_hardening
+    - role: monitoring_setup
+    - role: backup_setup
+
+  post_tasks:
+    - name: Display deployment summary
+      debug:
+        msg: |
+          🎉 Purrr.love deployment completed successfully!
+          
+          Application Details:
+          - URL: http://{{ inventory_hostname }}
+          - App Home: {{ app_home }}
+          - App User: {{ app_user }}
+          - Database: MySQL
+          - PHP Version: {{ php_version }}
+          
+          Next Steps:
+          1. Configure your domain DNS
+          2. Set up SSL certificates
+          3. Configure environment variables
+          4. Test the application
+          
+          🐱 Enjoy your cat game!

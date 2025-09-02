@@ -1,0 +1,52 @@
+{
+  "name": "@purrr-love/cli",
+  "version": "1.0.0",
+  "description": "🐱 Purrr.love CLI - Command-line interface for the ultimate cat gaming platform",
+  "main": "purrr",
+  "bin": {
+    "purrr": "./purrr"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "install": "chmod +x ./purrr",
+    "postinstall": "echo \"🐱 Purrr.love CLI installed successfully! Use 'purrr help' to get started.\""
+  },
+  "keywords": [
+    "cli",
+    "cat",
+    "gaming",
+    "crypto",
+    "api",
+    "oauth2",
+    "breeding",
+    "genetics",
+    "quests",
+    "social"
+  ],
+  "author": "Purrr.love Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/purrr-love/cli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/purrr-love/cli/issues"
+  },
+  "homepage": "https://purrr.love",
+  "engines": {
+    "node": ">=14.0.0",
+    "php": ">=8.0.0"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "preferGlobal": true,
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "cpu": [
+    "x64",
+    "arm64"
+  ]
+}

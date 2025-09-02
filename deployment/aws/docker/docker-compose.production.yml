@@ -1,0 +1,225 @@
+# 🐱 Purrr.love Production Docker Compose
+# AWS ECS deployment configuration
+
+version: '3.8'
+
+services:
+  # Main application
+  purrr-love-app:
+    build:
+      context: ../..
+      dockerfile: deployment/aws/docker/Dockerfile
+    image: purrr-love/app:${TAG:-latest}
+    container_name: purrr-love-app
+    restart: unless-stopped
+    
+    environment:
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - APP_URL=${APP_URL}
+      - DB_CONNECTION=${DB_CONNECTION}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_DATABASE=${DB_DATABASE}
+      - DB_USERNAME=${DB_USERNAME}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - COINBASE_API_KEY=${COINBASE_API_KEY}
+      - COINBASE_WEBHOOK_SECRET=${COINBASE_WEBHOOK_SECRET}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - FACEBOOK_CLIENT_ID=${FACEBOOK_CLIENT_ID}
+      - FACEBOOK_CLIENT_SECRET=${FACEBOOK_CLIENT_SECRET}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - STABILITY_API_KEY=${STABILITY_API_KEY}
+    
+    ports:
+      - "80:80"
+    
+    volumes:
+      - app_storage:/var/www/html/storage
+      - app_uploads:/var/www/html/uploads
+      - app_logs:/var/www/html/logs
+    
+    networks:
+      - purrr_love_network
+    
+    depends_on:
+      - redis
+      - postgres
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health.php"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: purrr-love-postgres
+    restart: unless-stopped
+    
+    environment:
+      - POSTGRES_DB=${DB_DATABASE}
+      - POSTGRES_USER=${DB_USERNAME}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+    
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    
+    ports:
+      - "5432:5432"
+    
+    networks:
+      - purrr_love_network
+    
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME} -d ${DB_DATABASE}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: purrr-love-redis
+    restart: unless-stopped
+    
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    
+    volumes:
+      - redis_data:/data
+    
+    ports:
+      - "6379:6379"
+    
+    networks:
+      - purrr_love_network
+    
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: purrr-love-nginx
+    restart: unless-stopped
+    
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - app_storage:/var/www/html/storage:ro
+      - app_uploads:/var/www/html/uploads:ro
+    
+    ports:
+      - "80:80"
+      - "443:443"
+    
+    networks:
+      - purrr_love_network
+    
+    depends_on:
+      - purrr-love-app
+    
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health.php"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+
+  # Certbot for SSL certificates
+  certbot:
+    image: certbot/certbot
+    container_name: purrr-love-certbot
+    restart: unless-stopped
+    
+    volumes:
+      - certbot_etc:/etc/letsencrypt
+      - certbot_var:/var/lib/letsencrypt
+      - app_storage:/var/www/html/storage
+    
+    command: certonly --webroot --webroot-path=/var/www/html/storage --email ${SSL_EMAIL} --agree-tos --no-eff-email -d ${DOMAIN_NAME}
+    
+    networks:
+      - purrr_love_network
+    
+    depends_on:
+      - nginx
+    
+    profiles:
+      - ssl
+
+volumes:
+  app_storage:
+    driver: local
+  app_uploads:
+    driver: local
+  app_logs:
+    driver: local
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  certbot_etc:
+    driver: local
+  certbot_var:
+    driver: local
+
+networks:
+  purrr_love_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

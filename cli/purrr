@@ -1,0 +1,888 @@
+#!/usr/bin/env php
+<?php
+/**
+ * 🐱 Purrr.love CLI Interface
+ * Command-line access to the entire cat gaming ecosystem
+ */
+
+require_once __DIR__ . '/../includes/functions.php';
+require_once __DIR__ . '/../includes/crypto.php';
+require_once __DIR__ . '/../includes/cat_behavior.php';
+require_once __DIR__ . '/../includes/oauth2.php';
+require_once __DIR__ . '/../includes/api_keys.php';
+
+// CLI configuration
+define('CLI_VERSION', '1.0.0');
+define('CLI_CONFIG_FILE', $_SERVER['HOME'] . '/.purrr/config.json');
+define('CLI_DEFAULT_API_URL', 'https://api.purrr.love');
+
+// Colors for output
+class Colors {
+    const RED = "\033[0;31m";
+    const GREEN = "\033[0;32m";
+    const YELLOW = "\033[1;33m";
+    const BLUE = "\033[0;34m";
+    const PURPLE = "\033[0;35m";
+    const CYAN = "\033[0;36m";
+    const WHITE = "\033[1;37m";
+    const NC = "\033[0m"; // No Color
+}
+
+// Main CLI class
+class PurrrCLI {
+    private $config;
+    private $apiUrl;
+    private $accessToken;
+    private $apiKey;
+    
+    public function __init__() {
+        $this->loadConfig();
+        $this->parseArguments();
+    }
+    
+    /**
+     * Load CLI configuration
+     */
+    private function loadConfig() {
+        $this->config = [
+            'api_url' => CLI_DEFAULT_API_URL,
+            'access_token' => null,
+            'api_key' => null,
+            'user_id' => null,
+            'debug' => false
+        ];
+        
+        if (file_exists(CLI_CONFIG_FILE)) {
+            $configData = json_decode(file_get_contents(CLI_CONFIG_FILE), true);
+            if ($configData) {
+                $this->config = array_merge($this->config, $configData);
+            }
+        }
+        
+        $this->apiUrl = $this->config['api_url'];
+        $this->accessToken = $this->config['access_token'];
+        $this->apiKey = $this->config['api_key'];
+    }
+    
+    /**
+     * Save CLI configuration
+     */
+    private function saveConfig() {
+        $configDir = dirname(CLI_CONFIG_FILE);
+        if (!is_dir($configDir)) {
+            mkdir($configDir, 0755, true);
+        }
+        
+        file_put_contents(CLI_CONFIG_FILE, json_encode($this->config, JSON_PRETTY_PRINT));
+    }
+    
+    /**
+     * Parse command line arguments
+     */
+    private function parseArguments() {
+        global $argv;
+        
+        if (count($argv) < 2) {
+            $this->showHelp();
+            exit(1);
+        }
+        
+        $command = $argv[1];
+        $args = array_slice($argv, 2);
+        
+        // Parse global options
+        $this->parseGlobalOptions($args);
+        
+        // Execute command
+        $this->executeCommand($command, $args);
+    }
+    
+    /**
+     * Parse global options
+     */
+    private function parseGlobalOptions(&$args) {
+        $globalOptions = [];
+        
+        foreach ($args as $key => $arg) {
+            if (strpos($arg, '--') === 0) {
+                $option = substr($arg, 2);
+                $value = true;
+                
+                if (strpos($option, '=') !== false) {
+                    list($option, $value) = explode('=', $option, 2);
+                }
+                
+                $globalOptions[$option] = $value;
+                unset($args[$key]);
+            }
+        }
+        
+        // Apply global options
+        if (isset($globalOptions['debug'])) {
+            $this->config['debug'] = true;
+        }
+        
+        if (isset($globalOptions['api-url'])) {
+            $this->config['api_url'] = $globalOptions['api-url'];
+            $this->apiUrl = $globalOptions['api-url'];
+        }
+        
+        $args = array_values($args);
+    }
+    
+    /**
+     * Execute CLI command
+     */
+    private function executeCommand($command, $args) {
+        switch ($command) {
+            case 'login':
+                $this->commandLogin($args);
+                break;
+                
+            case 'logout':
+                $this->commandLogout();
+                break;
+                
+            case 'config':
+                $this->commandConfig($args);
+                break;
+                
+            case 'cats':
+                $this->commandCats($args);
+                break;
+                
+            case 'games':
+                $this->commandGames($args);
+                break;
+                
+            case 'breeding':
+                $this->commandBreeding($args);
+                break;
+                
+            case 'quests':
+                $this->commandQuests($args);
+                break;
+                
+            case 'store':
+                $this->commandStore($args);
+                break;
+                
+            case 'economy':
+                $this->commandEconomy($args);
+                break;
+                
+            case 'social':
+                $this->commandSocial($args);
+                break;
+                
+            case 'keys':
+                $this->commandApiKeys($args);
+                break;
+                
+            case 'genetics':
+                $this->commandGenetics($args);
+                break;
+                
+            case 'status':
+                $this->commandStatus();
+                break;
+                
+            case 'version':
+                $this->commandVersion();
+                break;
+                
+            case 'help':
+            case '--help':
+            case '-h':
+                $this->showHelp();
+                break;
+                
+            default:
+                echo Colors::RED . "Unknown command: $command" . Colors::NC . "\n";
+                echo "Use 'purrr help' for available commands.\n";
+                exit(1);
+        }
+    }
+    
+    /**
+     * Login command
+     */
+    private function commandLogin($args) {
+        if (empty($args)) {
+            echo "Usage: purrr login <username> [password]\n";
+            exit(1);
+        }
+        
+        $username = $args[0];
+        $password = $args[1] ?? $this->promptPassword("Password for $username: ");
+        
+        try {
+            // Attempt OAuth2 login
+            $response = $this->apiRequest('POST', '/oauth/token', [
+                'grant_type' => 'password',
+                'username' => $username,
+                'password' => $password,
+                'client_id' => 'cli',
+                'client_secret' => 'cli_secret'
+            ]);
+            
+            if (isset($response['access_token'])) {
+                $this->config['access_token'] = $response['access_token'];
+                $this->config['user_id'] = $this->getUserIdFromToken($response['access_token']);
+                $this->saveConfig();
+                
+                echo Colors::GREEN . "✅ Login successful!" . Colors::NC . "\n";
+                echo "Welcome back, $username! 🐱\n";
+            } else {
+                echo Colors::RED . "❌ Login failed!" . Colors::NC . "\n";
+                exit(1);
+            }
+            
+        } catch (Exception $e) {
+            echo Colors::RED . "❌ Login error: " . $e->getMessage() . Colors::NC . "\n";
+            exit(1);
+        }
+    }
+    
+    /**
+     * Logout command
+     */
+    private function commandLogout() {
+        if ($this->accessToken) {
+            try {
+                $this->apiRequest('POST', '/oauth/revoke', [
+                    'token' => $this->accessToken
+                ]);
+            } catch (Exception $e) {
+                // Continue with logout even if revoke fails
+            }
+        }
+        
+        $this->config['access_token'] = null;
+        $this->config['user_id'] = null;
+        $this->saveConfig();
+        
+        echo Colors::GREEN . "✅ Logged out successfully!" . Colors::NC . "\n";
+    }
+    
+    /**
+     * Config command
+     */
+    private function commandConfig($args) {
+        if (empty($args)) {
+            $this->showConfig();
+            return;
+        }
+        
+        $action = $args[0];
+        
+        switch ($action) {
+            case 'set':
+                if (count($args) < 3) {
+                    echo "Usage: purrr config set <key> <value>\n";
+                    exit(1);
+                }
+                $this->setConfig($args[1], $args[2]);
+                break;
+                
+            case 'get':
+                if (count($args) < 2) {
+                    echo "Usage: purrr config get <key>\n";
+                    exit(1);
+                }
+                $this->getConfig($args[1]);
+                break;
+                
+            case 'reset':
+                $this->resetConfig();
+                break;
+                
+            default:
+                echo "Unknown config action: $action\n";
+                echo "Use: set, get, or reset\n";
+                exit(1);
+        }
+    }
+    
+    /**
+     * Cats command
+     */
+    private function commandCats($args) {
+        if (empty($args)) {
+            $this->listCats();
+            return;
+        }
+        
+        $action = $args[0];
+        
+        switch ($action) {
+            case 'list':
+                $this->listCats();
+                break;
+                
+            case 'show':
+                if (count($args) < 2) {
+                    echo "Usage: purrr cats show <cat_id>\n";
+                    exit(1);
+                }
+                $this->showCat($args[1]);
+                break;
+                
+            case 'feed':
+                if (count($args) < 3) {
+                    echo "Usage: purrr cats feed <cat_id> <food>\n";
+                    exit(1);
+                }
+                $this->feedCat($args[1], $args[2]);
+                break;
+                
+            case 'play':
+                if (count($args) < 3) {
+                    echo "Usage: purrr cats play <cat_id> <toy>\n";
+                    exit(1);
+                }
+                $this->playWithCat($args[1], $args[2]);
+                break;
+                
+            case 'stats':
+                if (count($args) < 2) {
+                    echo "Usage: purrr cats stats <cat_id>\n";
+                    exit(1);
+                }
+                $this->showCatStats($args[1]);
+                break;
+                
+            default:
+                echo "Unknown cats action: $action\n";
+                echo "Use: list, show, feed, play, or stats\n";
+                exit(1);
+        }
+    }
+    
+    /**
+     * Games command
+     */
+    private function commandGames($args) {
+        if (empty($args)) {
+            $this->listGames();
+            return;
+        }
+        
+        $action = $args[0];
+        
+        switch ($action) {
+            case 'list':
+                $this->listGames();
+                break;
+                
+            case 'play':
+                if (count($args) < 3) {
+                    echo "Usage: purrr games play <game_type> --cat-id <cat_id>\n";
+                    exit(1);
+                }
+                $this->playGame($args[1], $args);
+                break;
+                
+            case 'history':
+                $this->showGameHistory();
+                break;
+                
+            case 'leaderboard':
+                $this->showLeaderboard();
+                break;
+                
+            default:
+                echo "Unknown games action: $action\n";
+                echo "Use: list, play, history, or leaderboard\n";
+                exit(1);
+        }
+    }
+    
+    /**
+     * Breeding command
+     */
+    private function commandBreeding($args) {
+        if (empty($args)) {
+            $this->showBreedingInfo();
+            return;
+        }
+        
+        $action = $args[0];
+        
+        switch ($action) {
+            case 'pairs':
+                $this->showBreedingPairs();
+                break;
+                
+            case 'breed':
+                if (count($args) < 3) {
+                    echo "Usage: purrr breeding breed <cat1_id> <cat2_id>\n";
+                    exit(1);
+                }
+                $this->startBreeding($args[1], $args[2]);
+                break;
+                
+            case 'history':
+                $this->showBreedingHistory();
+                break;
+                
+            case 'offspring':
+                $this->showOffspring();
+                break;
+                
+            case 'predict':
+                if (count($args) < 3) {
+                    echo "Usage: purrr breeding predict <cat1_id> <cat2_id>\n";
+                    exit(1);
+                }
+                $this->predictBreeding($args[1], $args[2]);
+                break;
+                
+            default:
+                echo "Unknown breeding action: $action\n";
+                echo "Use: pairs, breed, history, offspring, or predict\n";
+                exit(1);
+        }
+    }
+    
+    /**
+     * Quests command
+     */
+    private function commandQuests($args) {
+        if (empty($args)) {
+            $this->listQuests();
+            return;
+        }
+        
+        $action = $args[0];
+        
+        switch ($action) {
+            case 'list':
+                $this->listQuests();
+                break;
+                
+            case 'start':
+                if (count($args) < 2) {
+                    echo "Usage: purrr quests start <quest_id>\n";
+                    exit(1);
+                }
+                $this->startQuest($args[1]);
+                break;
+                
+            case 'progress':
+                $this->showQuestProgress();
+                break;
+                
+            case 'achievements':
+                $this->showAchievements();
+                break;
+                
+            default:
+                echo "Unknown quests action: $action\n";
+                echo "Use: list, start, progress, or achievements\n";
+                exit(1);
+        }
+    }
+    
+    /**
+     * Store command
+     */
+    private function commandStore($args) {
+        if (empty($args)) {
+            $this->showStoreItems();
+            return;
+        }
+        
+        $action = $args[0];
+        
+        switch ($action) {
+            case 'items':
+                $this->showStoreItems();
+                break;
+                
+            case 'buy':
+                if (count($args) < 3) {
+                    echo "Usage: purrr store buy <item_id> <quantity>\n";
+                    exit(1);
+                }
+                $this->buyItem($args[1], $args[2]);
+                break;
+                
+            case 'inventory':
+                $this->showInventory();
+                break;
+                
+            default:
+                echo "Unknown store action: $action\n";
+                echo "Use: items, buy, or inventory\n";
+                exit(1);
+        }
+    }
+    
+    /**
+     * Economy command
+     */
+    private function commandEconomy($args) {
+        if (empty($args)) {
+            $this->showBalance();
+            return;
+        }
+        
+        $action = $args[0];
+        
+        switch ($action) {
+            case 'balance':
+                $this->showBalance();
+                break;
+                
+            case 'deposit':
+                if (count($args) < 3) {
+                    echo "Usage: purrr economy deposit <amount> <currency>\n";
+                    exit(1);
+                }
+                $this->createDeposit($args[1], $args[2]);
+                break;
+                
+            case 'withdraw':
+                if (count($args) < 3) {
+                    echo "Usage: purrr economy withdraw <amount> <currency>\n";
+                    exit(1);
+                }
+                $this->createWithdrawal($args[1], $args[2]);
+                break;
+                
+            default:
+                echo "Unknown economy action: $action\n";
+                echo "Use: balance, deposit, or withdraw\n";
+                exit(1);
+        }
+    }
+    
+    /**
+     * Social command
+     */
+    private function commandSocial($args) {
+        if (empty($args)) {
+            $this->showSocialInfo();
+            return;
+        }
+        
+        $action = $args[0];
+        
+        switch ($action) {
+            case 'friends':
+                $this->showFriends();
+                break;
+                
+            case 'add':
+                if (count($args) < 2) {
+                    echo "Usage: purrr social add <username>\n";
+                    exit(1);
+                }
+                $this->addFriend($args[1]);
+                break;
+                
+            case 'messages':
+                $this->showMessages();
+                break;
+                
+            case 'send':
+                if (count($args) < 3) {
+                    echo "Usage: purrr social send <username> <message>\n";
+                    exit(1);
+                }
+                $this->sendMessage($args[1], $args[2]);
+                break;
+                
+            default:
+                echo "Unknown social action: $action\n";
+                echo "Use: friends, add, messages, or send\n";
+                exit(1);
+        }
+    }
+    
+    /**
+     * API Keys command
+     */
+    private function commandApiKeys($args) {
+        if (empty($args)) {
+            $this->listApiKeys();
+            return;
+        }
+        
+        $action = $args[0];
+        
+        switch ($action) {
+            case 'list':
+                $this->listApiKeys();
+                break;
+                
+            case 'create':
+                $this->createApiKey($args);
+                break;
+                
+            case 'show':
+                if (count($args) < 2) {
+                    echo "Usage: purrr keys show <key_id>\n";
+                    exit(1);
+                }
+                $this->showApiKey($args[1]);
+                break;
+                
+            case 'revoke':
+                if (count($args) < 2) {
+                    echo "Usage: purrr keys revoke <key_id>\n";
+                    exit(1);
+                }
+                $this->revokeApiKey($args[1]);
+                break;
+                
+            case 'usage':
+                if (count($args) < 2) {
+                    echo "Usage: purrr keys usage <key_id>\n";
+                    exit(1);
+                }
+                $this->showApiKeyUsage($args[1]);
+                break;
+                
+            default:
+                echo "Unknown keys action: $action\n";
+                echo "Use: list, create, show, revoke, or usage\n";
+                exit(1);
+        }
+    }
+    
+    /**
+     * Genetics command
+     */
+    private function commandGenetics($args) {
+        if (empty($args)) {
+            $this->showGeneticInfo();
+            return;
+        }
+        
+        $action = $args[0];
+        
+        switch ($action) {
+            case 'traits':
+                $this->showGeneticTraits();
+                break;
+                
+            case 'predict':
+                if (count($args) < 3) {
+                    echo "Usage: purrr genetics predict <cat1_id> <cat2_id>\n";
+                    exit(1);
+                }
+                $this->predictGenetics($args[1], $args[2]);
+                break;
+                
+            default:
+                echo "Unknown genetics action: $action\n";
+                echo "Use: traits or predict\n";
+                exit(1);
+        }
+    }
+    
+    /**
+     * Status command
+     */
+    private function commandStatus() {
+        echo Colors::CYAN . "🐱 Purrr.love CLI Status" . Colors::NC . "\n";
+        echo "========================\n\n";
+        
+        echo "API URL: " . $this->apiUrl . "\n";
+        echo "Authentication: " . ($this->accessToken ? Colors::GREEN . "✅ Logged in" : Colors::RED . "❌ Not logged in") . Colors::NC . "\n";
+        
+        if ($this->accessToken) {
+            echo "User ID: " . ($this->config['user_id'] ?? 'Unknown') . "\n";
+            
+            try {
+                $response = $this->apiRequest('GET', '/api/v1/auth/profile');
+                if (isset($response['username'])) {
+                    echo "Username: " . $response['username'] . "\n";
+                    echo "Email: " . $response['email'] . "\n";
+                }
+            } catch (Exception $e) {
+                echo "Profile: " . Colors::RED . "Error loading" . Colors::NC . "\n";
+            }
+        }
+        
+        echo "\n" . Colors::GREEN . "Ready to play with cats! 🐱" . Colors::NC . "\n";
+    }
+    
+    /**
+     * Version command
+     */
+    private function commandVersion() {
+        echo "Purrr.love CLI v" . CLI_VERSION . "\n";
+        echo "🐱 The ultimate cat gaming platform!\n";
+    }
+    
+    /**
+     * Show help
+     */
+    private function showHelp() {
+        echo Colors::PURPLE . "🐱 Purrr.love CLI v" . CLI_VERSION . Colors::NC . "\n";
+        echo "Command-line interface for the ultimate cat gaming platform!\n\n";
+        
+        echo Colors::CYAN . "USAGE:" . Colors::NC . "\n";
+        echo "  purrr <command> [options] [arguments]\n\n";
+        
+        echo Colors::CYAN . "COMMANDS:" . Colors::NC . "\n";
+        echo "  login <username> [password]     Login to your account\n";
+        echo "  logout                          Logout from your account\n";
+        echo "  config [action]                 Manage CLI configuration\n";
+        echo "  cats [action]                   Manage your cats\n";
+        echo "  games [action]                  Play cat games\n";
+        echo "  breeding [action]               Cat breeding and genetics\n";
+        echo "  quests [action]                 Quests and achievements\n";
+        echo "  store [action]                  Store and inventory\n";
+        echo "  economy [action]                Crypto economy\n";
+        echo "  social [action]                 Social features\n";
+        echo "  keys [action]                   API key management\n";
+        echo "  genetics [action]               Genetic traits\n";
+        echo "  status                          Show current status\n";
+        echo "  version                         Show version information\n";
+        echo "  help                            Show this help message\n\n";
+        
+        echo Colors::CYAN . "GLOBAL OPTIONS:" . Colors::NC . "\n";
+        echo "  --debug                         Enable debug mode\n";
+        echo "  --api-url=<url>                 Set custom API URL\n\n";
+        
+        echo Colors::CYAN . "EXAMPLES:" . Colors::NC . "\n";
+        echo "  purrr login myuser              Login to account\n";
+        echo "  purrr cats list                 List your cats\n";
+        echo "  purrr games play mouse-hunt     Play mouse hunt game\n";
+        echo "  purrr cats feed 123 tuna        Feed cat with tuna\n";
+        echo "  purrr breeding predict 123 456  Predict breeding outcome\n\n";
+        
+        echo Colors::GREEN . "For more information, visit: https://purrr.love" . Colors::NC . "\n";
+    }
+    
+    /**
+     * Make API request
+     */
+    private function apiRequest($method, $endpoint, $data = null) {
+        $url = $this->apiUrl . $endpoint;
+        
+        $headers = [
+            'Content-Type: application/json',
+            'User-Agent: PurrrCLI/' . CLI_VERSION
+        ];
+        
+        if ($this->accessToken) {
+            $headers[] = 'Authorization: Bearer ' . $this->accessToken;
+        } elseif ($this->apiKey) {
+            $headers[] = 'X-API-Key: ' . $this->apiKey;
+        }
+        
+        $context = stream_context_create([
+            'http' => [
+                'method' => $method,
+                'header' => implode("\r\n", $headers),
+                'content' => $data ? json_encode($data) : null,
+                'timeout' => 30
+            ]
+        ]);
+        
+        $response = file_get_contents($url, false, $context);
+        
+        if ($response === false) {
+            throw new Exception('API request failed');
+        }
+        
+        $responseData = json_decode($response, true);
+        
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new Exception('Invalid JSON response from API');
+        }
+        
+        if (isset($responseData['error'])) {
+            throw new Exception($responseData['error']['message'] ?? 'API error');
+        }
+        
+        return $responseData['data'] ?? $responseData;
+    }
+    
+    /**
+     * Prompt for password
+     */
+    private function promptPassword($prompt) {
+        echo $prompt;
+        system('stty -echo');
+        $password = trim(fgets(STDIN));
+        system('stty echo');
+        echo "\n";
+        return $password;
+    }
+    
+    /**
+     * Get user ID from token
+     */
+    private function getUserIdFromToken($token) {
+        // Decode JWT token to get user ID
+        $parts = explode('.', $token);
+        if (count($parts) !== 3) {
+            return null;
+        }
+        
+        $payload = json_decode(base64_decode($parts[1]), true);
+        return $payload['user_id'] ?? null;
+    }
+    
+    // Placeholder methods for commands (to be implemented)
+    private function showConfig() { echo "Config: " . json_encode($this->config, JSON_PRETTY_PRINT) . "\n"; }
+    private function setConfig($key, $value) { $this->config[$key] = $value; $this->saveConfig(); echo "Config updated!\n"; }
+    private function getConfig($key) { echo $this->config[$key] ?? "Not set\n"; }
+    private function resetConfig() { $this->config = []; $this->saveConfig(); echo "Config reset!\n"; }
+    
+    private function listCats() { echo "Listing cats...\n"; }
+    private function showCat($id) { echo "Showing cat $id...\n"; }
+    private function feedCat($id, $food) { echo "Feeding cat $id with $food...\n"; }
+    private function playWithCat($id, $toy) { echo "Playing with cat $id using $toy...\n"; }
+    private function showCatStats($id) { echo "Showing stats for cat $id...\n"; }
+    
+    private function listGames() { echo "Listing games...\n"; }
+    private function playGame($type, $args) { echo "Playing $type game...\n"; }
+    private function showGameHistory() { echo "Showing game history...\n"; }
+    private function showLeaderboard() { echo "Showing leaderboard...\n"; }
+    
+    private function showBreedingInfo() { echo "Showing breeding info...\n"; }
+    private function showBreedingPairs() { echo "Showing breeding pairs...\n"; }
+    private function startBreeding($cat1, $cat2) { echo "Starting breeding between cats $cat1 and $cat2...\n"; }
+    private function showBreedingHistory() { echo "Showing breeding history...\n"; }
+    private function showOffspring() { echo "Showing offspring...\n"; }
+    private function predictBreeding($cat1, $cat2) { echo "Predicting breeding outcome...\n"; }
+    
+    private function listQuests() { echo "Listing quests...\n"; }
+    private function startQuest($id) { echo "Starting quest $id...\n"; }
+    private function showQuestProgress() { echo "Showing quest progress...\n"; }
+    private function showAchievements() { echo "Showing achievements...\n"; }
+    
+    private function showStoreItems() { echo "Showing store items...\n"; }
+    private function buyItem($id, $quantity) { echo "Buying item $id x$quantity...\n"; }
+    private function showInventory() { echo "Showing inventory...\n"; }
+    
+    private function showBalance() { echo "Showing balance...\n"; }
+    private function createDeposit($amount, $currency) { echo "Creating deposit of $amount $currency...\n"; }
+    private function createWithdrawal($amount, $currency) { echo "Creating withdrawal of $amount $currency...\n"; }
+    
+    private function showSocialInfo() { echo "Showing social info...\n"; }
+    private function showFriends() { echo "Showing friends...\n"; }
+    private function addFriend($username) { echo "Adding friend $username...\n"; }
+    private function showMessages() { echo "Showing messages...\n"; }
+    private function sendMessage($username, $message) { echo "Sending message to $username...\n"; }
+    
+    private function listApiKeys() { echo "Listing API keys...\n"; }
+    private function createApiKey($args) { echo "Creating API key...\n"; }
+    private function showApiKey($id) { echo "Showing API key $id...\n"; }
+    private function revokeApiKey($id) { echo "Revoking API key $id...\n"; }
+    private function showApiKeyUsage($id) { echo "Showing usage for API key $id...\n"; }
+    
+    private function showGeneticInfo() { echo "Showing genetic info...\n"; }
+    private function showGeneticTraits() { echo "Showing genetic traits...\n"; }
+    private function predictGenetics($cat1, $cat2) { echo "Predicting genetics...\n"; }
+}
+
+// Initialize and run CLI
+$cli = new PurrrCLI();
