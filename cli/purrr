@@ -1,5 +1,8 @@
 #!/usr/bin/env php
 <?php
+// Define SECURE_ACCESS for CLI usage
+define('SECURE_ACCESS', true);
+
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/oauth2.php';
 require_once __DIR__ . '/../includes/api_keys.php';
@@ -10,7 +13,7 @@ require_once __DIR__ . '/../includes/cat_shows.php';
 require_once __DIR__ . '/../includes/realtime_multiplayer.php';
 require_once __DIR__ . '/../includes/cat_health_monitoring.php';
 
-define('CLI_VERSION', '2.0.0');
+define('CLI_VERSION', '2.1.0');
 define('CLI_CONFIG_FILE', $_SERVER['HOME'] . '/.purrr/config.json');
 
 class PurrrCLI {
@@ -116,6 +119,21 @@ class PurrrCLI {
             case 'nightwatch':
             case 'night':
                 $this->commandNightWatch($args);
+                break;
+            case 'blockchain':
+            case 'nft':
+                $this->commandBlockchain($args);
+                break;
+            case 'ml':
+            case 'personality':
+                $this->commandMLPersonality($args);
+                break;
+            case 'metaverse':
+            case 'vr':
+                $this->commandMetaverse($args);
+                break;
+            case 'webhooks':
+                $this->commandWebhooks($args);
                 break;
             case 'config':
                 $this->commandConfig($args);
@@ -1215,6 +1233,10 @@ class PurrrCLI {
         echo "  analytics               - Analytics and insights\n";
         echo "  special                 - Manage special cats\n";
         echo "  nightwatch              - Night Watch system\n";
+        echo "  blockchain/nft          - Blockchain and NFT management\n";
+        echo "  ml/personality          - Machine learning personality\n";
+        echo "  metaverse/vr            - Metaverse and VR worlds\n";
+        echo "  webhooks                - Webhook management\n";
         echo "  config                  - Manage configuration\n";
         echo "  version                 - Show version information\n";
         echo "  help                    - Show this help message\n\n";
@@ -1223,6 +1245,847 @@ class PurrrCLI {
         echo "Example: purrr cats help\n\n";
         
         echo "🐾 Happy cat gaming! 🐾\n";
+    }
+
+    /**
+     * Blockchain and NFT Management Commands
+     */
+    private function commandBlockchain($args) {
+        if (empty($args)) {
+            $this->showBlockchainHelp();
+            return;
+        }
+
+        $action = array_shift($args);
+        switch ($action) {
+            case 'mint':
+                $this->mintNFT($args);
+                break;
+            case 'transfer':
+                $this->transferNFT($args);
+                break;
+            case 'verify':
+                $this->verifyNFTOwnership($args);
+                break;
+            case 'collection':
+                $this->showNFTCollection($args);
+                break;
+            case 'marketplace':
+                $this->showNFTMarketplace($args);
+                break;
+            case 'stats':
+                $this->showBlockchainStats();
+                break;
+            case 'help':
+                $this->showBlockchainHelp();
+                break;
+            default:
+                echo Colors::RED . "❌ Unknown blockchain action: $action" . Colors::NC . "\n";
+                echo "Use 'purrr blockchain help' to see available actions.\n";
+                break;
+        }
+    }
+
+    private function showBlockchainHelp() {
+        echo Colors::CYAN . "⛓️  Blockchain & NFT Commands:" . Colors::NC . "\n";
+        echo "  mint <cat_id> [network] [metadata] - Mint NFT for cat\n";
+        echo "  transfer <nft_id> <to_user_id>     - Transfer NFT ownership\n";
+        echo "  verify <nft_id>                     - Verify NFT ownership\n";
+        echo "  collection [network]                - Show user's NFT collection\n";
+        echo "  marketplace [filters]               - Browse NFT marketplace\n";
+        echo "  stats                               - Show blockchain statistics\n";
+        echo "  help                                - Show this help message\n\n";
+    }
+
+    private function mintNFT($args) {
+        if (empty($args)) {
+            echo Colors::RED . "❌ Cat ID required. Usage: purrr blockchain mint <cat_id> [network] [metadata]" . Colors::NC . "\n";
+            return;
+        }
+
+        $catId = array_shift($args);
+        $network = array_shift($args) ?? 'ethereum';
+        $metadata = !empty($args) ? json_decode(implode(' ', $args), true) : [];
+
+        try {
+            $response = $this->apiRequest('POST', '/v2/advanced_features/blockchain?action=mint-nft', [
+                'cat_id' => $catId,
+                'network' => $network,
+                'metadata' => $metadata
+            ]);
+
+            echo Colors::GREEN . "✅ NFT minted successfully!" . Colors::NC . "\n";
+            echo "Token ID: " . Colors::CYAN . $response['token_id'] . Colors::NC . "\n";
+            echo "Network: " . Colors::CYAN . $response['network'] . Colors::NC . "\n";
+            echo "Transaction: " . Colors::CYAN . $response['transaction_hash'] . Colors::NC . "\n";
+        } catch (Exception $e) {
+            echo Colors::RED . "❌ Failed to mint NFT: " . $e->getMessage() . Colors::NC . "\n";
+        }
+    }
+
+    private function transferNFT($args) {
+        if (count($args) < 2) {
+            echo Colors::RED . "❌ NFT ID and recipient user ID required. Usage: purrr blockchain transfer <nft_id> <to_user_id>" . Colors::NC . "\n";
+            return;
+        }
+
+        $nftId = array_shift($args);
+        $toUserId = array_shift($args);
+
+        try {
+            $response = $this->apiRequest('POST', '/v2/advanced_features/blockchain?action=transfer-nft', [
+                'nft_id' => $nftId,
+                'to_user_id' => $toUserId
+            ]);
+
+            echo Colors::GREEN . "✅ NFT transferred successfully!" . Colors::NC . "\n";
+            echo "Transaction: " . Colors::CYAN . $response['transaction_hash'] . Colors::NC . "\n";
+        } catch (Exception $e) {
+            echo Colors::RED . "❌ Failed to transfer NFT: " . $e->getMessage() . Colors::NC . "\n";
+        }
+    }
+
+    private function verifyNFTOwnership($args) {
+        if (empty($args)) {
+            echo Colors::RED . "❌ NFT ID required. Usage: purrr blockchain verify <nft_id>" . Colors::NC . "\n";
+            return;
+        }
+
+        $nftId = array_shift($args);
+
+        try {
+            $response = $this->apiRequest('GET', '/v2/advanced_features/blockchain?action=verify-ownership&nft_id=' . $nftId);
+
+            echo Colors::GREEN . "✅ NFT ownership verification complete!" . Colors::NC . "\n";
+            echo "Verified: " . Colors::CYAN . ($response['verified'] ? 'Yes' : 'No') . Colors::NC . "\n";
+            echo "Blockchain Owner: " . Colors::CYAN . $response['blockchain_owner'] . Colors::NC . "\n";
+            echo "Database Owner: " . Colors::CYAN . $response['database_owner'] . Colors::NC . "\n";
+        } catch (Exception $e) {
+            echo Colors::RED . "❌ Failed to verify NFT ownership: " . $e->getMessage() . Colors::NC . "\n";
+        }
+    }
+
+    private function showNFTCollection($args) {
+        $network = array_shift($args) ?? '';
+
+        try {
+            $endpoint = '/v2/advanced_features/blockchain?action=user-collection';
+            if ($network) {
+                $endpoint .= '&network=' . urlencode($network);
+            }
+
+            $response = $this->apiRequest('GET', $endpoint);
+
+            if (empty($response)) {
+                echo Colors::YELLOW . "📭 No NFTs found in collection." . Colors::NC . "\n";
+                return;
+            }
+
+            echo Colors::GREEN . "🏆 NFT Collection (" . count($response) . " items):" . Colors::NC . "\n\n";
+            foreach ($response as $nft) {
+                echo Colors::CYAN . "Token ID: " . $nft['token_id'] . Colors::NC . "\n";
+                echo "  Cat: " . $nft['cat_name'] . " (" . $nft['cat_breed'] . ")\n";
+                echo "  Network: " . $nft['network'] . "\n";
+                echo "  Contract: " . substr($nft['contract_address'], 0, 20) . "...\n";
+                echo "  Created: " . $nft['created_at'] . "\n\n";
+            }
+        } catch (Exception $e) {
+            echo Colors::RED . "❌ Failed to fetch NFT collection: " . $e->getMessage() . Colors::NC . "\n";
+        }
+    }
+
+    private function showNFTMarketplace($args) {
+        try {
+            $response = $this->apiRequest('GET', '/v2/advanced_features/blockchain?action=marketplace');
+
+            if (empty($response)) {
+                echo Colors::YELLOW . "📭 No NFT listings found." . Colors::NC . "\n";
+                return;
+            }
+
+            echo Colors::GREEN . "🛒 NFT Marketplace (" . count($response) . " listings):" . Colors::NC . "\n\n";
+            foreach ($response as $listing) {
+                echo Colors::CYAN . "Listing ID: " . $listing['listing_id'] . Colors::NC . "\n";
+                echo "  Cat: " . $listing['cat_name'] . " (" . $listing['cat_breed'] . ")\n";
+                echo "  Price: " . $listing['price'] . " " . $listing['currency'] . "\n";
+                echo "  Seller: " . $listing['seller_name'] . "\n";
+                echo "  Network: " . $listing['network'] . "\n";
+                echo "  Expires: " . $listing['expires_at'] . "\n\n";
+            }
+        } catch (Exception $e) {
+            echo Colors::RED . "❌ Failed to fetch marketplace: " . $e->getMessage() . Colors::NC . "\n";
+        }
+    }
+
+    private function showBlockchainStats() {
+        try {
+            $response = $this->apiRequest('GET', '/v2/advanced_features/blockchain?action=stats');
+
+            echo Colors::GREEN . "📊 Blockchain Statistics:" . Colors::NC . "\n";
+            echo "  Total NFTs: " . Colors::CYAN . $response['total_nfts'] . Colors::NC . "\n";
+            echo "  Active Listings: " . Colors::CYAN . $response['active_listings'] . Colors::NC . "\n";
+            echo "  Trading Volume: " . Colors::CYAN . $response['trading_volume'] . Colors::NC . "\n";
+            echo "  Total Trades: " . Colors::CYAN . $response['total_trades'] . Colors::NC . "\n\n";
+
+            if (!empty($response['nfts_by_network'])) {
+                echo Colors::YELLOW . "NFTs by Network:" . Colors::NC . "\n";
+                foreach ($response['nfts_by_network'] as $network => $count) {
+                    echo "  $network: $count\n";
+                }
+            }
+        } catch (Exception $e) {
+            echo Colors::RED . "❌ Failed to fetch blockchain stats: " . $e->getMessage() . Colors::NC . "\n";
+        }
+    }
+
+    /**
+     * Machine Learning Personality Commands
+     */
+    private function commandMLPersonality($args) {
+        if (empty($args)) {
+            $this->showMLPersonalityHelp();
+            return;
+        }
+
+        $action = array_shift($args);
+        switch ($action) {
+            case 'predict':
+                $this->predictPersonality($args);
+                break;
+            case 'insights':
+                $this->showPersonalityInsights($args);
+                break;
+            case 'observe':
+                $this->recordBehaviorObservation($args);
+                break;
+            case 'genetic':
+                $this->updateGeneticData($args);
+                break;
+            case 'training':
+                $this->showTrainingStatus();
+                break;
+            case 'help':
+                $this->showMLPersonalityHelp();
+                break;
+            default:
+                echo Colors::RED . "❌ Unknown ML personality action: $action" . Colors::NC . "\n";
+                echo "Use 'purrr ml help' to see available actions.\n";
+                break;
+        }
+    }
+
+    private function showMLPersonalityHelp() {
+        echo Colors::CYAN . "🧠 Machine Learning Personality Commands:" . Colors::NC . "\n";
+        echo "  predict <cat_id> [confidence]       - Predict cat personality\n";
+        echo "  insights <cat_id>                    - Show personality insights\n";
+        echo "  observe <cat_id> <type> [details]   - Record behavior observation\n";
+        echo "  genetic <cat_id> <data>             - Update genetic data\n";
+        echo "  training                             - Show ML training status\n";
+        echo "  help                                 - Show this help message\n\n";
+    }
+
+    private function predictPersonality($args) {
+        if (empty($args)) {
+            echo Colors::RED . "❌ Cat ID required. Usage: purrr ml predict <cat_id> [confidence]" . Colors::NC . "\n";
+            return;
+        }
+
+        $catId = array_shift($args);
+        $includeConfidence = !empty($args) ? (array_shift($args) === 'true') : true;
+
+        try {
+            $response = $this->apiRequest('POST', '/v2/advanced_features/ml-personality?action=predict', [
+                'cat_id' => $catId,
+                'include_confidence' => $includeConfidence
+            ]);
+
+            echo Colors::GREEN . "🧠 Personality Prediction Complete!" . Colors::NC . "\n\n";
+            
+            foreach ($response['personality'] as $dimension => $score) {
+                $color = $score >= 70 ? Colors::GREEN : ($score >= 40 ? Colors::YELLOW : Colors::RED);
+                echo "$dimension: " . $color . $score . "/100" . Colors::NC . "\n";
+            }
+
+            if ($includeConfidence && !empty($response['confidence_scores'])) {
+                echo "\n" . Colors::CYAN . "Confidence Scores:" . Colors::NC . "\n";
+                foreach ($response['confidence_scores'] as $dimension => $confidence) {
+                    echo "$dimension: " . round($confidence * 100, 1) . "%\n";
+                }
+            }
+        } catch (Exception $e) {
+            echo Colors::RED . "❌ Failed to predict personality: " . $e->getMessage() . Colors::NC . "\n";
+        }
+    }
+
+    private function showPersonalityInsights($args) {
+        if (empty($args)) {
+            echo Colors::RED . "❌ Cat ID required. Usage: purrr ml insights <cat_id>" . Colors::NC . "\n";
+            return;
+        }
+
+        $catId = array_shift($args);
+
+        try {
+            $response = $this->apiRequest('GET', '/v2/advanced_features/ml-personality?action=insights&cat_id=' . $catId);
+
+            echo Colors::GREEN . "💡 Personality Insights for Cat $catId:" . Colors::NC . "\n\n";
+            
+            echo Colors::CYAN . "Overall Assessment:" . Colors::NC . "\n";
+            echo $response['overall_assessment'] . "\n\n";
+
+            echo Colors::CYAN . "Dimension Insights:" . Colors::NC . "\n";
+            foreach ($response['insights'] as $dimension => $insight) {
+                echo Colors::YELLOW . "$dimension:" . Colors::NC . "\n";
+                echo "  $insight\n\n";
+            }
+
+            echo Colors::CYAN . "Recommendations:" . Colors::NC . "\n";
+            foreach ($response['recommendations'] as $dimension => $recommendation) {
+                echo Colors::YELLOW . "$dimension:" . Colors::NC . "\n";
+                echo "  $recommendation\n\n";
+            }
+
+            echo "Confidence Level: " . Colors::CYAN . $response['confidence_level'] . Colors::NC . "\n";
+        } catch (Exception $e) {
+            echo Colors::RED . "❌ Failed to fetch personality insights: " . $e->getMessage() . Colors::NC . "\n";
+        }
+    }
+
+    private function recordBehaviorObservation($args) {
+        if (count($args) < 2) {
+            echo Colors::RED . "❌ Cat ID and behavior type required. Usage: purrr ml observe <cat_id> <type> [intensity] [duration] [context]" . Colors::NC . "\n";
+            return;
+        }
+
+        $catId = array_shift($args);
+        $behaviorType = array_shift($args);
+        $intensity = array_shift($args) ?? 5;
+        $duration = array_shift($args) ?? 0;
+        $context = !empty($args) ? implode(' ', $args) : '';
+
+        try {
+            $response = $this->apiRequest('POST', '/v2/advanced_features/ml-personality?action=behavior-observation', [
+                'cat_id' => $catId,
+                'behavior_type' => $behaviorType,
+                'intensity_level' => $intensity,
+                'duration_seconds' => $duration,
+                'environmental_context' => $context
+            ]);
+
+            echo Colors::GREEN . "✅ Behavior observation recorded!" . Colors::NC . "\n";
+            echo "Observation ID: " . Colors::CYAN . $response['id'] . Colors::NC . "\n";
+            echo "Status: " . Colors::CYAN . $response['status'] . Colors::NC . "\n";
+        } catch (Exception $e) {
+            echo Colors::RED . "❌ Failed to record behavior: " . $e->getMessage() . Colors::NC . "\n";
+        }
+    }
+
+    private function updateGeneticData($args) {
+        if (count($args) < 2) {
+            echo Colors::RED . "❌ Cat ID and genetic data required. Usage: purrr ml genetic <cat_id> <heritage_score> [coat_pattern] [markers]" . Colors::NC . "\n";
+            return;
+        }
+
+        $catId = array_shift($args);
+        $heritageScore = array_shift($args);
+        $coatPattern = array_shift($args) ?? '';
+        $markers = !empty($args) ? implode(' ', $args) : '';
+
+        try {
+            $response = $this->apiRequest('POST', '/v2/advanced_features/ml-personality?action=genetic-data', [
+                'cat_id' => $catId,
+                'heritage_score' => $heritageScore,
+                'coat_pattern' => $coatPattern,
+                'genetic_markers' => $markers
+            ]);
+
+            echo Colors::GREEN . "✅ Genetic data updated!" . Colors::NC . "\n";
+            echo "Update ID: " . Colors::CYAN . $response['id'] . Colors::NC . "\n";
+            echo "Status: " . Colors::CYAN . $response['status'] . Colors::NC . "\n";
+        } catch (Exception $e) {
+            echo Colors::RED . "❌ Failed to update genetic data: " . $e->getMessage() . Colors::NC . "\n";
+        }
+    }
+
+    private function showTrainingStatus() {
+        try {
+            $response = $this->apiRequest('GET', '/v2/advanced_features/ml-personality?action=training-status');
+
+            echo Colors::GREEN . "🤖 ML Training Status:" . Colors::NC . "\n";
+            echo "  Status: " . Colors::CYAN . $response['status'] . Colors::NC . "\n";
+            
+            if (!empty($response['models'])) {
+                echo "\n" . Colors::YELLOW . "Active Models:" . Colors::NC . "\n";
+                foreach ($response['models'] as $model) {
+                    echo "  - $model\n";
+                }
+            }
+        } catch (Exception $e) {
+            echo Colors::RED . "❌ Failed to fetch training status: " . $e->getMessage() . Colors::NC . "\n";
+        }
+    }
+
+    /**
+     * Metaverse and VR Commands
+     */
+    private function commandMetaverse($args) {
+        if (empty($args)) {
+            $this->showMetaverseHelp();
+            return;
+        }
+
+        $action = array_shift($args);
+        switch ($action) {
+            case 'create':
+                $this->createMetaverseWorld($args);
+                break;
+            case 'join':
+                $this->joinMetaverseWorld($args);
+                break;
+            case 'leave':
+                $this->leaveMetaverseWorld($args);
+                break;
+            case 'worlds':
+                $this->listMetaverseWorlds($args);
+                break;
+            case 'players':
+                $this->showWorldPlayers($args);
+                break;
+            case 'interact':
+                $this->performVRInteraction($args);
+                break;
+            case 'social':
+                $this->createSocialVRSpace($args);
+                break;
+            case 'stats':
+                $this->showMetaverseStats();
+                break;
+            case 'help':
+                $this->showMetaverseHelp();
+                break;
+            default:
+                echo Colors::RED . "❌ Unknown metaverse action: $action" . Colors::NC . "\n";
+                echo "Use 'purrr metaverse help' to see available actions.\n";
+                break;
+        }
+    }
+
+    private function showMetaverseHelp() {
+        echo Colors::CYAN . "🌐 Metaverse & VR Commands:" . Colors::NC . "\n";
+        echo "  create <name> <type> [settings]     - Create metaverse world\n";
+        echo "  join <world_id> [cat_id]            - Join metaverse world\n";
+        echo "  leave <world_id>                     - Leave metaverse world\n";
+        echo "  worlds [filters]                     - List active worlds\n";
+        echo "  players <world_id>                   - Show world players\n";
+        echo "  interact <world_id> <type> [data]   - Perform VR interaction\n";
+        echo "  social <world_id> <name> <type>     - Create social VR space\n";
+        echo "  stats                                 - Show metaverse statistics\n";
+        echo "  help                                  - Show this help message\n\n";
+    }
+
+    private function createMetaverseWorld($args) {
+        if (count($args) < 2) {
+            echo Colors::RED . "❌ World name and type required. Usage: purrr metaverse create <name> <type> [max_players] [access_level]" . Colors::NC . "\n";
+            return;
+        }
+
+        $worldName = array_shift($args);
+        $worldType = array_shift($args);
+        $maxPlayers = array_shift($args) ?? 50;
+        $accessLevel = array_shift($args) ?? 'public';
+
+        try {
+            $response = $this->apiRequest('POST', '/v2/advanced_features/metaverse?action=create-world', [
+                'world_name' => $worldName,
+                'world_type' => $worldType,
+                'max_players' => $maxPlayers,
+                'access_level' => $accessLevel
+            ]);
+
+            echo Colors::GREEN . "✅ Metaverse world created!" . Colors::NC . "\n";
+            echo "World ID: " . Colors::CYAN . $response['world_id'] . Colors::NC . "\n";
+            echo "Name: " . Colors::CYAN . $response['world_name'] . Colors::NC . "\n";
+            echo "Type: " . Colors::CYAN . $response['world_type'] . Colors::NC . "\n";
+            echo "Max Players: " . Colors::CYAN . $response['max_players'] . Colors::NC . "\n";
+        } catch (Exception $e) {
+            echo Colors::RED . "❌ Failed to create world: " . $e->getMessage() . Colors::NC . "\n";
+        }
+    }
+
+    private function joinMetaverseWorld($args) {
+        if (empty($args)) {
+            echo Colors::RED . "❌ World ID required. Usage: purrr metaverse join <world_id> [cat_id]" . Colors::NC . "\n";
+            return;
+        }
+
+        $worldId = array_shift($args);
+        $catId = array_shift($args) ?? null;
+
+        try {
+            $response = $this->apiRequest('POST', '/v2/advanced_features/metaverse?action=join-world', [
+                'world_id' => $worldId,
+                'cat_id' => $catId
+            ]);
+
+            echo Colors::GREEN . "✅ Joined metaverse world!" . Colors::NC . "\n";
+            echo "World: " . Colors::CYAN . $response['world_name'] . Colors::NC . "\n";
+            echo "Type: " . Colors::CYAN . $response['world_type'] . Colors::NC . "\n";
+            echo "Cat: " . Colors::CYAN . $response['cat_id'] . Colors::NC . "\n";
+            echo "Players: " . Colors::CYAN . $response['player_count'] . "/" . $response['max_players'] . Colors::NC . "\n";
+        } catch (Exception $e) {
+            echo Colors::RED . "❌ Failed to join world: " . $e->getMessage() . Colors::NC . "\n";
+        }
+    }
+
+    private function leaveMetaverseWorld($args) {
+        if (empty($args)) {
+            echo Colors::RED . "❌ World ID required. Usage: purrr metaverse leave <world_id>" . Colors::NC . "\n";
+            return;
+        }
+
+        $worldId = array_shift($args);
+
+        try {
+            $response = $this->apiRequest('POST', '/v2/advanced_features/metaverse?action=leave-world', [
+                'world_id' => $worldId
+            ]);
+
+            echo Colors::GREEN . "✅ Left metaverse world!" . Colors::NC . "\n";
+        } catch (Exception $e) {
+            echo Colors::RED . "❌ Failed to leave world: " . $e->getMessage() . Colors::NC . "\n";
+        }
+    }
+
+    private function listMetaverseWorlds($args) {
+        try {
+            $response = $this->apiRequest('GET', '/v2/advanced_features/metaverse?action=active-worlds');
+
+            if (empty($response)) {
+                echo Colors::YELLOW . "🌍 No active metaverse worlds found." . Colors::NC . "\n";
+                return;
+            }
+
+            echo Colors::GREEN . "🌍 Active Metaverse Worlds (" . count($response) . "):" . Colors::NC . "\n\n";
+            foreach ($response as $world) {
+                echo Colors::CYAN . $world['name'] . Colors::NC . " (" . $world['world_type'] . ")\n";
+                echo "  ID: " . $world['world_id'] . "\n";
+                echo "  Players: " . $world['current_players'] . "/" . $world['max_players'] . "\n";
+                echo "  Environment: " . $world['environment'] . "\n";
+                echo "  Difficulty: " . $world['difficulty'] . "\n";
+                echo "  Creator: " . $world['creator_name'] . "\n\n";
+            }
+        } catch (Exception $e) {
+            echo Colors::RED . "❌ Failed to fetch worlds: " . $e->getMessage() . Colors::NC . "\n";
+        }
+    }
+
+    private function showWorldPlayers($args) {
+        if (empty($args)) {
+            echo Colors::RED . "❌ World ID required. Usage: purrr metaverse players <world_id>" . Colors::NC . "\n";
+            return;
+        }
+
+        $worldId = array_shift($args);
+
+        try {
+            $response = $this->apiRequest('GET', '/v2/advanced_features/metaverse?action=world-players&world_id=' . $worldId);
+
+            if (empty($response)) {
+                echo Colors::YELLOW . "👥 No players in this world." . Colors::NC . "\n";
+                return;
+            }
+
+            echo Colors::GREEN . "👥 World Players (" . count($response) . "):" . Colors::NC . "\n\n";
+            foreach ($response as $player) {
+                echo Colors::CYAN . $player['username'] . Colors::NC . "\n";
+                echo "  Cat: " . $player['cat_name'] . " (" . $player['cat_breed'] . ")\n";
+                echo "  Status: " . $player['online_status'] . "\n";
+                echo "  Joined: " . $player['joined_at'] . "\n\n";
+            }
+        } catch (Exception $e) {
+            echo Colors::RED . "❌ Failed to fetch players: " . $e->getMessage() . Colors::NC . "\n";
+        }
+    }
+
+    private function performVRInteraction($args) {
+        if (count($args) < 2) {
+            echo Colors::RED . "❌ World ID and interaction type required. Usage: purrr metaverse interact <world_id> <type> [data]" . Colors::NC . "\n";
+            return;
+        }
+
+        $worldId = array_shift($args);
+        $interactionType = array_shift($args);
+        $interactionData = !empty($args) ? implode(' ', $args) : '';
+
+        try {
+            $response = $this->apiRequest('POST', '/v2/advanced_features/metaverse?action=vr-interaction', [
+                'world_id' => $worldId,
+                'interaction_type' => $interactionType,
+                'target_data' => $interactionData
+            ]);
+
+            echo Colors::GREEN . "✅ VR interaction performed!" . Colors::NC . "\n";
+            echo "Type: " . Colors::CYAN . $response['interaction_type'] . Colors::NC . "\n";
+            echo "Result: " . Colors::CYAN . $response['result'] . Colors::NC . "\n";
+        } catch (Exception $e) {
+            echo Colors::RED . "❌ Failed to perform interaction: " . $e->getMessage() . Colors::NC . "\n";
+        }
+    }
+
+    private function createSocialVRSpace($args) {
+        if (count($args) < 3) {
+            echo Colors::RED . "❌ World ID, space name, and type required. Usage: purrr metaverse social <world_id> <name> <type> [capacity]" . Colors::NC . "\n";
+            return;
+        }
+
+        $worldId = array_shift($args);
+        $spaceName = array_shift($args);
+        $spaceType = array_shift($args);
+        $maxCapacity = array_shift($args) ?? 20;
+
+        try {
+            $response = $this->apiRequest('POST', '/v2/advanced_features/metaverse?action=social-space', [
+                'world_id' => $worldId,
+                'space_name' => $spaceName,
+                'space_type' => $spaceType,
+                'max_capacity' => $maxCapacity
+            ]);
+
+            echo Colors::GREEN . "✅ Social VR space created!" . Colors::NC . "\n";
+            echo "Space ID: " . Colors::CYAN . $response['space_id'] . Colors::NC . "\n";
+            echo "Name: " . Colors::CYAN . $response['name'] . Colors::NC . "\n";
+            echo "Type: " . Colors::CYAN . $response['space_type'] . Colors::NC . "\n";
+            echo "Capacity: " . Colors::CYAN . $response['max_occupants'] . Colors::NC . "\n";
+        } catch (Exception $e) {
+            echo Colors::RED . "❌ Failed to create social space: " . $e->getMessage() . Colors::NC . "\n";
+        }
+    }
+
+    private function showMetaverseStats() {
+        try {
+            $response = $this->apiRequest('GET', '/v2/advanced_features/metaverse?action=stats');
+
+            echo Colors::GREEN . "📊 Metaverse Statistics:" . Colors::NC . "\n";
+            echo "  Total Worlds: " . Colors::CYAN . $response['total_worlds'] . Colors::NC . "\n";
+            echo "  Players Online: " . Colors::CYAN . $response['players_online'] . Colors::NC . "\n\n";
+
+            if (!empty($response['world_types'])) {
+                echo Colors::YELLOW . "World Types:" . Colors::NC . "\n";
+                foreach ($response['world_types'] as $type => $count) {
+                    echo "  $type: $count\n";
+                }
+            }
+
+            if (!empty($response['popular_worlds'])) {
+                echo "\n" . Colors::YELLOW . "Popular Worlds:" . Colors::NC . "\n";
+                foreach ($response['popular_worlds'] as $world) {
+                    echo "  " . $world['name'] . ": " . $world['player_count'] . " players\n";
+                }
+            }
+        } catch (Exception $e) {
+            echo Colors::RED . "❌ Failed to fetch metaverse stats: " . $e->getMessage() . Colors::NC . "\n";
+        }
+    }
+
+    /**
+     * Webhook Management Commands
+     */
+    private function commandWebhooks($args) {
+        if (empty($args)) {
+            $this->showWebhooksHelp();
+            return;
+        }
+
+        $action = array_shift($args);
+        switch ($action) {
+            case 'create':
+                $this->createWebhook($args);
+                break;
+            case 'list':
+                $this->listWebhooks();
+                break;
+            case 'update':
+                $this->updateWebhook($args);
+                break;
+            case 'delete':
+                $this->deleteWebhook($args);
+                break;
+            case 'test':
+                $this->testWebhook($args);
+                break;
+            case 'logs':
+                $this->showWebhookLogs($args);
+                break;
+            case 'help':
+                $this->showWebhooksHelp();
+                break;
+            default:
+                echo Colors::RED . "❌ Unknown webhook action: $action" . Colors::NC . "\n";
+                echo "Use 'purrr webhooks help' to see available actions.\n";
+                break;
+        }
+    }
+
+    private function showWebhooksHelp() {
+        echo Colors::CYAN . "🔗 Webhook Management Commands:" . Colors::NC . "\n";
+        echo "  create <url> <events> [secret]      - Create new webhook\n";
+        echo "  list                                  - List user's webhooks\n";
+        echo "  update <id> <updates>                - Update webhook\n";
+        echo "  delete <id>                           - Delete webhook\n";
+        echo "  test <id>                             - Test webhook delivery\n";
+        echo "  logs <id> [limit]                    - Show delivery logs\n";
+        echo "  help                                  - Show this help message\n\n";
+    }
+
+    private function createWebhook($args) {
+        if (count($args) < 2) {
+            echo Colors::RED . "❌ URL and events required. Usage: purrr webhooks create <url> <events> [secret] [headers]" . Colors::NC . "\n";
+            return;
+        }
+
+        $url = array_shift($args);
+        $events = explode(',', array_shift($args));
+        $secret = array_shift($args) ?? '';
+        $headers = !empty($args) ? json_decode(implode(' ', $args), true) : [];
+
+        try {
+            $response = $this->apiRequest('POST', '/v2/advanced_features/webhooks?action=create', [
+                'webhook_url' => $url,
+                'events' => $events,
+                'secret_key' => $secret,
+                'headers' => $headers
+            ]);
+
+            echo Colors::GREEN . "✅ Webhook created!" . Colors::NC . "\n";
+            echo "Webhook ID: " . Colors::CYAN . $response['id'] . Colors::NC . "\n";
+            echo "URL: " . Colors::CYAN . $response['webhook_url'] . Colors::NC . "\n";
+            echo "Events: " . Colors::CYAN . implode(', ', $response['events']) . Colors::NC . "\n";
+            echo "Status: " . Colors::CYAN . $response['status'] . Colors::NC . "\n";
+        } catch (Exception $e) {
+            echo Colors::RED . "❌ Failed to create webhook: " . $e->getMessage() . Colors::NC . "\n";
+        }
+    }
+
+    private function listWebhooks() {
+        try {
+            $response = $this->apiRequest('GET', '/v2/advanced_features/webhooks?action=list');
+
+            if (empty($response)) {
+                echo Colors::YELLOW . "🔗 No webhooks found." . Colors::NC . "\n";
+                return;
+            }
+
+            echo Colors::GREEN . "🔗 User Webhooks (" . count($response) . "):" . Colors::NC . "\n\n";
+            foreach ($response as $webhook) {
+                echo Colors::CYAN . "ID: " . $webhook['id'] . Colors::NC . "\n";
+                echo "  URL: " . $webhook['webhook_url'] . "\n";
+                echo "  Events: " . implode(', ', $webhook['events']) . "\n";
+                echo "  Status: " . $webhook['status'] . "\n";
+                echo "  Created: " . $webhook['created_at'] . "\n\n";
+            }
+        } catch (Exception $e) {
+            echo Colors::RED . "❌ Failed to fetch webhooks: " . $e->getMessage() . Colors::NC . "\n";
+        }
+    }
+
+    private function updateWebhook($args) {
+        if (count($args) < 2) {
+            echo Colors::RED . "❌ Webhook ID and updates required. Usage: purrr webhooks update <id> <updates>" . Colors::NC . "\n";
+            return;
+        }
+
+        $webhookId = array_shift($args);
+        $updates = json_decode(implode(' ', $args), true);
+
+        if (!$updates) {
+            echo Colors::RED . "❌ Invalid updates format. Use JSON format." . Colors::NC . "\n";
+            return;
+        }
+
+        try {
+            $response = $this->apiRequest('PUT', '/v2/advanced_features/webhooks?action=update', [
+                'webhook_id' => $webhookId,
+                'updates' => $updates
+            ]);
+
+            echo Colors::GREEN . "✅ Webhook updated!" . Colors::NC . "\n";
+            echo "Webhook ID: " . Colors::CYAN . $response['id'] . Colors::NC . "\n";
+            echo "Status: " . Colors::CYAN . $response['status'] . Colors::NC . "\n";
+        } catch (Exception $e) {
+            echo Colors::RED . "❌ Failed to update webhook: " . $e->getMessage() . Colors::NC . "\n";
+        }
+    }
+
+    private function deleteWebhook($args) {
+        if (empty($args)) {
+            echo Colors::RED . "❌ Webhook ID required. Usage: purrr webhooks delete <id>" . Colors::NC . "\n";
+            return;
+        }
+
+        $webhookId = array_shift($args);
+
+        try {
+            $response = $this->apiRequest('DELETE', '/v2/advanced_features/webhooks?action=delete', [
+                'webhook_id' => $webhookId
+            ]);
+
+            echo Colors::GREEN . "✅ Webhook deleted!" . Colors::NC . "\n";
+        } catch (Exception $e) {
+            echo Colors::RED . "❌ Failed to delete webhook: " . $e->getMessage() . Colors::NC . "\n";
+        }
+    }
+
+    private function testWebhook($args) {
+        if (empty($args)) {
+            echo Colors::RED . "❌ Webhook ID required. Usage: purrr webhooks test <id>" . Colors::NC . "\n";
+            return;
+        }
+
+        $webhookId = array_shift($args);
+
+        try {
+            $response = $this->apiRequest('POST', '/v2/advanced_features/webhooks?action=test', [
+                'webhook_id' => $webhookId
+            ]);
+
+            echo Colors::GREEN . "✅ Webhook test completed!" . Colors::NC . "\n";
+            echo "Status: " . Colors::CYAN . $response['status'] . Colors::NC . "\n";
+        } catch (Exception $e) {
+            echo Colors::RED . "❌ Failed to test webhook: " . $e->getMessage() . Colors::NC . "\n";
+        }
+    }
+
+    private function showWebhookLogs($args) {
+        $webhookId = array_shift($args) ?? '';
+        $limit = array_shift($args) ?? 50;
+
+        try {
+            $endpoint = '/v2/advanced_features/webhooks?action=delivery-logs';
+            if ($webhookId) {
+                $endpoint .= '&webhook_id=' . urlencode($webhookId);
+            }
+            if ($limit) {
+                $endpoint .= '&limit=' . urlencode($limit);
+            }
+
+            $response = $this->apiRequest('GET', $endpoint);
+
+            if (empty($response)) {
+                echo Colors::YELLOW . "📋 No webhook logs found." . Colors::NC . "\n";
+                return;
+            }
+
+            echo Colors::GREEN . "📋 Webhook Delivery Logs (" . count($response) . "):" . Colors::NC . "\n\n";
+            foreach ($response as $log) {
+                echo Colors::CYAN . "Event: " . $log['event_type'] . Colors::NC . "\n";
+                echo "  Status: " . $log['delivery_status'] . "\n";
+                echo "  Response Code: " . $log['response_code'] . "\n";
+                echo "  Delivery Time: " . $log['delivery_time_ms'] . "ms\n";
+                echo "  Created: " . $log['created_at'] . "\n\n";
+            }
+        } catch (Exception $e) {
+            echo Colors::RED . "❌ Failed to fetch webhook logs: " . $e->getMessage() . Colors::NC . "\n";
+        }
     }
 
     private function apiRequest($method, $endpoint, $data = null) {
