@@ -1,0 +1,28 @@
+# Purrr.love Production Docker Image - Final Version
+FROM mattrayner/lamp:latest-1804
+
+# Set working directory
+WORKDIR /var/www/html
+
+# Remove default files
+RUN rm -rf /var/www/html/*
+
+# Copy application files directly to web directory
+COPY --chown=www-data:www-data . /var/www/html/
+
+# Set proper permissions
+RUN chmod -R 755 /var/www/html
+
+# Create uploads directory if needed
+RUN mkdir -p /var/www/html/uploads \
+    && chown -R www-data:www-data /var/www/html/uploads \
+    && chmod -R 777 /var/www/html/uploads
+
+# Enable Apache modules
+RUN a2enmod rewrite headers
+
+# Expose port 80
+EXPOSE 80
+
+# Start services with the original run script
+CMD ["/run.sh"]

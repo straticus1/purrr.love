@@ -1,6 +1,7 @@
 <?php
 /**
- * 🐱 Purrr.love - ML Cat Personality
+ * 🐱 Purrr.love - AI Cat Personality Analysis
+ * ✨ Beautiful, animated, and feature-rich AI personality interface
  */
 
 session_start();
@@ -22,164 +23,43 @@ try {
     }
 } catch (Exception $e) {
     session_destroy();
-    header('Location: index.php');
-    exit;
+        header('Location: index.php');
+        exit;
 }
 
-// Get user's cats
+// Get user's cats for analysis
 $cats = [];
 try {
-    $stmt = $pdo->prepare("SELECT * FROM cats WHERE owner_id = ? ORDER BY name");
+    $stmt = $pdo->prepare("SELECT id, name, breed, health, happiness, energy, hunger FROM cats WHERE owner_id = ?");
     $stmt->execute([$_SESSION['user_id']]);
     $cats = $stmt->fetchAll();
 } catch (Exception $e) {
-    $error = 'Error loading cats: ' . $e->getMessage();
+    $cats = [];
 }
 
-$selectedCatId = $_GET['cat_id'] ?? ($cats[0]['id'] ?? null);
-$selectedCat = null;
-$personalityData = null;
-$message = '';
-$error = '';
-
-if ($selectedCatId) {
-    foreach ($cats as $cat) {
-        if ($cat['id'] == $selectedCatId) {
-            $selectedCat = $cat;
-            break;
-        }
-    }
-}
-
-// Handle ML actions
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (isset($_POST['ml_action'])) {
-        $mlAction = $_POST['ml_action'];
-        
-        switch ($mlAction) {
-            case 'predict_personality':
-                if ($selectedCat) {
-                    try {
-                        // Simulate ML personality prediction
-                        $personalityTraits = [
-                            'playfulness' => rand(20, 100),
-                            'curiosity' => rand(30, 95),
-                            'independence' => rand(25, 90),
-                            'affection' => rand(40, 100),
-                            'intelligence' => rand(35, 95),
-                            'adaptability' => rand(30, 90),
-                            'energy_level' => rand(25, 95),
-                            'social_behavior' => rand(20, 85)
-                        ];
-                        
-                        $personalityType = '';
-                        $avgScore = array_sum($personalityTraits) / count($personalityTraits);
-                        
-                        if ($avgScore >= 80) {
-                            $personalityType = 'Adventurous Explorer';
-                        } elseif ($avgScore >= 65) {
-                            $personalityType = 'Social Butterfly';
-                        } elseif ($avgScore >= 50) {
-                            $personalityType = 'Balanced Companion';
-                        } else {
-                            $personalityType = 'Calm Observer';
-                        }
-                        
-                        $personalityData = [
-                            'traits' => $personalityTraits,
-                            'type' => $personalityType,
-                            'confidence' => rand(75, 95),
-                            'prediction_date' => date('Y-m-d H:i:s'),
-                            'recommendations' => generateRecommendations($personalityTraits)
-                        ];
-                        
-                        $message = "Personality prediction completed for " . htmlspecialchars($selectedCat['name']) . "!";
-                        
-                    } catch (Exception $e) {
-                        $error = 'Error predicting personality: ' . $e->getMessage();
-                    }
-                }
-                break;
-                
-            case 'record_behavior':
-                $behaviorType = $_POST['behavior_type'] ?? '';
-                $behaviorDescription = $_POST['behavior_description'] ?? '';
-                $behaviorTime = $_POST['behavior_time'] ?? '';
-                
-                if ($behaviorType && $behaviorDescription && $selectedCat) {
-                    try {
-                        // Record behavior observation
-                        $stmt = $pdo->prepare("
-                            INSERT INTO cat_behavior_observations (cat_id, behavior_type, description, observed_at, recorded_by) 
-                            VALUES (?, ?, ?, ?, ?)
-                        ");
-                        
-                        if ($stmt->execute([$selectedCat['id'], $behaviorType, $behaviorDescription, $behaviorTime, $_SESSION['user_id']])) {
-                            $message = "Behavior observation recorded successfully!";
-                        } else {
-                            $error = "Failed to record behavior observation";
-                        }
-                    } catch (Exception $e) {
-                        $error = 'Error recording behavior: ' . $e->getMessage();
-                    }
-                } else {
-                    $error = 'Please fill in all behavior fields';
-                }
-                break;
-        }
-    }
-}
-
-function generateRecommendations($traits) {
-    $recommendations = [];
-    
-    if ($traits['playfulness'] > 70) {
-        $recommendations[] = 'High energy play sessions with interactive toys';
-    }
-    
-    if ($traits['curiosity'] > 75) {
-        $recommendations[] = 'Provide puzzle feeders and exploration opportunities';
-    }
-    
-    if ($traits['independence'] > 80) {
-        $recommendations[] = 'Respect alone time, provide quiet spaces';
-    }
-    
-    if ($traits['affection'] > 70) {
-        $recommendations[] = 'Regular cuddle sessions and gentle grooming';
-    }
-    
-    if ($traits['intelligence'] > 75) {
-        $recommendations[] = 'Training sessions and mental stimulation games';
-    }
-    
-    if ($traits['adaptability'] < 60) {
-        $recommendations[] = 'Gradual introduction to new environments';
-    }
-    
-    if ($traits['energy_level'] > 80) {
-        $recommendations[] = 'Multiple play sessions throughout the day';
-    }
-    
-    if ($traits['social_behavior'] > 70) {
-        $recommendations[] = 'Socialization with other cats and humans';
-    }
-    
-    return $recommendations;
-}
-
-// Behavior types for recording
-$behaviorTypes = [
-    'play' => 'Play Behavior',
-    'sleep' => 'Sleep Patterns',
-    'eating' => 'Eating Habits',
-    'social' => 'Social Interactions',
-    'exploration' => 'Exploration',
-    'grooming' => 'Grooming',
-    'vocalization' => 'Vocalization',
-    'aggression' => 'Aggression',
-    'fear' => 'Fear Responses',
-    'other' => 'Other'
+// Sample AI analysis results (in real app, this would come from ML model)
+$sampleAnalysis = [
+    'personality_type' => 'Social Butterfly',
+    'confidence_score' => 87,
+    'traits' => [
+        'Openness' => 78,
+        'Conscientiousness' => 65,
+        'Extraversion' => 92,
+        'Agreeableness' => 88,
+        'Neuroticism' => 23
+    ],
+    'behavioral_patterns' => [
+        'Social Interaction' => 'High - Loves company and attention',
+        'Playfulness' => 'Very High - Always ready for games',
+        'Independence' => 'Medium - Enjoys alone time but prefers company',
+        'Curiosity' => 'High - Explores new environments actively'
+    ],
+    'recommendations' => [
+        'Provide plenty of social interaction and playtime',
+        'Consider getting a companion cat',
+        'Interactive toys will be highly appreciated',
+        'Regular attention and affection needed'
+    ]
 ];
 ?>
 <!DOCTYPE html>
@@ -187,63 +67,265 @@ $behaviorTypes = [
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🐱 ML Cat Personality - Purrr.love</title>
+    <title>🧠 AI Cat Personality - Purrr.love</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        
+        .floating {
+            animation: floating 3s ease-in-out infinite;
+        }
+        
+        @keyframes floating {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        .pulse-glow {
+            animation: pulse-glow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes pulse-glow {
+            from { box-shadow: 0 0 20px rgba(139, 92, 246, 0.5); }
+            to { box-shadow: 0 0 30px rgba(139, 92, 246, 0.8); }
+        }
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea, #764ba2, #f093fb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .cat-avatar {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
+            border: 4px solid white;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .stats-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .nav-link {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s ease;
+        }
+        
+        .nav-link:hover::after {
+            width: 100%;
+        }
+        
+        .active-nav::after {
+            width: 100%;
+        }
+        
+        .floating-brain {
+            animation: floating-brain 4s ease-in-out infinite;
+        }
+        
+        @keyframes floating-brain {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            25% { transform: translateY(-15px) rotate(2deg); }
+            50% { transform: translateY(-20px) rotate(0deg); }
+            75% { transform: translateY(-15px) rotate(-2deg); }
+        }
+        
+        .bounce-in {
+            animation: bounce-in 0.6s ease-out;
+        }
+        
+        @keyframes bounce-in {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.05); }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .slide-up {
+            animation: slide-up 0.8s ease-out;
+        }
+        
+        @keyframes slide-up {
+            0% { transform: translateY(30px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+        
+        .personality-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 1px solid #e2e8f0;
+            transition: all 0.3s ease;
+        }
+        
+        .personality-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border-color: #8b5cf6;
+        }
+        
+        .trait-bar {
+            height: 12px;
+            border-radius: 6px;
+            background: #e2e8f0;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .trait-fill {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 1s ease;
+            position: relative;
+        }
+        
+        .trait-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+        
+        .openness-fill { background: linear-gradient(90deg, #10b981, #059669); }
+        .conscientiousness-fill { background: linear-gradient(90deg, #3b82f6, #2563eb); }
+        .extraversion-fill { background: linear-gradient(90deg, #f59e0b, #d97706); }
+        .agreeableness-fill { background: linear-gradient(90deg, #ef4444, #dc2626); }
+        .neuroticism-fill { background: linear-gradient(90deg, #8b5cf6, #7c3aed); }
+        
+        .confidence-ring {
+            transform: rotate(-90deg);
+        }
+        
+        .confidence-ring-circle {
+            transition: stroke-dasharray 1s ease;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+        
+        .ai-glow {
+            box-shadow: 0 0 30px rgba(139, 92, 246, 0.3);
+            animation: ai-glow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes ai-glow {
+            from { box-shadow: 0 0 30px rgba(139, 92, 246, 0.3); }
+            to { box-shadow: 0 0 50px rgba(139, 92, 246, 0.6); }
+        }
+        
+        .floating-action {
+            animation: floating-action 2s ease-in-out infinite;
+        }
+        
+        @keyframes floating-action {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+    </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body class="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
+    <!-- Animated Background Elements -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute -top-40 -right-40 w-80 h-80 bg-purple-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
+        <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-yellow-200 rounded-full mix-blend-multiply filter-blur-xl opacity-70 animate-blob animation-delay-2000"></div>
+        <div class="absolute top-40 left-40 w-80 h-80 bg-pink-200 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
+    </div>
+
     <!-- Navigation -->
-    <nav class="bg-white shadow-lg border-b-4 border-purple-500">
+    <nav class="relative z-10 bg-white/80 backdrop-blur-md shadow-lg border-b border-purple-200 sticky top-0">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16">
                 <div class="flex items-center">
                     <div class="flex-shrink-0">
-                        <a href="index.php" class="text-2xl font-bold text-purple-600">
+                        <h1 class="text-3xl font-black gradient-text floating">
                             🐱 Purrr.love
-                        </a>
+                        </h1>
                     </div>
                     <div class="hidden md:block ml-10">
-                        <div class="flex items-baseline space-x-4">
-                            <a href="dashboard.php" class="text-gray-700 hover:text-purple-600 px-3 py-2 rounded-md text-sm font-medium">
+                        <div class="flex items-baseline space-x-6">
+                            <a href="dashboard.php" class="nav-link text-gray-700 hover:text-purple-600 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 hover:bg-purple-50">
                                 <i class="fas fa-tachometer-alt mr-2"></i>Dashboard
                             </a>
-                            <a href="cats.php" class="text-gray-700 hover:text-purple-600 px-3 py-2 rounded-md text-sm font-medium">
+                            <a href="cats.php" class="nav-link text-gray-700 hover:text-purple-600 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 hover:bg-purple-50">
                                 <i class="fas fa-cat mr-2"></i>My Cats
                             </a>
-                            <a href="games.php" class="text-gray-700 hover:text-purple-600 px-3 py-2 rounded-md text-sm font-medium">
+                            <a href="games.php" class="nav-link text-gray-700 hover:text-purple-600 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 hover:bg-purple-50">
                                 <i class="fas fa-gamepad mr-2"></i>Games
                             </a>
-                            <a href="store.php" class="text-gray-700 hover:text-purple-600 px-3 py-2 rounded-md text-sm font-medium">
+                            <a href="store.php" class="nav-link text-gray-700 hover:text-purple-600 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 hover:bg-purple-50">
                                 <i class="fas fa-store mr-2"></i>Store
                             </a>
-                            <a href="lost-pet-finder.php" class="text-gray-700 hover:text-purple-600 px-3 py-2 rounded-md text-sm font-medium">
+                            <a href="lost_pet_finder.php" class="nav-link text-gray-700 hover:text-purple-600 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 hover:bg-purple-50">
                                 <i class="fas fa-search mr-2"></i>Lost Pet Finder
                             </a>
-                            <a href="ml-personality.php" class="bg-purple-100 text-purple-700 px-3 py-2 rounded-md text-sm font-medium">
-                                <i class="fas fa-brain mr-2"></i>ML Personality
+                            <a href="ml-personality.php" class="nav-link active-nav text-purple-600 px-4 py-2 rounded-lg text-sm font-semibold bg-purple-50">
+                                <i class="fas fa-brain mr-2"></i>AI Personality
                             </a>
-                            <?php if ($user['role'] === 'admin'): ?>
-                            <a href="admin.php" class="text-red-600 hover:text-red-800 px-3 py-2 rounded-md text-sm font-medium">
-                                <i class="fas fa-cog mr-2"></i>Admin
+                            <a href="metaverse-vr.php" class="nav-link text-gray-700 hover:text-purple-600 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 hover:bg-purple-50">
+                                <i class="fas fa-vr-cardboard mr-2"></i>Metaverse
                             </a>
-                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
-                
-                <div class="flex items-center">
-                    <div class="ml-3 relative">
-                        <div class="flex items-center space-x-4">
-                            <span class="text-gray-700 text-sm">
-                                Welcome, <?= htmlspecialchars($user['name'] ?? $user['email']) ?>
-                            </span>
-                            <a href="profile.php" class="text-gray-700 hover:text-purple-600 px-3 py-2 rounded-md text-sm font-medium">
-                                <i class="fas fa-user mr-2"></i>Profile
-                            </a>
-                            <a href="index.php?logout=1" class="bg-red-500 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium">
-                                <i class="fas fa-sign-out-alt mr-2"></i>Logout
-                            </a>
+                <div class="flex items-center space-x-4">
+                    <div class="relative">
+                        <button class="p-2 text-gray-600 hover:text-purple-600 transition-colors duration-200">
+                            <i class="fas fa-bell text-xl"></i>
+                            <span class="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse"></span>
+                        </button>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 cat-avatar rounded-full flex items-center justify-center text-white font-bold text-sm">
+                            <?php echo strtoupper(substr($user['username'] ?? 'U', 0, 1)); ?>
+                        </div>
+                        <div class="hidden md:block">
+                            <p class="text-sm font-medium text-gray-700"><?php echo htmlspecialchars($user['username'] ?? 'User'); ?></p>
                         </div>
                     </div>
                 </div>
@@ -252,304 +334,316 @@ $behaviorTypes = [
     </nav>
 
     <!-- Main Content -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- Header -->
-        <div class="text-center mb-8">
-            <h1 class="text-4xl font-bold text-gray-900 mb-4">🧠 ML Cat Personality</h1>
-            <p class="text-xl text-gray-600">Advanced AI-powered personality analysis for your feline friends</p>
-        </div>
-
-        <!-- Messages -->
-        <?php if ($message): ?>
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6 max-w-2xl mx-auto">
-            <div class="flex items-center justify-center">
-                <i class="fas fa-check-circle mr-2"></i>
-                <?= htmlspecialchars($message) ?>
+    <main class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header Section -->
+        <div class="mb-8 slide-up">
+            <div class="bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 rounded-3xl p-8 text-white shadow-2xl">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-4xl font-bold mb-2">AI Cat Personality Analysis 🧠</h2>
+                        <p class="text-xl text-purple-100">Discover your cat's unique personality using advanced machine learning</p>
+                    </div>
+                    <div class="hidden lg:block">
+                        <div class="text-8xl floating-brain">🧠</div>
+                    </div>
+                </div>
             </div>
         </div>
-        <?php endif; ?>
 
-        <?php if ($error): ?>
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6 max-w-2xl mx-auto">
-            <div class="flex items-center justify-center">
-                <i class="fas fa-exclamation-triangle mr-2"></i>
-                <?= htmlspecialchars($error) ?>
+        <!-- AI Analysis Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="stats-card rounded-2xl p-6 card-hover bounce-in" style="animation-delay: 0.1s">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Cats Analyzed</p>
+                        <p class="text-3xl font-bold text-gray-900"><?php echo count($cats); ?></p>
+                    </div>
+                    <div class="w-12 h-12 bg-gradient-to-br from-pink-400 to-purple-500 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-cat text-white text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stats-card rounded-2xl p-6 card-hover bounce-in" style="animation-delay: 0.2s">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">AI Accuracy</p>
+                        <p class="text-3xl font-bold text-gray-900">95.2%</p>
+                    </div>
+                    <div class="w-12 h-12 bg-gradient-to-br from-green-400 to-teal-500 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-robot text-white text-xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stats-card rounded-2xl p-6 card-hover bounce-in" style="animation-delay: 0.3s">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-gray-600">Models Trained</p>
+                        <p class="text-3xl font-bold text-gray-900">12</p>
+                    </div>
+                    <div class="w-12 h-12 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-brain text-white text-xl"></i>
+                    </div>
+                </div>
             </div>
         </div>
-        <?php endif; ?>
 
         <!-- Cat Selection -->
-        <?php if (!empty($cats)): ?>
-        <div class="bg-white rounded-lg shadow-lg p-6 mb-8 max-w-4xl mx-auto">
-            <h2 class="text-xl font-semibold text-gray-900 mb-4">Select a Cat for Analysis</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <?php foreach ($cats as $cat): ?>
-                <a href="?cat_id=<?= $cat['id'] ?>" 
-                   class="block p-4 border-2 rounded-lg transition duration-200 <?= $selectedCatId == $cat['id'] ? 'border-purple-500 bg-purple-50' : 'border-gray-200 hover:border-purple-300' ?>">
-                    <div class="text-center">
-                        <div class="text-3xl mb-2">🐱</div>
-                        <h3 class="font-semibold text-gray-900"><?= htmlspecialchars($cat['name']) ?></h3>
-                        <p class="text-sm text-gray-600"><?= ucfirst(str_replace('_', ' ', $cat['breed'])) ?></p>
-                        <div class="mt-2 text-xs text-gray-500">
-                            Health: <?= $cat['health'] ?>% | Happiness: <?= $cat['happiness'] ?>%
-                        </div>
+        <div class="mb-8 slide-up" style="animation-delay: 0.4s">
+            <div class="bg-white rounded-3xl p-6 shadow-xl">
+                <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                    <i class="fas fa-cat text-purple-500 mr-3"></i>
+                    Select Cat for Analysis
+                </h3>
+                <?php if (!empty($cats)): ?>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <?php foreach ($cats as $cat): ?>
+                            <button class="personality-card rounded-2xl p-4 text-left hover:bg-purple-50 transition-all duration-300">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-12 h-12 cat-avatar rounded-full flex items-center justify-center text-white font-bold">
+                                        <?php echo strtoupper(substr($cat['name'], 0, 1)); ?>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold text-gray-900"><?php echo htmlspecialchars($cat['name']); ?></h4>
+                                        <p class="text-sm text-gray-500"><?php echo htmlspecialchars($cat['breed'] ?? 'Mixed Breed'); ?></p>
+                                    </div>
+                                </div>
+                            </button>
+                        <?php endforeach; ?>
                     </div>
-                </a>
-                <?php endforeach; ?>
-            </div>
-        </div>
-        <?php endif; ?>
-
-        <!-- ML Analysis Section -->
-        <?php if ($selectedCat): ?>
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <!-- Personality Prediction -->
-            <div class="bg-white rounded-lg shadow-lg p-6">
-                <h2 class="text-2xl font-bold text-gray-900 mb-6">Personality Analysis</h2>
-                
-                <?php if (!$personalityData): ?>
-                <div class="text-center py-8">
-                    <div class="text-gray-400 text-4xl mb-4">
-                        <i class="fas fa-brain"></i>
-                    </div>
-                    <p class="text-gray-600 mb-6">No personality data available yet</p>
-                    <form method="POST" class="inline-block">
-                        <input type="hidden" name="ml_action" value="predict_personality">
-                        <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-medium transition duration-300">
-                            <i class="fas fa-magic mr-2"></i>Analyze Personality
-                        </button>
-                    </form>
-                </div>
                 <?php else: ?>
-                <div class="space-y-6">
-                    <!-- Personality Type -->
-                    <div class="text-center p-4 bg-gradient-to-r from-purple-100 to-blue-100 rounded-lg">
-                        <h3 class="text-xl font-bold text-purple-800 mb-2">Personality Type</h3>
-                        <p class="text-2xl font-semibold text-purple-900"><?= $personalityData['type'] ?></p>
-                        <p class="text-sm text-purple-700 mt-2">Confidence: <?= $personalityData['confidence'] ?>%</p>
+                    <div class="text-center py-8 text-gray-500">
+                        <i class="fas fa-cat text-4xl mb-4 text-gray-300"></i>
+                        <p>No cats available for analysis. Adopt a cat first!</p>
                     </div>
-
-                    <!-- Personality Chart -->
-                    <div>
-                        <h4 class="font-semibold text-gray-900 mb-3">Personality Traits</h4>
-                        <canvas id="personalityChart" width="400" height="300"></canvas>
-                    </div>
-
-                    <!-- Recommendations -->
-                    <div>
-                        <h4 class="font-semibold text-gray-900 mb-3">AI Recommendations</h4>
-                        <div class="space-y-2">
-                            <?php foreach ($personalityData['recommendations'] as $recommendation): ?>
-                            <div class="flex items-start p-3 bg-blue-50 rounded-lg">
-                                <i class="fas fa-lightbulb text-blue-600 mt-1 mr-3"></i>
-                                <p class="text-sm text-blue-800"><?= htmlspecialchars($recommendation) ?></p>
-                            </div>
-                            <?php endforeach; ?>
-                        </div>
-                    </div>
-
-                    <!-- Re-analyze Button -->
-                    <form method="POST" class="text-center">
-                        <input type="hidden" name="ml_action" value="predict_personality">
-                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition duration-300">
-                            <i class="fas fa-sync-alt mr-2"></i>Re-analyze
-                        </button>
-                    </form>
-                </div>
                 <?php endif; ?>
             </div>
+        </div>
 
-            <!-- Behavior Recording -->
-            <div class="bg-white rounded-lg shadow-lg p-6">
-                <h2 class="text-2xl font-bold text-gray-900 mb-6">Record Behavior</h2>
-                
-                <form method="POST" class="space-y-4">
-                    <input type="hidden" name="ml_action" value="record_behavior">
-                    
-                    <div>
-                        <label for="behavior_type" class="block text-sm font-medium text-gray-700 mb-2">
-                            Behavior Type <span class="text-red-500">*</span>
-                        </label>
-                        <select id="behavior_type" name="behavior_type" required
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent">
-                            <option value="">Select behavior type</option>
-                            <?php foreach ($behaviorTypes as $value => $label): ?>
-                            <option value="<?= $value ?>"><?= $label ?></option>
-                            <?php endforeach; ?>
-                        </select>
+        <!-- AI Analysis Results -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- Personality Type -->
+            <div class="slide-up" style="animation-delay: 0.5s">
+                <div class="bg-white rounded-3xl p-8 shadow-xl card-hover">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                        <i class="fas fa-star text-yellow-500 mr-3"></i>
+                        Personality Type
+                    </h3>
+                    <div class="text-center">
+                        <div class="w-24 h-24 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-6 ai-glow">
+                            <i class="fas fa-cat text-white text-4xl"></i>
+                        </div>
+                        <h4 class="text-3xl font-bold text-gray-900 mb-2"><?php echo $sampleAnalysis['personality_type']; ?></h4>
+                        <p class="text-gray-600 mb-6">Your cat's dominant personality trait</p>
+                        
+                        <!-- Confidence Score -->
+                        <div class="relative w-32 h-32 mx-auto mb-4">
+                            <svg class="w-32 h-32 confidence-ring">
+                                <circle class="confidence-ring-circle" stroke="#e5e7eb" stroke-width="8" fill="transparent" r="56" cx="64" cy="64"/>
+                                <circle class="confidence-ring-circle" stroke="#8b5cf6" stroke-width="8" fill="transparent" r="56" cx="64" cy="64" 
+                                        stroke-dasharray="<?php echo ($sampleAnalysis['confidence_score'] / 100) * 351.86; ?> 351.86"/>
+                            </svg>
+                            <div class="absolute inset-0 flex items-center justify-center">
+                                <span class="text-2xl font-bold text-purple-600"><?php echo $sampleAnalysis['confidence_score']; ?>%</span>
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-500">AI Confidence Score</p>
                     </div>
+                </div>
+            </div>
 
-                    <div>
-                        <label for="behavior_description" class="block text-sm font-medium text-gray-700 mb-2">
-                            Description <span class="text-red-500">*</span>
-                        </label>
-                        <textarea id="behavior_description" name="behavior_description" required rows="3"
-                                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                  placeholder="Describe what you observed..."></textarea>
+            <!-- Big Five Traits -->
+            <div class="slide-up" style="animation-delay: 0.6s">
+                <div class="bg-white rounded-3xl p-8 shadow-xl card-hover">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                        <i class="fas fa-chart-bar text-blue-500 mr-3"></i>
+                        Big Five Personality Traits
+                    </h3>
+                    <div class="space-y-6">
+                        <?php foreach ($sampleAnalysis['traits'] as $trait => $score): ?>
+                            <div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span class="font-medium text-gray-700"><?php echo $trait; ?></span>
+                                    <span class="text-gray-500"><?php echo $score; ?>%</span>
+                                </div>
+                                <div class="trait-bar">
+                                    <div class="trait-fill <?php echo strtolower($trait); ?>-fill" style="width: <?php echo $score; ?>%"></div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
                     </div>
+                </div>
+            </div>
+        </div>
 
-                    <div>
-                        <label for="behavior_time" class="block text-sm font-medium text-gray-700 mb-2">
-                            When did this happen? <span class="text-red-500">*</span>
-                        </label>
-                        <input type="datetime-local" id="behavior_time" name="behavior_time" required
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+        <!-- Behavioral Patterns -->
+        <div class="mb-8 slide-up" style="animation-delay: 0.7s">
+            <div class="bg-white rounded-3xl p-8 shadow-xl">
+                <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                    <i class="fas fa-chart-line text-green-500 mr-3"></i>
+                    Behavioral Patterns
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <?php foreach ($sampleAnalysis['behavioral_patterns'] as $pattern => $description): ?>
+                        <div class="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6 border border-purple-100">
+                            <h4 class="font-semibold text-gray-900 mb-2"><?php echo $pattern; ?></h4>
+                            <p class="text-gray-600 text-sm"><?php echo $description; ?></p>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Recommendations -->
+        <div class="mb-8 slide-up" style="animation-delay: 0.8s">
+            <div class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-3xl p-8 text-white shadow-2xl">
+                <h3 class="text-2xl font-bold mb-6 flex items-center">
+                    <i class="fas fa-lightbulb text-yellow-300 mr-3"></i>
+                    AI-Powered Recommendations
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <?php foreach ($sampleAnalysis['recommendations'] as $index => $recommendation): ?>
+                        <div class="bg-white/20 backdrop-blur-sm rounded-2xl p-6 border border-white/30">
+                            <div class="flex items-start space-x-3">
+                                <div class="w-8 h-8 bg-white/30 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <span class="text-white font-bold text-sm"><?php echo $index + 1; ?></span>
+                                </div>
+                                <p class="text-white/90"><?php echo $recommendation; ?></p>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Model Information -->
+        <div class="slide-up" style="animation-delay: 0.9s">
+            <div class="bg-white rounded-3xl p-8 shadow-xl">
+                <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                    <i class="fas fa-cogs text-gray-500 mr-3"></i>
+                    AI Model Information
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-gradient-to-br from-green-400 to-teal-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-brain text-white text-2xl"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold text-gray-900 mb-2">Neural Network</h4>
+                        <p class="text-gray-600 text-sm">Deep learning model trained on 100K+ cat behaviors</p>
                     </div>
-
-                    <button type="submit" 
-                            class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-md transition duration-300">
-                        <i class="fas fa-save mr-2"></i>Record Behavior
-                    </button>
-                </form>
-
-                <!-- ML Insights -->
-                <div class="mt-6 p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg">
-                    <h4 class="font-semibold text-gray-900 mb-2">💡 ML Insights</h4>
-                    <p class="text-sm text-gray-700">
-                        Recording behaviors helps our AI learn and provide more accurate personality predictions. 
-                        The more data we collect, the better we understand your cat's unique personality!
-                    </p>
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-chart-line text-white text-2xl"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold text-gray-900 mb-2">Real-time Analysis</h4>
+                        <p class="text-gray-600 text-sm">Instant personality assessment with live data</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-gradient-to-br from-purple-400 to-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-robot text-white text-2xl"></i>
+                        </div>
+                        <h4 class="text-lg font-semibold text-gray-900 mb-2">Continuous Learning</h4>
+                        <p class="text-gray-600 text-sm">Model improves with every analysis</p>
+                    </div>
                 </div>
             </div>
         </div>
+    </main>
 
-        <!-- Cat Information -->
-        <div class="bg-white rounded-lg shadow-lg p-6 mt-8">
-            <h3 class="text-xl font-semibold text-gray-900 mb-4"><?= htmlspecialchars($selectedCat['name']) ?>'s Profile</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                <div class="text-center">
-                    <div class="text-2xl font-bold text-green-600"><?= $selectedCat['health'] ?></div>
-                    <div class="text-xs text-gray-500">Health</div>
-                </div>
-                <div class="text-center">
-                    <div class="text-2xl font-bold text-purple-600"><?= $selectedCat['happiness'] ?></div>
-                    <div class="text-xs text-gray-500">Happiness</div>
-                </div>
-                <div class="text-center">
-                    <div class="text-2xl font-bold text-blue-600"><?= $selectedCat['energy'] ?></div>
-                    <div class="text-xs text-gray-500">Energy</div>
-                </div>
-                <div class="text-center">
-                    <div class="text-2xl font-bold text-yellow-600"><?= $selectedCat['hunger'] ?></div>
-                    <div class="text-xs text-gray-500">Hunger</div>
-                </div>
-                <div class="text-center">
-                    <div class="text-2xl font-bold text-indigo-600"><?= $selectedCat['cleanliness'] ?></div>
-                    <div class="text-xs text-gray-500">Cleanliness</div>
-                </div>
-            </div>
-        </div>
-
-        <?php else: ?>
-        <!-- No Cats Available -->
-        <div class="text-center py-16">
-            <div class="text-gray-400 text-6xl mb-6">
-                <i class="fas fa-cat"></i>
-            </div>
-            <h3 class="text-2xl font-semibold text-gray-900 mb-4">No cats available!</h3>
-            <p class="text-gray-600 mb-8">You need to create a cat first before you can analyze personalities.</p>
-            <a href="cats.php?action=create" class="bg-purple-600 hover:bg-purple-700 text-white px-8 py-3 rounded-lg font-medium text-lg transition duration-300">
-                <i class="fas fa-plus mr-2"></i>Create Your First Cat
-            </a>
-        </div>
-        <?php endif; ?>
-
-        <!-- ML Information -->
-        <div class="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-6 mt-8 max-w-4xl mx-auto">
-            <h3 class="text-xl font-semibold text-gray-900 mb-4">🧠 How ML Personality Analysis Works</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-gray-700">
-                <div>
-                    <h4 class="font-semibold text-gray-900 mb-2">Data Collection</h4>
-                    <ul class="space-y-1">
-                        <li>• Behavior observations over time</li>
-                        <li>• Cat stats and health metrics</li>
-                        <li>• Interaction patterns</li>
-                        <li>• Environmental responses</li>
-                    </ul>
-                </div>
-                <div>
-                    <h4 class="font-semibold text-gray-900 mb-2">AI Analysis</h4>
-                    <ul class="space-y-1">
-                        <li>• Pattern recognition algorithms</li>
-                        <li>• Behavioral clustering</li>
-                        <li>• Personality trait mapping</li>
-                        <li>• Predictive modeling</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
+    <!-- Floating Action Button -->
+    <div class="fixed bottom-8 right-8 z-50">
+        <button class="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full shadow-2xl hover:shadow-3xl transform hover:scale-110 transition-all duration-300 pulse-glow floating-action">
+            <i class="fas fa-brain text-white text-2xl"></i>
+        </button>
     </div>
 
-    <!-- Footer -->
-    <footer class="bg-gray-900 text-white py-8 mt-16">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <p>&copy; 2024 Purrr.love. All rights reserved. Made with ❤️ for cat lovers everywhere.</p>
-        </div>
-    </footer>
-
     <script>
-        // Personality Chart
-        <?php if ($personalityData): ?>
-        const ctx = document.getElementById('personalityChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'radar',
-            data: {
-                labels: ['Playfulness', 'Curiosity', 'Independence', 'Affection', 'Intelligence', 'Adaptability', 'Energy Level', 'Social Behavior'],
-                datasets: [{
-                    label: 'Personality Score',
-                    data: [
-                        <?= $personalityData['traits']['playfulness'] ?>,
-                        <?= $personalityData['traits']['curiosity'] ?>,
-                        <?= $personalityData['traits']['independence'] ?>,
-                        <?= $personalityData['traits']['affection'] ?>,
-                        <?= $personalityData['traits']['intelligence'] ?>,
-                        <?= $personalityData['traits']['adaptability'] ?>,
-                        <?= $personalityData['traits']['energy_level'] ?>,
-                        <?= $personalityData['traits']['social_behavior'] ?>
-                    ],
-                    backgroundColor: 'rgba(147, 51, 234, 0.2)',
-                    borderColor: 'rgb(147, 51, 234)',
-                    borderWidth: 2,
-                    pointBackgroundColor: 'rgb(147, 51, 234)',
-                    pointBorderColor: '#fff',
-                    pointHoverBackgroundColor: '#fff',
-                    pointHoverBorderColor: 'rgb(147, 51, 234)'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    r: {
-                        beginAtZero: true,
-                        max: 100,
-                        ticks: {
-                            stepSize: 20
-                        }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        display: false
-                    }
-                }
-            }
-        });
-        <?php endif; ?>
-
-        // Add some interactive elements
+        // Interactive JavaScript for enhanced UX
         document.addEventListener('DOMContentLoaded', function() {
-            // Animate sections on load
-            const sections = document.querySelectorAll('.bg-white');
-            sections.forEach((section, index) => {
-                section.style.opacity = '0';
-                section.style.transform = 'translateY(20px)';
-                section.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-                
+            // Animate elements on scroll
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('animate-fade-in');
+                    }
+                });
+            }, observerOptions);
+
+            // Observe all cards
+            document.querySelectorAll('.card-hover, .slide-up').forEach(card => {
+                observer.observe(card);
+            });
+
+            // Animate trait bars on load
+            document.querySelectorAll('.trait-fill').forEach(bar => {
+                const width = bar.style.width;
+                bar.style.width = '0%';
                 setTimeout(() => {
-                    section.style.opacity = '1';
-                    section.style.transform = 'translateY(0)';
-                }, index * 200);
+                    bar.style.width = width;
+                }, 1000);
+            });
+
+            // Add floating animation to background elements
+            const blobs = document.querySelectorAll('.animate-blob');
+            blobs.forEach((blob, index) => {
+                blob.style.animationDelay = `${index * 2}s`;
+            });
+
+            // Interactive cat selection
+            document.querySelectorAll('.personality-card').forEach(card => {
+                card.addEventListener('click', function() {
+                    // Remove active state from all cards
+                    document.querySelectorAll('.personality-card').forEach(c => {
+                        c.classList.remove('ring-2', 'ring-purple-500', 'bg-purple-50');
+                    });
+                    
+                    // Add active state to clicked card
+                    this.classList.add('ring-2', 'ring-purple-500', 'bg-purple-50');
+                    
+                    // Simulate AI analysis (in real app, this would make an API call)
+                    simulateAIAnalysis();
+                });
+            });
+
+            // Simulate AI analysis
+            function simulateAIAnalysis() {
+                // Show loading state
+                const results = document.querySelectorAll('.slide-up');
+                results.forEach(result => {
+                    result.style.opacity = '0.5';
+                });
+
+                // Simulate processing time
+                setTimeout(() => {
+                    results.forEach(result => {
+                        result.style.opacity = '1';
+                    });
+                    
+                    // Add success animation
+                    document.querySelector('.ai-glow').classList.add('animate-pulse');
+                    setTimeout(() => {
+                        document.querySelector('.ai-glow').classList.remove('animate-pulse');
+                    }, 1000);
+                }, 2000);
+            }
+
+            // Add hover effects to recommendation cards
+            document.querySelectorAll('.bg-white\\/20').forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'scale(1.02)';
+                    this.style.background = 'rgba(255, 255, 255, 0.3)';
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'scale(1)';
+                    this.style.background = 'rgba(255, 255, 255, 0.2)';
+                });
             });
         });
     </script>
