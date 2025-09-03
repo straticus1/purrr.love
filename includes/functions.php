@@ -13,9 +13,9 @@ if (!defined('SECURE_ACCESS')) {
 // Database configuration constants
 if (!defined('DB_HOST')) define('DB_HOST', 'localhost');
 if (!defined('DB_NAME')) define('DB_NAME', 'purrr_love');
-if (!defined('DB_USER')) define('DB_USER', 'purrr_user');
+if (!defined('DB_USER')) define('DB_USER', 'root');
 if (!defined('DB_PASS')) define('DB_PASS', '');
-if (!defined('DB_PORT')) define('DB_PORT', 5432);
+if (!defined('DB_PORT')) define('DB_PORT', 3306);
 
 /**
  * Secure database connection with connection pooling
@@ -25,7 +25,8 @@ function get_db() {
     
     if ($pdo === null) {
         try {
-            $dsn = "pgsql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";port=" . DB_PORT;
+            // Try MySQL first (since we're using LAMP stack)
+            $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";port=" . (DB_PORT ?: 3306) . ";charset=utf8mb4";
             $options = [
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
