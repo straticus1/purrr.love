@@ -1,0 +1,230 @@
+/* Special Cats Section */
+.special-cats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.special-cat-card {
+    background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+    border-radius: 15px;
+    padding: 2rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.special-cat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.special-cat-card:hover::before {
+    opacity: 1;
+}
+
+.special-cat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+}
+
+/* Rarity-based styling */
+.rarity-legendary {
+    border-color: #ffd700;
+    background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+}
+
+.rarity-legendary::before {
+    background: linear-gradient(90deg, #ffd700, #ffed4e, #ffd700);
+    opacity: 1;
+}
+
+.rarity-epic {
+    border-color: #9b59b6;
+    background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+}
+
+.rarity-epic::before {
+    background: linear-gradient(90deg, #9b59b6, #8e44ad, #9b59b6);
+    opacity: 1;
+}
+
+.rarity-rare {
+    border-color: #3498db;
+    background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+}
+
+.rarity-rare::before {
+    background: linear-gradient(90deg, #3498db, #2980b9, #3498db);
+    opacity: 1;
+}
+
+.cat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.cat-header h3 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: #fff;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.rarity-badge {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.rarity-legendary .rarity-badge {
+    background: linear-gradient(135deg, #ffd700, #ffed4e);
+    color: #000;
+    box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+}
+
+.rarity-epic .rarity-badge {
+    background: linear-gradient(135deg, #9b59b6, #8e44ad);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(155, 89, 182, 0.3);
+}
+
+.rarity-rare .rarity-badge {
+    background: linear-gradient(135deg, #3498db, #2980b9);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(52, 152, 219, 0.3);
+}
+
+.cat-description {
+    color: #ccc;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+    font-style: italic;
+}
+
+.unlock-status {
+    margin-bottom: 1.5rem;
+}
+
+.unlocked {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #4caf50;
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.status-icon {
+    font-size: 1.5rem;
+}
+
+.locked {
+    color: #ff6b6b;
+}
+
+.status-text {
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.unlock-conditions {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: rgba(255, 107, 107, 0.1);
+    border-radius: 10px;
+    border-left: 4px solid #ff6b6b;
+}
+
+.unlock-conditions h4 {
+    margin: 0 0 0.5rem 0;
+    color: #ff6b6b;
+    font-size: 1rem;
+}
+
+.unlock-conditions p {
+    margin: 0 0 1rem 0;
+    color: #ccc;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ff6b6b, #4ecdc4);
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    text-align: center;
+    color: #ccc;
+    font-size: 0.9rem;
+}
+
+.special-abilities {
+    background: rgba(76, 175, 80, 0.1);
+    border-radius: 10px;
+    padding: 1rem;
+    border-left: 4px solid #4caf50;
+}
+
+.special-abilities h4 {
+    margin: 0 0 1rem 0;
+    color: #4caf50;
+    font-size: 1rem;
+}
+
+.special-abilities ul {
+    margin: 0;
+    padding-left: 1.5rem;
+    color: #ccc;
+}
+
+.special-abilities li {
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .special-cats-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .special-cat-card {
+        padding: 1.5rem;
+    }
+    
+    .cat-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .rarity-badge {
+        align-self: flex-start;
+    }
+}

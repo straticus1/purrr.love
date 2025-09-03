@@ -70,6 +70,9 @@ chmod +x deploy.sh
 
 # OR for AWS cloud deployment
 ./deploy.sh --aws --environment production
+
+# Check deployment status
+./deploy.sh --status
 ```
 
 ### Docker-Based Installation
@@ -81,8 +84,18 @@ For containerized deployment with Docker:
 git clone https://github.com/straticus1/purrr.love.git
 cd purrr.love/deployment/aws/docker
 
+# Copy environment configuration
+cp .env.example .env
+# Edit .env with your settings
+
 # Start the containers
 docker-compose -f docker-compose.production.yml up -d
+
+# Check container status
+docker-compose ps
+
+# View logs
+docker-compose logs -f
 ```
 
 ### Manual Installation
@@ -98,10 +111,12 @@ cd purrr.love
 composer install --no-dev --optimize-autoloader
 
 # 3. Set up database
-# For MySQL:
-mysql -u root -p < database/schema.sql
-# Or PostgreSQL:
-psql -U postgres -d purrr_love -f database/api_schema.sql
+# Create database first
+mysql -u root -p -e "CREATE DATABASE purrr_love CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+# Import schema
+mysql -u root -p purrr_love < database/schema.sql
+# Or for PostgreSQL:
+# createdb purrr_love && psql -U postgres -d purrr_love -f database/api_schema.sql
 
 # 4. Configure environment
 cp config/config.example.php config/config.php
@@ -110,14 +125,21 @@ cp config/oauth2.example.php config/oauth2.php
 # Edit config files with your settings
 
 # 5. Set proper permissions
-chmod 755 uploads/
-chmod 755 cache/
-chown -R www-data:www-data uploads/ cache/
+mkdir -p uploads cache logs
+chmod 755 uploads/ cache/ logs/
+chown -R www-data:www-data uploads/ cache/ logs/
 
-# 6. Set up web server (Apache/Nginx)
+# 6. Initialize application
+# Generate API keys and setup admin user
+php -f init/setup.php
+
+# 7. Set up web server (Apache/Nginx)
 # See web server configuration examples below
 
-# 7. Run CLI setup (optional)
+# 8. Test installation
+php -f scripts/test-installation.php
+
+# 9. Run CLI setup (optional)
 ./cli/purrr setup
 ```
 

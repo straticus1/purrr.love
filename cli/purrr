@@ -110,6 +110,9 @@ class PurrrCLI {
             case 'analytics':
                 $this->commandAnalytics($args);
                 break;
+            case 'special':
+                $this->commandSpecial($args);
+                break;
             case 'config':
                 $this->commandConfig($args);
                 break;
@@ -527,6 +530,34 @@ class PurrrCLI {
         }
     }
 
+    private function commandSpecial($args) {
+        if (empty($args)) {
+            $this->showSpecialHelp();
+            return;
+        }
+
+        $action = array_shift($args);
+        switch ($action) {
+            case 'list':
+                $this->listSpecialCats();
+                break;
+            case 'progress':
+                $this->showSpecialCatProgress();
+                break;
+            case 'unlock':
+                if (empty($args)) {
+                    echo Colors::RED . "❌ Please specify a special cat ID" . Colors::NC . "\n";
+                    return;
+                }
+                $this->unlockSpecialCat($args[0]);
+                break;
+            default:
+                echo Colors::RED . "❌ Unknown special command: $action" . Colors::NC . "\n";
+                $this->showSpecialHelp();
+                break;
+        }
+    }
+
     private function commandConfig($args) {
         if (empty($args)) {
             $this->showConfig();
@@ -800,6 +831,96 @@ class PurrrCLI {
         }
     }
 
+    private function listSpecialCats() {
+        try {
+            $response = $this->apiRequest('GET', '/api/v1/special-cats');
+            
+            if (isset($response['data']) && !empty($response['data'])) {
+                echo Colors::GREEN . "🌟 Available Special Cats:" . Colors::NC . "\n";
+                foreach ($response['data'] as $cat) {
+                    $rarityColor = $this->getRarityColor($cat['rarity']);
+                    echo "  {$rarityColor}{$cat['name']} ({$cat['rarity']})" . Colors::NC . "\n";
+                    echo "     {$cat['description']}\n";
+                    echo "     Unlock: {$cat['unlock_conditions']['description']}\n\n";
+                }
+            } else {
+                echo Colors::YELLOW . "📝 No special cats available." . Colors::NC . "\n";
+            }
+        } catch (Exception $e) {
+            echo Colors::RED . "❌ Failed to fetch special cats: " . $e->getMessage() . Colors::NC . "\n";
+        }
+    }
+
+    private function showSpecialCatProgress() {
+        try {
+            $response = $this->apiRequest('GET', '/api/v1/special-cats/progress');
+            
+            if (isset($response['data']) && !empty($response['data'])) {
+                echo Colors::GREEN . "🌟 Special Cat Unlock Progress:" . Colors::NC . "\n";
+                foreach ($response['data'] as $catId => $progress) {
+                    $rarityColor = $this->getRarityColor($progress['rarity']);
+                    $status = $progress['unlocked'] ? Colors::GREEN . "✅ UNLOCKED" . Colors::NC : Colors::RED . "🔒 LOCKED" . Colors::NC;
+                    
+                    echo "  {$rarityColor}{$progress['name']} ({$progress['rarity']})" . Colors::NC . " - {$status}\n";
+                    
+                    if (!$progress['unlocked']) {
+                        echo "     Requirements: {$progress['conditions']['description']}\n";
+                        if (isset($progress['progress']['percentage'])) {
+                            $percentage = $progress['progress']['percentage'];
+                            $bar = $this->createProgressBar($percentage);
+                            echo "     Progress: {$bar} {$percentage}%\n";
+                        }
+                    } else {
+                        echo "     Special abilities unlocked!\n";
+                    }
+                    echo "\n";
+                }
+            } else {
+                echo Colors::YELLOW . "📝 No special cat progress found." . Colors::NC . "\n";
+            }
+        } catch (Exception $e) {
+            echo Colors::RED . "❌ Failed to fetch special cat progress: " . $e->getMessage() . Colors::NC . "\n";
+        }
+    }
+
+    private function unlockSpecialCat($catId) {
+        try {
+            $response = $this->apiRequest('POST', "/api/v1/special-cats/$catId/unlock");
+            
+            if (isset($response['success']) && $response['success']) {
+                echo Colors::GREEN . "🎉 {$response['message']}" . Colors::NC . "\n";
+                echo "  Cat ID: {$response['cat_id']}\n";
+                echo "  Name: {$response['cat_name']}\n";
+            } else {
+                echo Colors::RED . "❌ Failed to unlock special cat: " . ($response['message'] ?? 'Unknown error') . Colors::NC . "\n";
+            }
+        } catch (Exception $e) {
+            echo Colors::RED . "❌ Failed to unlock special cat: " . $e->getMessage() . Colors::NC . "\n";
+        }
+    }
+
+    private function getRarityColor($rarity) {
+        switch ($rarity) {
+            case 'legendary':
+                return Colors::YELLOW;
+            case 'epic':
+                return Colors::MAGENTA;
+            case 'rare':
+                return Colors::BLUE;
+            default:
+                return Colors::WHITE;
+        }
+    }
+
+    private function createProgressBar($percentage) {
+        $width = 20;
+        $filled = intval(($percentage / 100) * $width);
+        $empty = $width - $filled;
+        
+        $bar = str_repeat('█', $filled) . str_repeat('░', $empty);
+        return $bar;
+    }
+
     // Help methods...
     private function showCatsHelp() {
         echo "🐱 Cat Commands:\n";
@@ -873,6 +994,13 @@ class PurrrCLI {
         echo "  trends <cat_id> [timeframe] - Get trends\n";
     }
 
+    private function showSpecialHelp() {
+        echo "🌟 Special Cats Commands:\n";
+        echo "  list                    - List all available special cats\n";
+        echo "  progress                - Show your unlock progress\n";
+        echo "  unlock <cat_id>         - Attempt to unlock a special cat\n";
+    }
+
     private function showHelp() {
         echo Colors::CYAN . "🐱 Purrr.love CLI v" . CLI_VERSION . Colors::NC . "\n";
         echo "The Ultimate Cat Gaming Platform Command Line Interface\n\n";
@@ -893,6 +1021,7 @@ class PurrrCLI {
         echo "  multiplayer             - Real-time multiplayer\n";
         echo "  health                  - Health monitoring\n";
         echo "  analytics               - Analytics and insights\n";
+        echo "  special                 - Manage special cats\n";
         echo "  config                  - Manage configuration\n";
         echo "  version                 - Show version information\n";
         echo "  help                    - Show this help message\n\n";

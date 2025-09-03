@@ -456,6 +456,54 @@ foreach ($storeItems as $item) {
                 </div>
             </div>
 
+            <!-- Stimulants Section -->
+            <div class="store-section">
+                <h3>🌿 Stimulants & Special Items</h3>
+                <div class="items-grid">
+                    <div class="store-item">
+                        <div class="item-image">🌿</div>
+                        <div class="item-info">
+                            <h4>Catnip</h4>
+                            <p>Classic cat stimulant that most cats love</p>
+                            <div class="item-effects">
+                                <span class="effect">😊 +30 Happiness</span>
+                                <span class="effect">⚡ +40 Energy</span>
+                            </div>
+                            <div class="item-price">💰 50 coins</div>
+                            <button class="buy-btn" onclick="buyItem('catnip', 50)">Buy</button>
+                        </div>
+                    </div>
+                    
+                    <div class="store-item">
+                        <div class="item-image">🌸</div>
+                        <div class="item-info">
+                            <h4>Honeysuckle</h4>
+                            <p>Alternative stimulant for cats that don't respond to catnip</p>
+                            <div class="item-effects">
+                                <span class="effect">😊 +25 Happiness</span>
+                                <span class="effect">⚡ +35 Energy</span>
+                            </div>
+                            <div class="item-price">💰 60 coins</div>
+                            <button class="buy-btn" onclick="buyItem('honeysuckle', 60)">Buy</button>
+                        </div>
+                    </div>
+                    
+                    <div class="store-item">
+                        <div class="item-image">🎭</div>
+                        <div class="item-info">
+                            <h4>Dual Stimulant Pack</h4>
+                            <p>Both catnip and honeysuckle for all cat types</p>
+                            <div class="item-effects">
+                                <span class="effect">😊 +40 Happiness</span>
+                                <span class="effect">⚡ +50 Energy</span>
+                            </div>
+                            <div class="item-price">💰 100 coins</div>
+                            <button class="buy-btn" onclick="buyItem('dual_stimulant_pack', 100)">Buy</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Your Inventory -->
             <div class="store-section">
                 <h2>📦 Your Inventory</h2>

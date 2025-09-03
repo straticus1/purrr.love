@@ -6,103 +6,153 @@
  */
 
 /**
- * Feed a cat with food items
+ * Feed a cat with specified food
  */
-function feedCat($catId, $foodItemId, $userId) {
-    global $pdo;
+function feedCat($catId, $foodType, $amount = 'normal') {
+    $pdo = get_db();
     
-    // Verify ownership or permission
-    if (!canCareForCat($catId, $userId)) {
-        return ['success' => false, 'message' => 'You cannot care for this cat.'];
-    }
-    
-    // Get food item details
-    $stmt = $pdo->prepare("SELECT * FROM store_items WHERE id = ? AND item_type = 'food'");
-    $stmt->execute([$foodItemId]);
-    $foodItem = $stmt->fetch();
-    
-    if (!$foodItem) {
-        return ['success' => false, 'message' => 'Invalid food item.'];
-    }
-    
-    // Check if user has the food item
-    $stmt = $pdo->prepare("SELECT quantity FROM user_inventory WHERE user_id = ? AND item_id = ?");
-    $stmt->execute([$userId, $foodItemId]);
-    $inventory = $stmt->fetch();
-    
-    if (!$inventory || $inventory['quantity'] < 1) {
-        return ['success' => false, 'message' => 'You don\'t have this food item.'];
-    }
-    
-    // Get cat's current stats and personality
+    // Get cat's current stats
     $stmt = $pdo->prepare("SELECT * FROM cats WHERE id = ?");
     $stmt->execute([$catId]);
-    $cat = $stmt->fetch();
+    $cat = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if (!$cat) {
-        return ['success' => false, 'message' => 'Cat not found.'];
+        return ['success' => false, 'message' => 'Cat not found'];
     }
     
-    // Calculate feeding effects with personality bonuses
-    $personalityBonus = getCatPersonalityBonus($cat['personality_type'], 'feeding');
-    $hungerRestore = $foodItem['hunger_restore'] * (1 + $personalityBonus);
-    $happinessBoost = $foodItem['happiness_boost'] * (1 + $personalityBonus);
-    $energyBoost = $foodItem['energy_boost'] * (1 + $personalityBonus);
+    // Calculate feeding effects
+    $feedingEffects = getFeedingEffects($foodType, $amount);
     
-    // Apply feeding effects
-    $newHunger = min(100, $cat['hunger'] + $hungerRestore);
-    $newHappiness = min(100, $cat['happiness'] + $happinessBoost);
-    $newEnergy = min(100, $cat['energy'] + $energyBoost);
+    // Apply personality and mood bonuses
+    $personalityBonus = getCatPersonalityBonuses($cat['personality_type']);
+    $moodMultiplier = getCatMoodMultiplier($cat['mood']);
+    
+    $hungerIncrease = $feedingEffects['hunger'] * $personalityBonus['energy_boost'] * $moodMultiplier;
+    $happinessIncrease = $feedingEffects['happiness'] * $personalityBonus['happiness_boost'] * $moodMultiplier;
+    $energyIncrease = $feedingEffects['energy'] * $personalityBonus['energy_boost'] * $moodMultiplier;
     
     // Update cat stats
-    $stmt = $pdo->prepare("
-        UPDATE cats 
-        SET hunger = ?, happiness = ?, energy = ?, last_fed = NOW()
-        WHERE id = ?
-    ");
-    $stmt->execute([$newHunger, $newHappiness, $newEnergy, $catId]);
+    $newHunger = min(100, $cat['hunger'] + $hungerIncrease);
+    $newHappiness = min(100, $cat['happiness'] + $happinessIncrease);
+    $newEnergy = min(100, $cat['energy'] + $energyIncrease);
     
-    // Consume food item
-    $stmt = $pdo->prepare("
-        UPDATE user_inventory 
-        SET quantity = quantity - 1 
-        WHERE user_id = ? AND item_id = ?
-    ");
-    $stmt->execute([$userId, $foodItemId]);
+    $stmt = $pdo->prepare("UPDATE cats SET hunger = ?, happiness = ?, energy = ?, updated_at = ? WHERE id = ?");
+    $stmt->execute([$newHunger, $newHappiness, $newEnergy, time(), $catId]);
     
-    // Remove item if quantity becomes 0
-    $stmt = $pdo->prepare("DELETE FROM user_inventory WHERE user_id = ? AND item_id = ? AND quantity <= 0");
-    $stmt->execute([$userId, $foodItemId]);
-    
-    // Record feeding activity
-    $stmt = $pdo->prepare("
-        INSERT INTO cat_activities (cat_id, user_id, activity_type, item_id, effects, created_at)
-        VALUES (?, ?, 'feeding', ?, ?, NOW())
-    ");
-    $effects = json_encode([
-        'hunger_restore' => $hungerRestore,
-        'happiness_boost' => $happinessBoost,
-        'energy_boost' => $energyBoost,
-        'personality_bonus' => $personalityBonus
+    // Log feeding event
+    logCatEvent($catId, 'feeding', [
+        'food_type' => $foodType,
+        'amount' => $amount,
+        'hunger_increase' => $hungerIncrease,
+        'happiness_increase' => $happinessIncrease,
+        'energy_increase' => $energyIncrease
     ]);
-    $stmt->execute([$catId, $userId, $foodItemId, $effects]);
-    
-    // Check for level up
-    checkCatLevelUp($catId);
-    
-    // Track quest progress
-    update_quest_progress($userId, 'feed_cats');
     
     return [
         'success' => true,
-        'message' => 'Cat fed successfully!',
-        'effects' => [
-            'hunger_restore' => $hungerRestore,
-            'happiness_boost' => $happinessBoost,
-            'energy_boost' => $energyBoost,
-            'personality_bonus' => $personalityBonus
+        'message' => "{$cat['name']} enjoyed the $foodType!",
+        'hunger_increase' => $hungerIncrease,
+        'happiness_increase' => $happinessIncrease,
+        'energy_increase' => $energyIncrease,
+        'new_stats' => [
+            'hunger' => $newHunger,
+            'happiness' => $newHappiness,
+            'energy' => $newEnergy
         ]
     ];
+}
+
+/**
+ * Give cat a stimulant (catnip or honeysuckle)
+ */
+function giveCatStimulant($catId, $stimulantType) {
+    $pdo = get_db();
+    
+    // Get cat's current stats and response type
+    $stmt = $pdo->prepare("SELECT * FROM cats WHERE id = ?");
+    $stmt->execute([$catId]);
+    $cat = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if (!$cat) {
+        return ['success' => false, 'message' => 'Cat not found'];
+    }
+    
+    // Apply stimulant effect
+    $effect = applyStimulantEffect($cat, $stimulantType);
+    
+    if ($effect['success']) {
+        // Update cat stats
+        $stmt = $pdo->prepare("UPDATE cats SET energy = ?, happiness = ?, mood = ?, updated_at = ? WHERE id = ?");
+        $stmt->execute([
+            $effect['new_stats']['energy'] ?? $cat['energy'],
+            $effect['new_stats']['happiness'] ?? $cat['happiness'],
+            $effect['mood_change'] ?? $cat['mood'],
+            time(),
+            $catId
+        ]);
+        
+        // Log stimulant event
+        logCatEvent($catId, 'stimulant', [
+            'stimulant_type' => $stimulantType,
+            'response_type' => $cat['response_type'] ?? 'catnip_responder',
+            'effect_strength' => $effect['energy_boost'],
+            'mood_change' => $effect['mood_change']
+        ]);
+    }
+    
+    return $effect;
+}
+
+/**
+ * Get feeding effects for different food types
+ */
+function getFeedingEffects($foodType, $amount = 'normal') {
+    $amountMultiplier = $amount === 'large' ? 1.5 : ($amount === 'small' ? 0.7 : 1.0);
+    
+    $foodEffects = [
+        'premium_cat_food' => [
+            'hunger' => 25 * $amountMultiplier,
+            'happiness' => 15 * $amountMultiplier,
+            'energy' => 20 * $amountMultiplier
+        ],
+        'tuna_fish' => [
+            'hunger' => 30 * $amountMultiplier,
+            'happiness' => 20 * $amountMultiplier,
+            'energy' => 25 * $amountMultiplier
+        ],
+        'chicken_breast' => [
+            'hunger' => 28 * $amountMultiplier,
+            'happiness' => 18 * $amountMultiplier,
+            'energy' => 22 * $amountMultiplier
+        ],
+        'salmon' => [
+            'hunger' => 32 * $amountMultiplier,
+            'happiness' => 25 * $amountMultiplier,
+            'energy' => 28 * $amountMultiplier
+        ],
+        'cat_treats' => [
+            'hunger' => 15 * $amountMultiplier,
+            'happiness' => 20 * $amountMultiplier,
+            'energy' => 10 * $amountMultiplier
+        ],
+        'milk' => [
+            'hunger' => 20 * $amountMultiplier,
+            'happiness' => 15 * $amountMultiplier,
+            'energy' => 15 * $amountMultiplier
+        ],
+        'catnip' => [
+            'hunger' => 0,
+            'happiness' => 30,
+            'energy' => 40
+        ],
+        'honeysuckle' => [
+            'hunger' => 0,
+            'happiness' => 25,
+            'energy' => 35
+        ]
+    ];
+    
+    return $foodEffects[$foodType] ?? $foodEffects['premium_cat_food'];
 }
 
 /**

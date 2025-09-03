@@ -397,6 +397,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['play_game'])) {
                 </form>
             </div>
 
+            <!-- Honeysuckle Dance Game -->
+            <div class="game-card">
+                <h2>🌸 Honeysuckle Dance</h2>
+                <p>Let your cat show off their dance moves with a beautiful honeysuckle dance!</p>
+                <p><strong>Entry Fee:</strong> $<?php echo getGameEntryFee('honeysuckle_dance'); ?> (in crypto)</p>
+                <p><strong>Cat Bonus:</strong> Cats with "Playful" or "Curious" personality get +30% dance performance!</p>
+                
+                <form method="POST" class="game-form" id="honeysuckle-dance-form">
+                    <?php echo getCSRFTokenField(); ?>
+                    <input type="hidden" name="game_type" value="honeysuckle_dance">
+                    <input type="hidden" name="cat_id" id="honeysuckle-dance-cat" value="">
+                    
+                    <div class="form-group">
+                        <label>Select Cryptocurrency</label>
+                        <div class="crypto-selector">
+                            <?php foreach (SUPPORTED_CRYPTOS as $crypto => $name): ?>
+                                <div class="crypto-option" data-crypto="<?php echo $crypto; ?>">
+                                    <div class="crypto-name"><?php echo $crypto; ?></div>
+                                    <div class="crypto-amount" id="honeysuckle-dance-amount-<?php echo $crypto; ?>">
+                                        <?php echo (defined('DEVELOPER_MODE') && DEVELOPER_MODE) ? 'FREE' : '-'; ?>
+                                    </div>
+                                    <div class="balance">Balance: <?php echo number_format($balances[$crypto], 8); ?></div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <input type="hidden" name="crypto_type" id="honeysuckle-dance-crypto" value="">
+                    </div>
+                    
+                    <button type="submit" name="play_game" class="btn btn-primary btn-large" disabled id="honeysuckle-dance-btn">
+                        🎮 Dance Honeysuckle <?php echo (defined('DEVELOPER_MODE') && DEVELOPER_MODE) ? '(FREE)' : ''; ?>
+                    </button>
+                </form>
+            </div>
+
             <!-- Coming Soon Games -->
             <div class="game-card">
                 <h2>🏆 Cat Olympics</h2>
