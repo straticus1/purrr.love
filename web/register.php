@@ -54,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $errors[] = 'An account with this email address already exists';
             }
         } catch (Exception $e) {
-            $errors[] = 'System error. Please try again.';
+            $errors[] = 'System error: ' . $e->getMessage();
         }
     }
     
@@ -79,6 +79,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors[] = 'Registration failed: ' . $e->getMessage();
         }
     }
+}
+
+// Test database connection for debugging
+$dbStatus = '';
+try {
+    if (test_web_database()) {
+        $dbStatus = 'Database connection: ✅ Connected';
+    } else {
+        $dbStatus = 'Database connection: ❌ Failed';
+    }
+} catch (Exception $e) {
+    $dbStatus = 'Database connection: ❌ Error - ' . $e->getMessage();
 }
 ?>
 <!DOCTYPE html>
@@ -128,6 +140,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <p class="mt-2 text-sm text-gray-600">
                     Create your account and start your cat gaming journey
                 </p>
+            </div>
+
+            <!-- Database Status (for debugging) -->
+            <div class="bg-blue-50 border border-blue-200 rounded-md p-3">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-database text-blue-400"></i>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm text-blue-700">
+                            <?= htmlspecialchars($dbStatus) ?>
+                        </p>
+                    </div>
+                </div>
             </div>
 
             <?php if (!empty($errors)): ?>
@@ -217,6 +243,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </p>
                 </div>
             </form>
+
+            <!-- Help Section -->
+            <div class="bg-gray-50 border border-gray-200 rounded-md p-4">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-question-circle text-gray-400"></i>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-gray-800">
+                            Need Help?
+                        </h3>
+                        <div class="mt-2 text-sm text-gray-600">
+                            <p>If you're having trouble, try the <a href="setup.php" class="text-purple-600 hover:text-purple-500">database setup</a> first.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 

@@ -4,10 +4,15 @@
  * Environment-based configuration with security settings
  */
 
-// Prevent direct access
-if (!defined('SECURE_ACCESS')) {
+// Prevent direct access (only if not already defined)
+if (!defined('SECURE_ACCESS') && basename($_SERVER['PHP_SELF']) == 'config.php') {
     http_response_code(403);
     exit('Direct access not allowed');
+}
+
+// Allow secure access by default for includes
+if (!defined('SECURE_ACCESS')) {
+    define('SECURE_ACCESS', true);
 }
 
 // Environment detection

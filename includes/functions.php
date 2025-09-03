@@ -49,6 +49,15 @@ function get_db() {
     return $pdo;
 }
 
+// Initialize global $pdo variable for backward compatibility with web interfaces
+try {
+    $pdo = get_db();
+} catch (Exception $e) {
+    // Log error but don't crash - let individual pages handle gracefully
+    error_log("Failed to initialize global \$pdo: " . $e->getMessage());
+    $pdo = null;
+}
+
 /**
  * Get client IP address with proxy detection
  */
@@ -87,13 +96,21 @@ function getErrorCode($code) {
  * Secure session configuration
  */
 function configureSecureSession() {
-    // Set secure session parameters
-    ini_set('session.cookie_httponly', 1);
-    ini_set('session.cookie_secure', 1);
-    ini_set('session.cookie_samesite', 'Strict');
-    ini_set('session.use_strict_mode', 1);
-    ini_set('session.cookie_lifetime', 0); // Session cookie
-    ini_set('session.gc_maxlifetime', 3600); // 1 hour
+    // Only configure sessions in web context, not CLI
+    if (php_sapi_name() === 'cli') {
+        return;
+    }
+    
+    // Only set session parameters if session hasn't started yet
+    if (session_status() === PHP_SESSION_NONE) {
+        // Set secure session parameters
+        ini_set('session.cookie_httponly', 1);
+        ini_set('session.cookie_secure', 1);
+        ini_set('session.cookie_samesite', 'Strict');
+        ini_set('session.use_strict_mode', 1);
+        ini_set('session.cookie_lifetime', 0); // Session cookie
+        ini_set('session.gc_maxlifetime', 3600); // 1 hour
+    }
     
     // Regenerate session ID periodically
     if (!isset($_SESSION['last_regeneration'])) {
@@ -126,6 +143,21 @@ function getCurrentUser() {
         return $stmt->fetch();
     } catch (Exception $e) {
         error_log("Error getting current user: " . $e->getMessage());
+        return null;
+    }
+}
+
+/**
+ * Get user by ID
+ */
+function getUserById($userId) {
+    try {
+        $pdo = get_db();
+        $stmt = $pdo->prepare("SELECT id, username, email, role, created_at, active FROM users WHERE id = ?");
+        $stmt->execute([$userId]);
+        return $stmt->fetch();
+    } catch (Exception $e) {
+        error_log("Error getting user by ID: " . $e->getMessage());
         return null;
     }
 }
@@ -319,6 +351,11 @@ function isAllowedOrigin($origin) {
  * Set secure headers
  */
 function setSecureHeaders() {
+    // Only set headers in web context, not CLI
+    if (php_sapi_name() === 'cli') {
+        return;
+    }
+    
     // Security headers
     header('X-Content-Type-Options: nosniff');
     header('X-Frame-Options: DENY');
