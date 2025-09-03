@@ -27,7 +27,7 @@ def read_requirements():
 
 setup(
     name="purrr-love-sdk",
-    version="1.0.0",
+    version="2.0.0",
     author="Purrr.love Team",
     author_email="dev@purrr.love",
     description="🐱 Official Python client library for the Purrr.love cat gaming platform",

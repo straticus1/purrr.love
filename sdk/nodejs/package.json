@@ -1,6 +1,6 @@
 {
   "name": "@purrr-love/sdk",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "🐱 Purrr.love Node.js SDK - Official Node.js client library for the ultimate cat gaming platform",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

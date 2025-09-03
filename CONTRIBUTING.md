@@ -13,6 +13,11 @@ First off, thank you for considering contributing to Purrr.love! It's people lik
 - [Documentation Standards](#documentation-standards)
 - [Submitting Changes](#submitting-changes)
 - [Review Process](#review-process)
+- [Advanced Features Development](#advanced-features-development)
+  - [Blockchain & NFT Guidelines](#blockchain--nft-guidelines)
+  - [Machine Learning Guidelines](#machine-learning-guidelines)
+  - [Webhook Development](#webhook-development)
+  - [Lost Pet Finder Guidelines](#lost-pet-finder-guidelines)
 - [Community](#community)
 
 ## 📜 Code of Conduct
@@ -102,6 +107,14 @@ We welcome code contributions! Here are the areas where we especially need help:
 - VR interaction features
 - Mobile app development
 - API endpoint enhancements
+
+**Advanced Features (v2.1.0+):**
+- Blockchain/NFT integrations
+- Machine learning model improvements
+- Webhook system enhancements
+- Lost Pet Finder features
+- Metaverse/VR world development
+- Advanced analytics dashboard
 
 **Bug Fixes:**
 - Check our [Issues](https://github.com/straticus1/purrr.love/issues) page for bugs labeled `good-first-issue`
@@ -1366,6 +1379,736 @@ We use labels to categorize and prioritize work:
 
 **Good First Issue:**
 - `good first issue` - Suitable for newcomers
+
+## 🚀 Advanced Features Development
+
+Purrr.love v2.1.0 introduces revolutionary advanced features that require specialized knowledge and careful implementation. This section provides guidelines for contributing to these cutting-edge systems.
+
+### Blockchain & NFT Guidelines
+
+#### Overview
+Our blockchain integration supports multiple networks (Ethereum, Solana, Polygon) and enables NFT minting, trading, and ownership verification of virtual cats.
+
+#### Prerequisites
+- Understanding of Web3 concepts and blockchain technology
+- Experience with smart contract development (Solidity/Rust)
+- Knowledge of IPFS and decentralized storage
+- Familiarity with Web3.js/Ethers.js libraries
+
+#### Development Standards
+
+**Smart Contract Development:**
+```solidity
+// ✅ GOOD - Secure NFT contract with proper access controls
+pragma solidity ^0.8.19;
+
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+
+contract PurrrCatNFT is ERC721, Ownable, ReentrancyGuard {
+    uint256 private _nextTokenId = 1;
+    mapping(uint256 => string) private _tokenURIs;
+    
+    event CatMinted(uint256 indexed tokenId, address indexed to, string metadataURI);
+    
+    constructor() ERC721("PurrrCat", "PCAT") {}
+    
+    function mintCat(address to, string memory metadataURI) 
+        public 
+        onlyOwner 
+        nonReentrant 
+        returns (uint256) 
+    {
+        require(to != address(0), "Invalid recipient address");
+        require(bytes(metadataURI).length > 0, "Metadata URI required");
+        
+        uint256 tokenId = _nextTokenId++;
+        _safeMint(to, tokenId);
+        _setTokenURI(tokenId, metadataURI);
+        
+        emit CatMinted(tokenId, to, metadataURI);
+        return tokenId;
+    }
+}
+```
+
+**PHP Blockchain Integration:**
+```php
+// ✅ GOOD - Secure blockchain interaction with proper error handling
+class SecureBlockchainManager {
+    private $web3Provider;
+    private $contractAddress;
+    private $privateKey;
+    
+    public function mintCatNFT(int $catId, string $recipientAddress): array {
+        try {
+            // Validate inputs
+            if (!$this->isValidAddress($recipientAddress)) {
+                throw new InvalidArgumentException('Invalid recipient address');
+            }
+            
+            $cat = $this->getCatById($catId);
+            if (!$cat) {
+                throw new NotFoundException('Cat not found');
+            }
+            
+            // Generate metadata
+            $metadata = $this->generateNFTMetadata($cat);
+            $metadataURI = $this->uploadToIPFS($metadata);
+            
+            // Estimate gas
+            $gasEstimate = $this->estimateGasForMinting($recipientAddress, $metadataURI);
+            
+            // Create and sign transaction
+            $transaction = [
+                'to' => $this->contractAddress,
+                'data' => $this->encodeMintFunction($recipientAddress, $metadataURI),
+                'gas' => $gasEstimate,
+                'gasPrice' => $this->getOptimalGasPrice()
+            ];
+            
+            $signedTx = $this->signTransaction($transaction, $this->privateKey);
+            $txHash = $this->web3Provider->sendRawTransaction($signedTx);
+            
+            // Store NFT record
+            $this->storeNFTRecord($catId, $txHash, $metadataURI, $recipientAddress);
+            
+            return [
+                'success' => true,
+                'transaction_hash' => $txHash,
+                'metadata_uri' => $metadataURI,
+                'estimated_gas' => $gasEstimate
+            ];
+            
+        } catch (Exception $e) {
+            $this->logBlockchainError('NFT_MINT_FAILED', [
+                'cat_id' => $catId,
+                'recipient' => $recipientAddress,
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
+        }
+    }
+}
+```
+
+#### Testing Requirements
+- **Testnet Testing**: All blockchain features must be tested on testnets first
+- **Gas Optimization**: Measure and optimize gas usage
+- **Security Audits**: Smart contracts require security review
+- **Integration Tests**: Test complete Web3 workflows
+
+#### Documentation Requirements
+- Contract deployment instructions
+- Gas optimization strategies
+- Security considerations
+- Network configuration guides
+
+### Machine Learning Guidelines
+
+#### Overview
+Our ML system analyzes cat images to predict personality traits, behavior patterns, and compatibility scores using TensorFlow and PyTorch models.
+
+#### Prerequisites
+- Python machine learning experience (TensorFlow/PyTorch)
+- Computer vision knowledge (OpenCV, PIL)
+- Understanding of neural networks and model training
+- Experience with REST API development
+
+#### Development Standards
+
+**Model Development:**
+```python
+# ✅ GOOD - Robust ML model with proper validation
+import tensorflow as tf
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report
+
+class CatPersonalityModel:
+    def __init__(self, model_path=None):
+        self.model = None
+        self.scaler = None
+        self.label_encoder = None
+        
+        if model_path:
+            self.load_model(model_path)
+    
+    def build_model(self, input_shape, num_classes):
+        """Build CNN model for personality classification"""
+        model = tf.keras.Sequential([
+            tf.keras.layers.Conv2D(32, (3, 3), activation='relu', input_shape=input_shape),
+            tf.keras.layers.BatchNormalization(),
+            tf.keras.layers.MaxPooling2D(2, 2),
+            
+            tf.keras.layers.Conv2D(64, (3, 3), activation='relu'),
+            tf.keras.layers.BatchNormalization(),
+            tf.keras.layers.MaxPooling2D(2, 2),
+            
+            tf.keras.layers.Conv2D(128, (3, 3), activation='relu'),
+            tf.keras.layers.BatchNormalization(),
+            tf.keras.layers.MaxPooling2D(2, 2),
+            
+            tf.keras.layers.GlobalAveragePooling2D(),
+            tf.keras.layers.Dropout(0.5),
+            tf.keras.layers.Dense(256, activation='relu'),
+            tf.keras.layers.BatchNormalization(),
+            tf.keras.layers.Dropout(0.5),
+            tf.keras.layers.Dense(num_classes, activation='softmax')
+        ])
+        
+        model.compile(
+            optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
+            loss='categorical_crossentropy',
+            metrics=['accuracy', 'precision', 'recall']
+        )
+        
+        self.model = model
+        return model
+    
+    def train(self, X_train, y_train, validation_split=0.2, epochs=50):
+        """Train the model with proper validation"""
+        # Data augmentation
+        datagen = tf.keras.preprocessing.image.ImageDataGenerator(
+            rotation_range=20,
+            width_shift_range=0.2,
+            height_shift_range=0.2,
+            horizontal_flip=True,
+            zoom_range=0.2,
+            fill_mode='nearest'
+        )
+        
+        # Callbacks
+        callbacks = [
+            tf.keras.callbacks.EarlyStopping(
+                monitor='val_loss', patience=10, restore_best_weights=True
+            ),
+            tf.keras.callbacks.ReduceLROnPlateau(
+                monitor='val_loss', factor=0.5, patience=5, min_lr=1e-7
+            ),
+            tf.keras.callbacks.ModelCheckpoint(
+                'best_model.h5', save_best_only=True, monitor='val_accuracy'
+            )
+        ]
+        
+        # Train model
+        history = self.model.fit(
+            datagen.flow(X_train, y_train, batch_size=32),
+            validation_split=validation_split,
+            epochs=epochs,
+            callbacks=callbacks,
+            verbose=1
+        )
+        
+        return history
+    
+    def predict_personality(self, image_array):
+        """Predict personality with confidence scores"""
+        if self.model is None:
+            raise ValueError("Model not loaded or trained")
+        
+        # Preprocess image
+        processed_image = self.preprocess_image(image_array)
+        
+        # Get prediction
+        predictions = self.model.predict(processed_image)
+        confidence_scores = predictions[0]
+        
+        # Get personality labels
+        personality_labels = ['playful', 'aloof', 'curious', 'lazy', 'territorial', 'social_butterfly']
+        
+        results = {
+            'primary_personality': personality_labels[np.argmax(confidence_scores)],
+            'confidence': float(np.max(confidence_scores)),
+            'all_scores': {label: float(score) for label, score in zip(personality_labels, confidence_scores)}
+        }
+        
+        return results
+```
+
+**PHP ML Integration:**
+```php
+// ✅ GOOD - Robust ML service integration with caching and error handling
+class MLPersonalityService {
+    private string $serviceUrl;
+    private int $timeout;
+    private bool $cacheEnabled;
+    private SecurityLogger $securityLogger;
+    
+    public function __construct() {
+        $this->serviceUrl = getenv('ML_SERVICE_URL') ?: 'http://127.0.0.1:8088';
+        $this->timeout = (int)(getenv('ML_TIMEOUT_MS') ?: 8000) / 1000;
+        $this->cacheEnabled = getenv('ML_ENABLE_CACHE') === 'true';
+        $this->securityLogger = new SecurityLogger();
+    }
+    
+    public function analyzePersonality(int $catId, string $imageData): array {
+        try {
+            // Check cache first
+            if ($this->cacheEnabled) {
+                $cached = $this->getCachedAnalysis($catId);
+                if ($cached) {
+                    return $cached;
+                }
+            }
+            
+            // Validate image data
+            if (empty($imageData) || !$this->isValidImageData($imageData)) {
+                throw new InvalidArgumentException('Invalid image data provided');
+            }
+            
+            // Prepare secure request
+            $payload = [
+                'image' => base64_encode($imageData),
+                'cat_id' => $catId,
+                'timestamp' => time(),
+                'request_id' => $this->generateRequestId()
+            ];
+            
+            // Make HTTP request with timeout and retry logic
+            $response = $this->makeSecureRequest('/analyze', $payload);
+            
+            if (!$response['success']) {
+                throw new MLAnalysisException('ML analysis failed: ' . $response['error']);
+            }
+            
+            $analysis = $response['data'];
+            
+            // Validate response structure
+            $this->validateAnalysisResponse($analysis);
+            
+            // Store results in database
+            $this->storePersonalityAnalysis($catId, $analysis);
+            
+            // Cache results
+            if ($this->cacheEnabled) {
+                $this->cacheAnalysis($catId, $analysis, 3600); // 1 hour cache
+            }
+            
+            // Log successful analysis
+            $this->securityLogger->logSecurityEvent('ML_ANALYSIS_SUCCESS', [
+                'cat_id' => $catId,
+                'confidence' => $analysis['confidence'],
+                'primary_personality' => $analysis['primary_personality']
+            ]);
+            
+            return $analysis;
+            
+        } catch (Exception $e) {
+            $this->securityLogger->logSecurityEvent('ML_ANALYSIS_ERROR', [
+                'cat_id' => $catId,
+                'error' => $e->getMessage(),
+                'error_type' => get_class($e)
+            ]);
+            throw $e;
+        }
+    }
+}
+```
+
+#### Testing Requirements
+- **Model Validation**: Cross-validation with test datasets
+- **Performance Testing**: Measure inference time and accuracy
+- **Integration Testing**: Test PHP-Python communication
+- **Load Testing**: Ensure service handles concurrent requests
+
+### Webhook Development
+
+#### Overview
+Our webhook system provides real-time event notifications to external services with retry logic, signature verification, and comprehensive logging.
+
+#### Prerequisites
+- Understanding of HTTP protocols and REST APIs
+- Knowledge of cryptographic signatures (HMAC)
+- Experience with queue systems (Redis)
+- Understanding of retry mechanisms and circuit breakers
+
+#### Development Standards
+
+**Webhook Implementation:**
+```php
+// ✅ GOOD - Secure webhook system with comprehensive error handling
+class EnterpriseWebhookManager {
+    private Redis $redis;
+    private string $signingSecret;
+    private int $maxRetries;
+    private SecurityLogger $securityLogger;
+    
+    public function __construct() {
+        $this->redis = getRedisConnection();
+        $this->signingSecret = getenv('WEBHOOK_SIGNING_SECRET');
+        $this->maxRetries = (int)(getenv('WEBHOOK_MAX_RETRIES') ?: 5);
+        $this->securityLogger = new SecurityLogger();
+    }
+    
+    public function registerWebhook(int $userId, string $url, array $events, ?string $secret = null): array {
+        try {
+            // Validate URL
+            if (!filter_var($url, FILTER_VALIDATE_URL)) {
+                throw new InvalidArgumentException('Invalid webhook URL provided');
+            }
+            
+            // Security check - no internal URLs
+            if ($this->isInternalURL($url)) {
+                throw new SecurityException('Internal URLs not allowed for webhooks');
+            }
+            
+            // Validate events
+            $validEvents = $this->getValidEvents();
+            foreach ($events as $event) {
+                if (!in_array($event, $validEvents)) {
+                    throw new InvalidArgumentException("Invalid event type: {$event}");
+                }
+            }
+            
+            // Test webhook endpoint
+            $testResult = $this->testWebhookEndpoint($url);
+            if (!$testResult['success']) {
+                throw new WebhookTestException('Webhook endpoint test failed: ' . $testResult['error']);
+            }
+            
+            $webhook = [
+                'id' => $this->generateWebhookId(),
+                'user_id' => $userId,
+                'url' => $url,
+                'events' => $events,
+                'secret' => $secret ?: $this->generateSecret(),
+                'status' => 'active',
+                'created_at' => time(),
+                'last_success_at' => null,
+                'last_failure_at' => null,
+                'failure_count' => 0,
+                'rate_limit' => $this->calculateRateLimit($userId)
+            ];
+            
+            // Store webhook
+            $this->storeWebhook($webhook);
+            
+            // Log webhook registration
+            $this->securityLogger->logSecurityEvent('WEBHOOK_REGISTERED', [
+                'webhook_id' => $webhook['id'],
+                'user_id' => $userId,
+                'events' => $events,
+                'url' => $this->sanitizeURL($url)
+            ]);
+            
+            return $webhook;
+            
+        } catch (Exception $e) {
+            $this->securityLogger->logSecurityEvent('WEBHOOK_REGISTRATION_ERROR', [
+                'user_id' => $userId,
+                'url' => $this->sanitizeURL($url),
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
+        }
+    }
+    
+    public function dispatchEvent(string $eventType, array $eventData, ?int $userId = null): array {
+        try {
+            // Validate event data
+            $this->validateEventData($eventType, $eventData);
+            
+            $event = [
+                'id' => $this->generateEventId(),
+                'type' => $eventType,
+                'data' => $eventData,
+                'user_id' => $userId,
+                'timestamp' => time(),
+                'delivered' => false
+            ];
+            
+            // Find matching webhooks
+            $webhooks = $this->getMatchingWebhooks($eventType, $userId);
+            
+            $deliveryJobs = [];
+            foreach ($webhooks as $webhook) {
+                // Check rate limits
+                if ($this->isWebhookRateLimited($webhook['id'])) {
+                    continue;
+                }
+                
+                // Queue webhook delivery
+                $deliveryJob = [
+                    'webhook_id' => $webhook['id'],
+                    'event' => $event,
+                    'attempt' => 1,
+                    'scheduled_at' => time(),
+                    'priority' => $this->calculatePriority($eventType)
+                ];
+                
+                $this->queueWebhookDelivery($deliveryJob);
+                $deliveryJobs[] = $deliveryJob;
+            }
+            
+            // Store event for audit trail
+            $this->storeWebhookEvent($event);
+            
+            // Log event dispatch
+            $this->securityLogger->logSecurityEvent('WEBHOOK_EVENT_DISPATCHED', [
+                'event_id' => $event['id'],
+                'event_type' => $eventType,
+                'webhooks_notified' => count($deliveryJobs),
+                'user_id' => $userId
+            ]);
+            
+            return [
+                'event_id' => $event['id'],
+                'webhooks_notified' => count($deliveryJobs),
+                'delivery_jobs' => $deliveryJobs
+            ];
+            
+        } catch (Exception $e) {
+            $this->securityLogger->logSecurityEvent('WEBHOOK_DISPATCH_ERROR', [
+                'event_type' => $eventType,
+                'user_id' => $userId,
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
+        }
+    }
+}
+```
+
+#### Testing Requirements
+- **Endpoint Testing**: Test webhook delivery to various endpoints
+- **Retry Logic Testing**: Verify exponential backoff works correctly
+- **Signature Testing**: Validate HMAC signature generation and verification
+- **Performance Testing**: Test webhook delivery under load
+
+### Lost Pet Finder Guidelines
+
+#### Overview
+The Lost Pet Finder is a comprehensive geospatial system for helping reunite lost pets with their owners, featuring location-based search, image recognition, and community coordination.
+
+#### Prerequisites
+- Understanding of geospatial databases (PostGIS)
+- Experience with mapping APIs (Mapbox, Google Maps)
+- Knowledge of image processing and recognition
+- Understanding of notification systems (SMS, email)
+
+#### Development Standards
+
+**Geospatial Implementation:**
+```php
+// ✅ GOOD - Secure and efficient geospatial pet finder system
+class SecureLostPetFinder {
+    private PDO $pdo;
+    private Redis $redis;
+    private string $mapsProvider;
+    private float $defaultRadius;
+    private SecurityLogger $securityLogger;
+    
+    public function __construct() {
+        $this->pdo = get_db();
+        $this->redis = getRedisConnection();
+        $this->mapsProvider = getenv('MAPS_PROVIDER') ?: 'mapbox';
+        $this->defaultRadius = (float)(getenv('LOST_PET_FINDER_DEFAULT_RADIUS_KM') ?: 10);
+        $this->securityLogger = new SecurityLogger();
+    }
+    
+    public function reportLostPet(array $reportData): array {
+        try {
+            // Validate required fields
+            $this->validateReportData($reportData);
+            
+            // Geocode location with caching
+            $coordinates = $this->geocodeLocationSecure($reportData['last_seen_location']);
+            
+            // Process and validate uploaded images
+            $imageUrls = [];
+            if (!empty($reportData['images'])) {
+                foreach ($reportData['images'] as $image) {
+                    // Validate image
+                    if (!$this->validateImage($image)) {
+                        throw new InvalidImageException('Invalid image format or size');
+                    }
+                    
+                    // Process and store securely
+                    $imageUrl = $this->processAndStoreImage($image, 'lost_pets');
+                    $imageUrls[] = $imageUrl;
+                }
+            }
+            
+            // Create lost pet report with geospatial data
+            $stmt = $this->pdo->prepare("
+                INSERT INTO lost_pets (
+                    id, pet_name, pet_type, breed, color, size, age, 
+                    description, distinctive_features, last_seen_location,
+                    last_seen_coordinates, last_seen_date, contact_name,
+                    contact_phone, contact_email, reward_amount, images,
+                    status, reported_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ST_GeomFromText(?), ?, ?, ?, ?, ?, ?, 'active', NOW())
+            ");
+            
+            $lostPetId = $this->generateSecureId();
+            $geoPoint = "POINT({$coordinates['lng']} {$coordinates['lat']})";
+            
+            $stmt->execute([
+                $lostPetId,
+                $this->sanitizeInput($reportData['pet_name']),
+                $this->validatePetType($reportData['pet_type']),
+                $this->sanitizeInput($reportData['breed'] ?? ''),
+                $this->sanitizeInput($reportData['color']),
+                $this->validateSize($reportData['size'] ?? 'medium'),
+                $this->sanitizeInput($reportData['age'] ?? ''),
+                $this->sanitizeInput($reportData['description'] ?? ''),
+                $this->sanitizeInput($reportData['distinctive_features'] ?? ''),
+                $this->sanitizeInput($reportData['last_seen_location']),
+                $geoPoint,
+                $this->validateDate($reportData['last_seen_date']),
+                $this->sanitizeInput($reportData['contact_name'] ?? ''),
+                $this->validatePhone($reportData['contact_phone']),
+                $this->validateEmail($reportData['contact_email']),
+                $this->validateAmount($reportData['reward_amount'] ?? 0),
+                json_encode($imageUrls)
+            ]);
+            
+            // Send notifications to nearby users (asynchronously)
+            $this->queueNearbyNotifications($lostPetId, $coordinates, $this->defaultRadius);
+            
+            // Create Facebook post if enabled and authorized
+            if ($this->isFacebookIntegrationEnabled($reportData)) {
+                $this->queueFacebookPost($lostPetId);
+            }
+            
+            // Dispatch webhook event
+            $webhookManager = new EnterpriseWebhookManager();
+            $webhookManager->dispatchEvent('lost_pet.reported', [
+                'lost_pet_id' => $lostPetId,
+                'pet_name' => $reportData['pet_name'],
+                'pet_type' => $reportData['pet_type'],
+                'location' => $reportData['last_seen_location'],
+                'coordinates' => $coordinates,
+                'contact_phone' => $this->maskPhoneNumber($reportData['contact_phone']),
+                'reward_amount' => $reportData['reward_amount'] ?? 0
+            ]);
+            
+            // Log successful report
+            $this->securityLogger->logSecurityEvent('LOST_PET_REPORTED', [
+                'lost_pet_id' => $lostPetId,
+                'pet_type' => $reportData['pet_type'],
+                'location' => $reportData['last_seen_location'],
+                'images_count' => count($imageUrls)
+            ]);
+            
+            return [
+                'success' => true,
+                'lost_pet_id' => $lostPetId,
+                'coordinates' => $coordinates,
+                'nearby_users_notified' => $this->estimateNearbyUsers($coordinates, $this->defaultRadius),
+                'facebook_post_scheduled' => $this->isFacebookIntegrationEnabled($reportData)
+            ];
+            
+        } catch (Exception $e) {
+            $this->securityLogger->logSecurityEvent('LOST_PET_REPORT_ERROR', [
+                'error' => $e->getMessage(),
+                'pet_name' => $reportData['pet_name'] ?? 'unknown',
+                'location' => $reportData['last_seen_location'] ?? 'unknown'
+            ]);
+            throw $e;
+        }
+    }
+    
+    public function searchLostPets(array $searchCriteria): array {
+        try {
+            // Validate and sanitize search criteria
+            $validatedCriteria = $this->validateSearchCriteria($searchCriteria);
+            
+            // Build secure query with geospatial search
+            $sql = "
+                SELECT 
+                    id, pet_name, pet_type, breed, color, size,
+                    description, last_seen_location, last_seen_date,
+                    contact_name, contact_phone, reward_amount, images,
+                    ST_X(last_seen_coordinates) as lng,
+                    ST_Y(last_seen_coordinates) as lat,
+                    ST_Distance_Sphere(last_seen_coordinates, ST_GeomFromText(?)) / 1000 as distance_km
+                FROM lost_pets 
+                WHERE status = 'active'
+            ";
+            
+            $params = [];
+            $geoPoint = null;
+            
+            // Add location-based search with caching
+            if (!empty($validatedCriteria['location'])) {
+                $coordinates = $this->geocodeLocationSecure($validatedCriteria['location']);
+                $geoPoint = "POINT({$coordinates['lng']} {$coordinates['lat']})";
+                $params[] = $geoPoint;
+                
+                $radius = $validatedCriteria['radius'] ?? $this->defaultRadius;
+                $sql .= " AND ST_Distance_Sphere(last_seen_coordinates, ST_GeomFromText(?)) <= ? * 1000";
+                $params[] = $geoPoint;
+                $params[] = $radius;
+            }
+            
+            // Add additional filters
+            $sql = $this->addSearchFilters($sql, $params, $validatedCriteria);
+            
+            // Add ordering
+            if ($geoPoint) {
+                $sql .= " ORDER BY distance_km ASC, last_seen_date DESC";
+            } else {
+                $sql .= " ORDER BY last_seen_date DESC";
+            }
+            
+            // Add pagination
+            $limit = min((int)($validatedCriteria['limit'] ?? 50), 100);
+            $offset = (int)($validatedCriteria['offset'] ?? 0);
+            $sql .= " LIMIT {$limit} OFFSET {$offset}";
+            
+            // If no location provided, add dummy parameter
+            if (!$geoPoint) {
+                array_unshift($params, 'POINT(0 0)');
+            }
+            
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute($params);
+            
+            $results = $stmt->fetchAll();
+            
+            // Process and enrich results
+            foreach ($results as &$result) {
+                $result['images'] = json_decode($result['images'], true) ?: [];
+                $result['sightings_count'] = $this->countSightings($result['id']);
+                $result['days_missing'] = $this->calculateDaysMissing($result['last_seen_date']);
+                
+                // Mask sensitive information
+                $result['contact_phone'] = $this->maskPhoneNumber($result['contact_phone']);
+            }
+            
+            // Log search query
+            $this->securityLogger->logSecurityEvent('LOST_PET_SEARCH', [
+                'criteria' => $validatedCriteria,
+                'results_count' => count($results),
+                'search_location' => $validatedCriteria['location'] ?? null
+            ]);
+            
+            return [
+                'results' => $results,
+                'total_count' => count($results),
+                'search_criteria' => $validatedCriteria,
+                'search_radius_km' => $validatedCriteria['radius'] ?? $this->defaultRadius
+            ];
+            
+        } catch (Exception $e) {
+            $this->securityLogger->logSecurityEvent('LOST_PET_SEARCH_ERROR', [
+                'error' => $e->getMessage(),
+                'criteria' => $searchCriteria
+            ]);
+            throw $e;
+        }
+    }
+}
+```
+
+#### Testing Requirements
+- **Geospatial Testing**: Test coordinate accuracy and distance calculations
+- **Image Testing**: Validate image upload, processing, and storage
+- **Notification Testing**: Test SMS, email, and push notifications
+- **Performance Testing**: Test search performance with large datasets
 
 ## 🌟 Recognition
 

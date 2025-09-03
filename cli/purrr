@@ -132,9 +132,14 @@ class PurrrCLI {
             case 'vr':
                 $this->commandMetaverse($args);
                 break;
-            case 'webhooks':
-                $this->commandWebhooks($args);
-                break;
+                    case 'webhooks':
+            $this->commandWebhooks($args);
+            break;
+            
+        case 'lost-pet':
+        case 'finder':
+            $this->commandLostPetFinder($args);
+            break;
             case 'config':
                 $this->commandConfig($args);
                 break;
@@ -1237,6 +1242,7 @@ class PurrrCLI {
         echo "  ml/personality          - Machine learning personality\n";
         echo "  metaverse/vr            - Metaverse and VR worlds\n";
         echo "  webhooks                - Webhook management\n";
+        echo "  lost-pet/finder         - Lost pet finder and Facebook integration\n";
         echo "  config                  - Manage configuration\n";
         echo "  version                 - Show version information\n";
         echo "  help                    - Show this help message\n\n";
@@ -2183,6 +2189,211 @@ class PurrrCLI {
         ];
         $this->saveConfig();
         echo Colors::GREEN . "✅ Configuration reset to defaults!" . Colors::NC . "\n";
+    }
+    
+    /**
+     * Lost Pet Finder Commands
+     */
+    private function commandLostPetFinder($args) {
+        if (empty($args)) {
+            $this->showLostPetFinderHelp();
+            return;
+        }
+
+        $action = array_shift($args);
+        switch ($action) {
+            case 'report':
+                $this->reportLostPet($args);
+                break;
+            case 'search':
+                $this->searchLostPets($args);
+                break;
+            case 'sighting':
+                $this->reportSighting($args);
+                break;
+            case 'found':
+                $this->markPetFound($args);
+                break;
+            case 'stats':
+                $this->showLostPetStats();
+                break;
+            case 'facebook':
+                $this->manageFacebookIntegration($args);
+                break;
+            case 'help':
+                $this->showLostPetFinderHelp();
+                break;
+            default:
+                echo Colors::RED . "❌ Unknown lost pet finder action: $action" . Colors::NC . "\n";
+                echo "Use 'purrr lost-pet help' to see available actions.\n";
+                break;
+        }
+    }
+
+    private function showLostPetFinderHelp() {
+        echo Colors::CYAN . "🐱 Lost Pet Finder Commands:" . Colors::NC . "\n";
+        echo "  report <pet_data>           - Report a lost pet\n";
+        echo "  search <criteria>           - Search for lost pets\n";
+        echo "  sighting <report_id> <data> - Report a pet sighting\n";
+        echo "  found <report_id>           - Mark pet as found\n";
+        echo "  stats                       - Show lost pet statistics\n";
+        echo "  facebook <action>           - Manage Facebook integration\n";
+        echo "  help                        - Show this help message\n\n";
+    }
+
+    private function reportLostPet($args) {
+        if (empty($args)) {
+            echo Colors::RED . "❌ Pet data required. Usage: purrr lost-pet report <name> <breed> <color> <location> [date]" . Colors::NC . "\n";
+            return;
+        }
+
+        $petData = [
+            'name' => $args[0] ?? '',
+            'breed' => $args[1] ?? '',
+            'color' => $args[2] ?? '',
+            'last_seen_location' => $args[3] ?? '',
+            'last_seen_date' => $args[4] ?? date('Y-m-d'),
+            'type' => 'cat'
+        ];
+
+        try {
+            $response = $this->apiRequest('POST', '/v2/lost_pet_finder/report', $petData);
+            echo Colors::GREEN . "✅ Lost pet report created successfully!" . Colors::NC . "\n";
+            echo "Report ID: " . ($response['report_id'] ?? 'N/A') . "\n";
+        } catch (Exception $e) {
+            echo Colors::RED . "❌ Failed to create lost pet report: " . $e->getMessage() . Colors::NC . "\n";
+        }
+    }
+
+    private function searchLostPets($args) {
+        if (empty($args)) {
+            echo Colors::YELLOW . "⚠️  No search criteria provided. Searching for all active lost pets..." . Colors::NC . "\n";
+        }
+
+        $searchCriteria = [];
+        if (!empty($args[0])) $searchCriteria['breed'] = $args[0];
+        if (!empty($args[1])) $searchCriteria['color'] = $args[1];
+        if (!empty($args[2])) $searchCriteria['radius_km'] = $args[2];
+
+        try {
+            $response = $this->apiRequest('GET', '/v2/lost_pet_finder/search', $searchCriteria);
+            $this->displayLostPetSearchResults($response);
+        } catch (Exception $e) {
+            echo Colors::RED . "❌ Search failed: " . $e->getMessage() . Colors::NC . "\n";
+        }
+    }
+
+    private function reportSighting($args) {
+        if (count($args) < 2) {
+            echo Colors::RED . "❌ Report ID and location required. Usage: purrr lost-pet sighting <report_id> <location> [description]" . Colors::NC . "\n";
+            return;
+        }
+
+        $sightingData = [
+            'lost_pet_report_id' => $args[0],
+            'location' => $args[1],
+            'description' => $args[2] ?? '',
+            'sighting_date' => date('Y-m-d')
+        ];
+
+        try {
+            $response = $this->apiRequest('POST', '/v2/lost_pet_finder/sighting', $sightingData);
+            echo Colors::GREEN . "✅ Sighting report submitted successfully!" . Colors::NC . "\n";
+        } catch (Exception $e) {
+            echo Colors::RED . "❌ Failed to submit sighting: " . $e->getMessage() . Colors::NC . "\n";
+        }
+    }
+
+    private function markPetFound($args) {
+        if (empty($args)) {
+            echo Colors::RED . "❌ Report ID required. Usage: purrr lost-pet found <report_id>" . Colors::NC . "\n";
+            return;
+        }
+
+        $reportId = $args[0];
+        $foundData = [
+            'found_location' => $args[1] ?? 'Home',
+            'found_details' => ['reported_by' => 'CLI']
+        ];
+
+        try {
+            $response = $this->apiRequest('PUT', '/v2/lost_pet_finder/found', $foundData);
+            echo Colors::GREEN . "✅ Pet marked as found successfully!" . Colors::NC . "\n";
+        } catch (Exception $e) {
+            echo Colors::RED . "❌ Failed to mark pet as found: " . $e->getMessage() . Colors::NC . "\n";
+        }
+    }
+
+    private function showLostPetStats() {
+        try {
+            $response = $this->apiRequest('GET', '/v2/lost_pet_finder/statistics');
+            $this->displayLostPetStats($response);
+        } catch (Exception $e) {
+            echo Colors::RED . "❌ Failed to retrieve statistics: " . $e->getMessage() . Colors::NC . "\n";
+        }
+    }
+
+    private function manageFacebookIntegration($args) {
+        if (empty($args)) {
+            echo Colors::YELLOW . "⚠️  No action specified. Available actions: connect, disconnect, status" . Colors::NC . "\n";
+            return;
+        }
+
+        $action = $args[0];
+        try {
+            $response = $this->apiRequest('POST', '/v2/lost_pet_finder/facebook', ['action' => $action]);
+            echo Colors::GREEN . "✅ Facebook integration action completed: $action" . Colors::NC . "\n";
+        } catch (Exception $e) {
+            echo Colors::RED . "❌ Facebook integration failed: " . $e->getMessage() . Colors::NC . "\n";
+        }
+    }
+
+    private function displayLostPetSearchResults($results) {
+        if (empty($results['results'])) {
+            echo Colors::YELLOW . "🔍 No lost pets found matching your criteria." . Colors::NC . "\n";
+            return;
+        }
+
+        echo Colors::CYAN . "🔍 Found " . count($results['results']) . " lost pets:" . Colors::NC . "\n\n";
+        
+        foreach ($results['results'] as $pet) {
+            echo Colors::GREEN . "🐱 " . ($pet['pet_name'] ?? 'Unknown') . Colors::NC . "\n";
+            echo "   Breed: " . ($pet['breed'] ?? 'Unknown') . "\n";
+            echo "   Color: " . ($pet['color'] ?? 'Unknown') . "\n";
+            echo "   Location: " . ($pet['last_seen_location'] ?? 'Unknown') . "\n";
+            echo "   Date: " . ($pet['last_seen_date'] ?? 'Unknown') . "\n";
+            echo "   Status: " . ($pet['status'] ?? 'Unknown') . "\n";
+            if (isset($pet['distance_meters'])) {
+                echo "   Distance: " . round($pet['distance_meters'] / 1000, 2) . " km\n";
+            }
+            echo "\n";
+        }
+    }
+
+    private function displayLostPetStats($stats) {
+        echo Colors::CYAN . "📊 Lost Pet Statistics:" . Colors::NC . "\n\n";
+        
+        if (isset($stats['overall'])) {
+            echo Colors::GREEN . "Overall:" . Colors::NC . "\n";
+            echo "  Total Reports: " . ($stats['overall']['total_reports'] ?? 0) . "\n";
+            echo "  Active Reports: " . ($stats['overall']['active_reports'] ?? 0) . "\n";
+            echo "  Found Pets: " . ($stats['overall']['found_pets'] ?? 0) . "\n";
+            echo "  Success Rate: " . ($stats['overall']['success_rate'] ?? 0) . "%\n";
+        }
+        
+        if (isset($stats['user'])) {
+            echo Colors::GREEN . "\nYour Reports:" . Colors::NC . "\n";
+            echo "  Your Reports: " . ($stats['user']['user_reports'] ?? 0) . "\n";
+            echo "  Found: " . ($stats['user']['user_found_pets'] ?? 0) . "\n";
+            echo "  Avg Days to Find: " . round($stats['user']['avg_days_to_find'] ?? 0, 1) . "\n";
+        }
+        
+        if (isset($stats['breed_success_rates'])) {
+            echo Colors::GREEN . "\nSuccess Rates by Breed:" . Colors::NC . "\n";
+            foreach ($stats['breed_success_rates'] as $breed) {
+                echo "  " . ($breed['breed'] ?? 'Unknown') . ": " . ($breed['success_rate'] ?? 0) . "% (" . ($breed['found_count'] ?? 0) . "/" . ($breed['total_reports'] ?? 0) . ")\n";
+            }
+        }
     }
 }
 

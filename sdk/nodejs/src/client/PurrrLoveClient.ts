@@ -506,6 +506,389 @@ export class PurrrLoveClient {
     return response.data;
   }
 
+  // ============================================================================
+  // LOST PET FINDER SYSTEM
+  // ============================================================================
+
+  /**
+   * Report a lost pet
+   */
+  async reportLostPet(petData: {
+    name: string;
+    breed: string;
+    color: string;
+    lastSeenLocation: string;
+    lastSeenDate: string;
+    description?: string;
+    photos?: string[];
+    facebookShareEnabled?: boolean;
+  }): Promise<any> {
+    const response = await this.makeRequest('POST', '/api/v2/lost_pet_finder/report', petData);
+    return response.data;
+  }
+
+  /**
+   * Search for lost pets
+   */
+  async searchLostPets(searchCriteria: {
+    breed?: string;
+    color?: string;
+    ageRange?: { min: number; max: number };
+    radiusKm?: number;
+    latitude?: number;
+    longitude?: number;
+  }): Promise<any> {
+    const response = await this.makeRequest('GET', '/api/v2/lost_pet_finder/search', undefined, searchCriteria);
+    return response.data;
+  }
+
+  /**
+   * Report a pet sighting
+   */
+  async reportPetSighting(sightingData: {
+    lostPetReportId: number;
+    location: string;
+    sightingDate: string;
+    description?: string;
+    confidenceLevel?: 'low' | 'medium' | 'high';
+  }): Promise<any> {
+    const response = await this.makeRequest('POST', '/api/v2/lost_pet_finder/sighting', sightingData);
+    return response.data;
+  }
+
+  /**
+   * Mark pet as found
+   */
+  async markPetFound(reportId: number, foundData: {
+    foundLocation?: string;
+    foundDetails?: any;
+  }): Promise<any> {
+    const response = await this.makeRequest('PUT', '/api/v2/lost_pet_finder/found', foundData);
+    return response.data;
+  }
+
+  /**
+   * Get lost pet statistics
+   */
+  async getLostPetStatistics(): Promise<any> {
+    const response = await this.makeRequest('GET', '/api/v2/lost_pet_finder/statistics');
+    return response.data;
+  }
+
+  // ============================================================================
+  // BLOCKCHAIN & NFT MANAGEMENT
+  // ============================================================================
+
+  /**
+   * Mint an NFT for a cat
+   */
+  async mintCatNFT(catId: number, network: string = 'ethereum', metadata?: any): Promise<any> {
+    const data = {
+      cat_id: catId,
+      network,
+      metadata: metadata || {}
+    };
+    const response = await this.makeRequest('POST', '/api/v2/advanced_features/blockchain?action=mint-nft', data);
+    return response.data;
+  }
+
+  /**
+   * Transfer NFT ownership
+   */
+  async transferNFT(nftId: number, toUserId: number, network: string = 'ethereum'): Promise<any> {
+    const data = {
+      nft_id: nftId,
+      to_user_id: toUserId,
+      network
+    };
+    const response = await this.makeRequest('POST', '/api/v2/advanced_features/blockchain?action=transfer-nft', data);
+    return response.data;
+  }
+
+  /**
+   * Verify NFT ownership
+   */
+  async verifyNFTOwnership(nftId: number): Promise<any> {
+    const response = await this.makeRequest('GET', `/api/v2/advanced_features/blockchain?action=verify-nft&nft_id=${nftId}`);
+    return response.data;
+  }
+
+  /**
+   * Get NFT collection
+   */
+  async getNFTCollection(network?: string): Promise<any> {
+    const params: any = { action: 'collection' };
+    if (network) params.network = network;
+    const response = await this.makeRequest('GET', '/api/v2/advanced_features/blockchain', undefined, params);
+    return response.data;
+  }
+
+  /**
+   * Get blockchain statistics
+   */
+  async getBlockchainStatistics(): Promise<any> {
+    const response = await this.makeRequest('GET', '/api/v2/advanced_features/blockchain?action=stats');
+    return response.data;
+  }
+
+  // ============================================================================
+  // MACHINE LEARNING PERSONALITY PREDICTION
+  // ============================================================================
+
+  /**
+   * Predict cat personality using ML
+   */
+  async predictCatPersonality(catId: number, includeConfidence: boolean = true): Promise<any> {
+    const params = { action: 'predict', cat_id: catId, confidence: includeConfidence };
+    const response = await this.makeRequest('GET', '/api/v2/advanced_features/ml-personality', undefined, params);
+    return response.data;
+  }
+
+  /**
+   * Get personality insights
+   */
+  async getPersonalityInsights(catId: number): Promise<any> {
+    const params = { action: 'insights', cat_id: catId };
+    const response = await this.makeRequest('GET', '/api/v2/advanced_features/ml-personality', undefined, params);
+    return response.data;
+  }
+
+  /**
+   * Record behavior observation
+   */
+  async recordBehaviorObservation(catId: number, behaviorData: {
+    type: string;
+    intensity: number;
+    duration: number;
+    context: string;
+  }): Promise<any> {
+    const data = {
+      action: 'observe',
+      cat_id: catId,
+      ...behaviorData
+    };
+    const response = await this.makeRequest('POST', '/api/v2/advanced_features/ml-personality', data);
+    return response.data;
+  }
+
+  /**
+   * Update genetic data
+   */
+  async updateGeneticData(catId: number, geneticData: {
+    heritageScore: number;
+    coatPattern?: string;
+    markers?: string;
+  }): Promise<any> {
+    const data = {
+      action: 'genetic',
+      cat_id: catId,
+      heritage_score: geneticData.heritageScore,
+      coat_pattern: geneticData.coatPattern,
+      markers: geneticData.markers
+    };
+    const response = await this.makeRequest('POST', '/api/v2/advanced_features/ml-personality', data);
+    return response.data;
+  }
+
+  /**
+   * Get ML training status
+   */
+  async getMLTrainingStatus(): Promise<any> {
+    const response = await this.makeRequest('GET', '/api/v2/advanced_features/ml-personality?action=training');
+    return response.data;
+  }
+
+  // ============================================================================
+  // METAVERSE & VR WORLDS
+  // ============================================================================
+
+  /**
+   * Create metaverse world
+   */
+  async createMetaverseWorld(worldData: {
+    name: string;
+    type: string;
+    maxPlayers: number;
+    accessLevel: string;
+  }): Promise<any> {
+    const data = {
+      action: 'create-world',
+      ...worldData
+    };
+    const response = await this.makeRequest('POST', '/api/v2/advanced_features/metaverse', data);
+    return response.data;
+  }
+
+  /**
+   * Join metaverse world
+   */
+  async joinMetaverseWorld(worldId: number, catId?: number): Promise<any> {
+    const data: any = {
+      action: 'join-world',
+      world_id: worldId
+    };
+    if (catId) data.cat_id = catId;
+    const response = await this.makeRequest('POST', '/api/v2/advanced_features/metaverse', data);
+    return response.data;
+  }
+
+  /**
+   * Leave metaverse world
+   */
+  async leaveMetaverseWorld(worldId: number): Promise<any> {
+    const data = { action: 'leave-world', world_id: worldId };
+    const response = await this.makeRequest('POST', '/api/v2/advanced_features/metaverse', data);
+    return response.data;
+  }
+
+  /**
+   * List metaverse worlds
+   */
+  async listMetaverseWorlds(filters?: any): Promise<any> {
+    const params: any = { action: 'worlds' };
+    if (filters) Object.assign(params, filters);
+    const response = await this.makeRequest('GET', '/api/v2/advanced_features/metaverse', undefined, params);
+    return response.data;
+  }
+
+  /**
+   * Perform VR interaction
+   */
+  async performVRInteraction(worldId: number, interactionData: {
+    type: string;
+    targetData?: any;
+  }): Promise<any> {
+    const data = {
+      action: 'interact',
+      world_id: worldId,
+      ...interactionData
+    };
+    const response = await this.makeRequest('POST', '/api/v2/advanced_features/metaverse', data);
+    return response.data;
+  }
+
+  /**
+   * Get metaverse statistics
+   */
+  async getMetaverseStatistics(): Promise<any> {
+    const response = await this.makeRequest('GET', '/api/v2/advanced_features/metaverse?action=stats');
+    return response.data;
+  }
+
+  // ============================================================================
+  // WEBHOOK SYSTEM
+  // ============================================================================
+
+  /**
+   * Create webhook
+   */
+  async createWebhook(webhookData: {
+    url: string;
+    events: string[];
+    secret?: string;
+    headers?: any;
+  }): Promise<any> {
+    const data = {
+      action: 'create',
+      ...webhookData
+    };
+    const response = await this.makeRequest('POST', '/api/v2/advanced_features/webhooks', data);
+    return response.data;
+  }
+
+  /**
+   * List webhooks
+   */
+  async listWebhooks(): Promise<any> {
+    const response = await this.makeRequest('GET', '/api/v2/advanced_features/webhooks?action=list');
+    return response.data;
+  }
+
+  /**
+   * Update webhook
+   */
+  async updateWebhook(webhookId: number, updates: any): Promise<any> {
+    const data = {
+      action: 'update',
+      webhook_id: webhookId,
+      ...updates
+    };
+    const response = await this.makeRequest('POST', '/api/v2/advanced_features/webhooks', data);
+    return response.data;
+  }
+
+  /**
+   * Delete webhook
+   */
+  async deleteWebhook(webhookId: number): Promise<boolean> {
+    const data = { action: 'delete', webhook_id: webhookId };
+    await this.makeRequest('POST', '/api/v2/advanced_features/webhooks', data);
+    return true;
+  }
+
+  /**
+   * Test webhook
+   */
+  async testWebhook(webhookId: number): Promise<any> {
+    const data = { action: 'test', webhook_id: webhookId };
+    const response = await this.makeRequest('POST', '/api/v2/advanced_features/webhooks', data);
+    return response.data;
+  }
+
+  /**
+   * Get webhook logs
+   */
+  async getWebhookLogs(webhookId: number, limit: number = 100): Promise<any> {
+    const params = {
+      action: 'logs',
+      webhook_id: webhookId,
+      limit
+    };
+    const response = await this.makeRequest('GET', '/api/v2/advanced_features/webhooks', undefined, params);
+    return response.data;
+  }
+
+  // ============================================================================
+  // ANALYTICS & HEALTH
+  // ============================================================================
+
+  /**
+   * Get analytics data
+   */
+  async getAnalyticsData(analyticsType: string = 'overview', filters?: any): Promise<any> {
+    const params: any = { type: analyticsType };
+    if (filters) Object.assign(params, filters);
+    const response = await this.makeRequest('GET', '/web/analytics_dashboard.php', undefined, params);
+    return response.data;
+  }
+
+  /**
+   * Health check
+   */
+  async healthCheck(): Promise<any> {
+    const response = await this.makeRequest('GET', '/api/health.php');
+    return response;
+  }
+
+  /**
+   * Get API info
+   */
+  async getApiInfo(): Promise<any> {
+    const response = await this.makeRequest('GET', '/api/');
+    return response;
+  }
+
+  /**
+   * Get rate limit info
+   */
+  async getRateLimitInfo(): Promise<any> {
+    const response = await this.makeRequest('GET', '/api/health.php');
+    return {
+      remaining: response.rate_limit_remaining || 'unknown',
+      resetTime: response.rate_limit_reset || 'unknown'
+    };
+  }
+
   /**
    * Close the client and clean up resources
    */

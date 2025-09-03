@@ -3,7 +3,7 @@
 Official Python client library for the Purrr.love cat gaming platform
 """
 
-__version__ = "1.0.0"
+__version__ = "2.0.0"
 __author__ = "Purrr.love Team"
 __email__ = "dev@purrr.love"
 

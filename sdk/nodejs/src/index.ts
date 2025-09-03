@@ -54,5 +54,5 @@ export type {
 export { API_ENDPOINTS, DEFAULT_TIMEOUT, MAX_RETRIES } from './constants';
 
 // Version
-export const VERSION = '1.0.0';
+export const VERSION = '2.0.0';
 export const SDK_NAME = 'PurrrLove-NodeJS-SDK';

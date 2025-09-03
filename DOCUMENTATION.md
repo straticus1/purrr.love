@@ -14,6 +14,10 @@ Welcome to the comprehensive technical documentation for Purrr.love, the advance
 - [AI & Machine Learning](#ai--machine-learning)
 - [Development Guide](#development-guide)
 - [Advanced Features](#advanced-features)
+  - [Blockchain & NFT Integration](#blockchain--nft-integration)
+  - [Machine Learning Personality Models](#machine-learning-personality-models-1)
+  - [Webhook System](#webhook-system)
+  - [Lost Pet Finder System](#lost-pet-finder-system-1)
 - [Testing](#testing)
 - [Performance Optimization](#performance-optimization)
 
@@ -1849,6 +1853,1132 @@ purrr.love/
    ```
 
 ## 🔬 Advanced Features
+
+### Blockchain & NFT Integration
+
+#### Overview
+Purrr.love integrates with blockchain networks to enable NFT minting, trading, and ownership verification of virtual cats. The system supports multiple blockchains including Ethereum, Solana, and Polygon.
+
+#### Blockchain Architecture
+```
+┌─────────────────────────────────────────────────────────┐
+│                  Blockchain Layer                       │
+├─────────────────────────────────────────────────────────┤
+│ Ethereum │ Solana │ Polygon │ BSC │ Avalanche │ Arbitrum │
+├─────────────────────────────────────────────────────────┤
+│            Web3 Provider Abstraction                   │
+├─────────────────────────────────────────────────────────┤
+│ Smart Contracts │ Wallet Connect │ MetaMask │ Phantom │
+├─────────────────────────────────────────────────────────┤
+│                  Purrr.love Core                       │
+└─────────────────────────────────────────────────────────┘
+```
+
+#### NFT Smart Contract Integration
+```php
+class BlockchainNFTManager {
+    private $web3Provider;
+    private $contractAddress;
+    private $walletPrivateKey;
+    
+    public function __construct($network = 'ethereum') {
+        $this->web3Provider = new Web3Provider(
+            getenv('WEB3_PROVIDER_URL'),
+            $network
+        );
+        $this->contractAddress = getenv('NFT_CONTRACT_ADDRESS');
+        $this->walletPrivateKey = getenv('NFT_MINT_PRIVATE_KEY');
+    }
+    
+    public function mintCatNFT($catId, $recipientAddress, $metadata) {
+        $cat = getCatById($catId);
+        
+        // Prepare NFT metadata
+        $nftMetadata = [
+            'name' => $cat['name'],
+            'description' => "Unique Purrr.love cat: {$cat['name']}",
+            'image' => $cat['image_url'],
+            'attributes' => [
+                ['trait_type' => 'Breed', 'value' => $cat['breed']],
+                ['trait_type' => 'Personality', 'value' => $cat['personality_type']],
+                ['trait_type' => 'Level', 'value' => $cat['level']],
+                ['trait_type' => 'Happiness', 'value' => $cat['happiness']],
+                ['trait_type' => 'Energy', 'value' => $cat['energy']],
+                ['trait_type' => 'Intelligence', 'value' => $cat['intelligence']],
+                ['trait_type' => 'Rarity', 'value' => $this->calculateRarity($cat)]
+            ],
+            'external_url' => "https://purrr.love/cats/{$catId}",
+            'properties' => [
+                'cat_id' => $catId,
+                'created_at' => $cat['created_at'],
+                'genetics' => $cat['genetic_data']
+            ]
+        ];
+        
+        // Upload metadata to IPFS
+        $metadataUri = $this->uploadToIPFS($nftMetadata);
+        
+        // Mint NFT on blockchain
+        $transaction = [
+            'to' => $this->contractAddress,
+            'data' => $this->encodeMintFunction($recipientAddress, $metadataUri),
+            'gas' => '200000',
+            'gasPrice' => $this->estimateGasPrice()
+        ];
+        
+        $signedTx = $this->signTransaction($transaction, $this->walletPrivateKey);
+        $txHash = $this->web3Provider->sendRawTransaction($signedTx);
+        
+        // Store NFT record
+        $nftRecord = [
+            'cat_id' => $catId,
+            'token_id' => $this->extractTokenId($txHash),
+            'contract_address' => $this->contractAddress,
+            'network' => $this->web3Provider->getNetwork(),
+            'transaction_hash' => $txHash,
+            'metadata_uri' => $metadataUri,
+            'owner_address' => $recipientAddress,
+            'minted_at' => time()
+        ];
+        
+        $this->storeCatNFTRecord($nftRecord);
+        
+        return [
+            'success' => true,
+            'transaction_hash' => $txHash,
+            'token_id' => $nftRecord['token_id'],
+            'metadata_uri' => $metadataUri,
+            'opensea_url' => $this->generateOpenSeaURL($nftRecord)
+        ];
+    }
+    
+    public function transferCatNFT($tokenId, $fromAddress, $toAddress) {
+        $nftRecord = $this->getCatNFTByTokenId($tokenId);
+        
+        if (!$nftRecord) {
+            throw new Exception('NFT not found');
+        }
+        
+        // Verify ownership
+        if (!$this->verifyNFTOwnership($tokenId, $fromAddress)) {
+            throw new Exception('Sender does not own this NFT');
+        }
+        
+        // Prepare transfer transaction
+        $transaction = [
+            'to' => $this->contractAddress,
+            'data' => $this->encodeTransferFunction($fromAddress, $toAddress, $tokenId),
+            'gas' => '100000',
+            'gasPrice' => $this->estimateGasPrice()
+        ];
+        
+        $signedTx = $this->signTransaction($transaction, $this->walletPrivateKey);
+        $txHash = $this->web3Provider->sendRawTransaction($signedTx);
+        
+        // Update ownership record
+        $this->updateNFTOwnership($tokenId, $toAddress, $txHash);
+        
+        return [
+            'success' => true,
+            'transaction_hash' => $txHash,
+            'new_owner' => $toAddress
+        ];
+    }
+    
+    public function getCatNFTMarketData($catId) {
+        $nftRecord = $this->getCatNFTByCatId($catId);
+        
+        if (!$nftRecord) {
+            return null;
+        }
+        
+        // Get market data from OpenSea API
+        $openSeaData = $this->fetchOpenSeaData($nftRecord['contract_address'], $nftRecord['token_id']);
+        
+        return [
+            'floor_price' => $openSeaData['collection']['stats']['floor_price'],
+            'last_sale_price' => $openSeaData['last_sale']['total_price'],
+            'total_sales' => $openSeaData['collection']['stats']['total_sales'],
+            'market_cap' => $openSeaData['collection']['stats']['market_cap'],
+            'opensea_url' => $openSeaData['permalink'],
+            'rarity_rank' => $this->calculateRarityRank($nftRecord)
+        ];
+    }
+}
+```
+
+#### Blockchain Database Schema
+```sql
+CREATE TABLE cat_nfts (
+    id SERIAL PRIMARY KEY,
+    cat_id INTEGER REFERENCES cats(id) ON DELETE CASCADE,
+    token_id VARCHAR(255) NOT NULL,
+    contract_address VARCHAR(255) NOT NULL,
+    network VARCHAR(50) NOT NULL,
+    transaction_hash VARCHAR(255) NOT NULL,
+    metadata_uri VARCHAR(500),
+    owner_address VARCHAR(255),
+    minted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_transfer_hash VARCHAR(255),
+    last_transfer_at TIMESTAMP,
+    INDEX idx_cat_nfts_cat_id (cat_id),
+    INDEX idx_cat_nfts_token_contract (token_id, contract_address),
+    INDEX idx_cat_nfts_owner (owner_address)
+);
+
+CREATE TABLE blockchain_transactions (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    transaction_type ENUM('mint', 'transfer', 'trade', 'burn'),
+    transaction_hash VARCHAR(255) UNIQUE NOT NULL,
+    network VARCHAR(50) NOT NULL,
+    from_address VARCHAR(255),
+    to_address VARCHAR(255),
+    gas_used INTEGER,
+    gas_price BIGINT,
+    transaction_fee DECIMAL(20, 8),
+    status ENUM('pending', 'confirmed', 'failed') DEFAULT 'pending',
+    block_number INTEGER,
+    confirmed_at TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+#### CLI Integration
+```bash
+# Mint NFT for a cat
+./cli/purrr nft:mint --cat-id 123 --to 0xRecipient --network ethereum
+
+# Check NFT status
+./cli/purrr nft:status --cat-id 123
+
+# Transfer NFT ownership
+./cli/purrr nft:transfer --token-id 456 --to 0xNewOwner
+
+# Get market data
+./cli/purrr nft:market --cat-id 123
+```
+
+### Machine Learning Personality Models
+
+#### Overview
+Purrr.love uses advanced machine learning models to analyze cat images and predict personality traits, behavior patterns, and compatibility scores. The ML system runs as a separate service and integrates via REST API.
+
+#### ML Architecture
+```
+┌─────────────────────────────────────────────────────────┐
+│                  ML Service Layer                       │
+├─────────────────────────────────────────────────────────┤
+│ TensorFlow │ PyTorch │ OpenCV │ scikit-learn │ Hugging Face │
+├─────────────────────────────────────────────────────────┤
+│      Personality Model │ Behavior Model │ Vision Model    │
+├─────────────────────────────────────────────────────────┤
+│            REST API │ WebSocket │ Background Queue       │
+├─────────────────────────────────────────────────────────┤
+│                  Purrr.love Core                       │
+└─────────────────────────────────────────────────────────┘
+```
+
+#### Personality Analysis Service
+```python
+# sdk/python/services/personality_service.py
+import tensorflow as tf
+import numpy as np
+from flask import Flask, request, jsonify
+import cv2
+import base64
+from io import BytesIO
+from PIL import Image
+
+app = Flask(__name__)
+
+class CatPersonalityAnalyzer:
+    def __init__(self, model_path):
+        self.personality_model = tf.keras.models.load_model(f"{model_path}/personality_model.h5")
+        self.behavior_model = tf.keras.models.load_model(f"{model_path}/behavior_model.h5")
+        self.face_detector = cv2.CascadeClassifier(f"{model_path}/cat_face_cascade.xml")
+        
+        # Personality traits mapping
+        self.personality_traits = [
+            'playful', 'aloof', 'curious', 'lazy', 'territorial', 'social_butterfly'
+        ]
+        
+        # Behavior categories
+        self.behavior_categories = [
+            'energy_level', 'social_preference', 'activity_preference', 
+            'independence_level', 'trainability', 'aggression_level'
+        ]
+    
+    def preprocess_image(self, image_data):
+        # Decode base64 image
+        image_bytes = base64.b64decode(image_data)
+        image = Image.open(BytesIO(image_bytes)).convert('RGB')
+        image_array = np.array(image)
+        
+        # Detect cat face
+        gray = cv2.cvtColor(image_array, cv2.COLOR_RGB2GRAY)
+        faces = self.face_detector.detectMultiScale(gray, 1.3, 5)
+        
+        if len(faces) == 0:
+            # Use full image if no face detected
+            processed_image = cv2.resize(image_array, (224, 224))
+        else:
+            # Crop to face region
+            x, y, w, h = faces[0]
+            face_region = image_array[y:y+h, x:x+w]
+            processed_image = cv2.resize(face_region, (224, 224))
+        
+        # Normalize
+        processed_image = processed_image.astype(np.float32) / 255.0
+        return np.expand_dims(processed_image, axis=0)
+    
+    def predict_personality(self, image_data):
+        processed_image = self.preprocess_image(image_data)
+        
+        # Get personality predictions
+        personality_probs = self.personality_model.predict(processed_image)[0]
+        personality_scores = dict(zip(self.personality_traits, personality_probs))
+        
+        # Get behavior predictions
+        behavior_probs = self.behavior_model.predict(processed_image)[0]
+        behavior_scores = dict(zip(self.behavior_categories, behavior_probs))
+        
+        # Determine primary personality
+        primary_personality = max(personality_scores, key=personality_scores.get)
+        confidence = float(personality_scores[primary_personality])
+        
+        return {
+            'primary_personality': primary_personality,
+            'confidence': confidence,
+            'personality_scores': {k: float(v) for k, v in personality_scores.items()},
+            'behavior_scores': {k: float(v) for k, v in behavior_scores.items()},
+            'recommendations': self.generate_recommendations(primary_personality, behavior_scores)
+        }
+    
+    def generate_recommendations(self, personality, behavior_scores):
+        recommendations = {
+            'playful': {
+                'activities': ['interactive_games', 'toy_play', 'agility_training'],
+                'care_tips': ['Provide plenty of toys', 'Schedule regular play sessions'],
+                'compatibility': ['other_playful_cats', 'active_owners']
+            },
+            'aloof': {
+                'activities': ['solo_exploration', 'puzzle_games', 'observation'],
+                'care_tips': ['Respect personal space', 'Provide quiet hiding spots'],
+                'compatibility': ['independent_cats', 'calm_environments']
+            },
+            # ... other personalities
+        }
+        
+        return recommendations.get(personality, {})
+
+analyzer = CatPersonalityAnalyzer('/app/models')
+
+@app.route('/analyze', methods=['POST'])
+def analyze_personality():
+    try:
+        data = request.json
+        image_data = data['image']
+        
+        result = analyzer.predict_personality(image_data)
+        
+        return jsonify({
+            'success': True,
+            'data': result
+        })
+    
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    return jsonify({
+        'status': 'healthy',
+        'models_loaded': True,
+        'version': '1.0.0'
+    })
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=8088, debug=False)
+```
+
+#### PHP Integration with ML Service
+```php
+class MLPersonalityService {
+    private $serviceUrl;
+    private $timeout;
+    private $cacheEnabled;
+    
+    public function __construct() {
+        $this->serviceUrl = getenv('ML_SERVICE_URL') ?: 'http://127.0.0.1:8088';
+        $this->timeout = (int)(getenv('ML_TIMEOUT_MS') ?: 8000) / 1000;
+        $this->cacheEnabled = getenv('ML_ENABLE_CACHE') === 'true';
+    }
+    
+    public function analyzePersonality($catId, $imageData) {
+        // Check cache first
+        if ($this->cacheEnabled) {
+            $cached = $this->getCachedAnalysis($catId);
+            if ($cached) {
+                return $cached;
+            }
+        }
+        
+        // Prepare request
+        $payload = [
+            'image' => base64_encode($imageData),
+            'cat_id' => $catId
+        ];
+        
+        // Make HTTP request to ML service
+        $ch = curl_init();
+        curl_setopt_array($ch, [
+            CURLOPT_URL => $this->serviceUrl . '/analyze',
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => json_encode($payload),
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => $this->timeout,
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/json',
+                'Accept: application/json'
+            ]
+        ]);
+        
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        
+        if ($httpCode !== 200 || !$response) {
+            throw new Exception('ML service unavailable');
+        }
+        
+        $result = json_decode($response, true);
+        
+        if (!$result['success']) {
+            throw new Exception('ML analysis failed: ' . $result['error']);
+        }
+        
+        $analysis = $result['data'];
+        
+        // Store results in database
+        $this->storePersonalityAnalysis($catId, $analysis);
+        
+        // Cache results
+        if ($this->cacheEnabled) {
+            $this->cacheAnalysis($catId, $analysis);
+        }
+        
+        return $analysis;
+    }
+    
+    public function updateCatPersonality($catId, $analysis) {
+        $pdo = get_db();
+        
+        // Update cat's personality based on ML analysis
+        $stmt = $pdo->prepare("
+            UPDATE cats 
+            SET 
+                personality_type = ?,
+                intelligence = GREATEST(intelligence, ?),
+                social = GREATEST(social, ?),
+                energy_ai_modifier = ?,
+                ml_confidence = ?,
+                ml_analyzed_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        ");
+        
+        $stmt->execute([
+            $analysis['primary_personality'],
+            intval($analysis['behavior_scores']['trainability'] * 100),
+            intval($analysis['behavior_scores']['social_preference'] * 100),
+            $analysis['behavior_scores']['energy_level'],
+            $analysis['confidence'],
+            $catId
+        ]);
+        
+        // Log personality update
+        $this->logPersonalityUpdate($catId, $analysis);
+    }
+}
+```
+
+#### ML Database Schema
+```sql
+CREATE TABLE ml_personality_analyses (
+    id SERIAL PRIMARY KEY,
+    cat_id INTEGER REFERENCES cats(id) ON DELETE CASCADE,
+    primary_personality VARCHAR(50) NOT NULL,
+    confidence_score DECIMAL(5, 4) NOT NULL,
+    personality_scores JSON NOT NULL,
+    behavior_scores JSON NOT NULL,
+    recommendations JSON,
+    model_version VARCHAR(20),
+    analyzed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_ml_analyses_cat_id (cat_id),
+    INDEX idx_ml_analyses_personality (primary_personality)
+);
+
+CREATE TABLE ml_training_feedback (
+    id SERIAL PRIMARY KEY,
+    cat_id INTEGER REFERENCES cats(id) ON DELETE CASCADE,
+    predicted_personality VARCHAR(50),
+    actual_personality VARCHAR(50),
+    user_feedback ENUM('accurate', 'somewhat_accurate', 'inaccurate'),
+    feedback_notes TEXT,
+    submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### Webhook System
+
+#### Overview
+Purrr.love implements a comprehensive webhook system for real-time event notifications to external services. The system supports both outgoing webhooks (sending events) and incoming webhooks (receiving events from external services).
+
+#### Webhook Architecture
+```
+┌─────────────────────────────────────────────────────────┐
+│                Event Generation                         │
+├─────────────────────────────────────────────────────────┤
+│ Cat Created │ Level Up │ Breeding │ Game Win │ NFT Mint │
+├─────────────────────────────────────────────────────────┤
+│                Event Dispatcher                         │
+├─────────────────────────────────────────────────────────┤
+│    Redis Queue │ Retry Logic │ Rate Limiting           │
+├─────────────────────────────────────────────────────────┤
+│             Webhook Delivery Service                    │
+├─────────────────────────────────────────────────────────┤
+│ HTTP Client │ Signature │ Timeout │ Circuit Breaker    │
+├─────────────────────────────────────────────────────────┤
+│                External Services                        │
+└─────────────────────────────────────────────────────────┘
+```
+
+#### Webhook Manager
+```php
+class WebhookManager {
+    private $redis;
+    private $signingSecret;
+    private $maxRetries;
+    
+    public function __construct() {
+        $this->redis = getRedisConnection();
+        $this->signingSecret = getenv('WEBHOOK_SIGNING_SECRET');
+        $this->maxRetries = 5;
+    }
+    
+    public function registerWebhook($userId, $url, $events, $secret = null) {
+        // Validate URL
+        if (!filter_var($url, FILTER_VALIDATE_URL)) {
+            throw new Exception('Invalid webhook URL');
+        }
+        
+        // Test webhook endpoint
+        $testResult = $this->testWebhookEndpoint($url);
+        if (!$testResult['success']) {
+            throw new Exception('Webhook endpoint test failed: ' . $testResult['error']);
+        }
+        
+        $webhook = [
+            'id' => $this->generateWebhookId(),
+            'user_id' => $userId,
+            'url' => $url,
+            'events' => $events,
+            'secret' => $secret ?: $this->generateSecret(),
+            'status' => 'active',
+            'created_at' => time(),
+            'last_success_at' => null,
+            'last_failure_at' => null,
+            'failure_count' => 0
+        ];
+        
+        $this->storeWebhook($webhook);
+        
+        return $webhook;
+    }
+    
+    public function dispatchEvent($eventType, $eventData, $userId = null) {
+        $event = [
+            'id' => $this->generateEventId(),
+            'type' => $eventType,
+            'data' => $eventData,
+            'user_id' => $userId,
+            'timestamp' => time(),
+            'delivered' => false
+        ];
+        
+        // Find matching webhooks
+        $webhooks = $this->getMatchingWebhooks($eventType, $userId);
+        
+        foreach ($webhooks as $webhook) {
+            // Queue webhook delivery
+            $deliveryJob = [
+                'webhook_id' => $webhook['id'],
+                'event' => $event,
+                'attempt' => 1,
+                'scheduled_at' => time()
+            ];
+            
+            $this->queueWebhookDelivery($deliveryJob);
+        }
+        
+        // Store event for audit trail
+        $this->storeWebhookEvent($event);
+        
+        return $event;
+    }
+    
+    public function deliverWebhook($deliveryJob) {
+        $webhook = $this->getWebhookById($deliveryJob['webhook_id']);
+        $event = $deliveryJob['event'];
+        
+        if (!$webhook || $webhook['status'] !== 'active') {
+            return ['success' => false, 'error' => 'Webhook inactive'];
+        }
+        
+        // Prepare payload
+        $payload = [
+            'id' => $event['id'],
+            'type' => $event['type'],
+            'data' => $event['data'],
+            'timestamp' => $event['timestamp'],
+            'webhook_id' => $webhook['id']
+        ];
+        
+        $jsonPayload = json_encode($payload);
+        
+        // Generate signature
+        $signature = $this->generateSignature($jsonPayload, $webhook['secret']);
+        
+        // Send HTTP request
+        $ch = curl_init();
+        curl_setopt_array($ch, [
+            CURLOPT_URL => $webhook['url'],
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => $jsonPayload,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/json',
+                'X-Purrr-Signature: ' . $signature,
+                'X-Purrr-Event-Type: ' . $event['type'],
+                'X-Purrr-Event-ID: ' . $event['id'],
+                'User-Agent: Purrr.love-Webhooks/1.0'
+            ]
+        ]);
+        
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($ch);
+        curl_close($ch);
+        
+        $success = $httpCode >= 200 && $httpCode < 300;
+        
+        // Log delivery attempt
+        $deliveryLog = [
+            'webhook_id' => $webhook['id'],
+            'event_id' => $event['id'],
+            'attempt' => $deliveryJob['attempt'],
+            'http_code' => $httpCode,
+            'response_body' => substr($response, 0, 1000),
+            'curl_error' => $curlError,
+            'success' => $success,
+            'delivered_at' => time()
+        ];
+        
+        $this->logWebhookDelivery($deliveryLog);
+        
+        if ($success) {
+            // Update webhook success timestamp
+            $this->updateWebhookStatus($webhook['id'], 'success');
+            return ['success' => true];
+        } else {
+            // Handle failure
+            $this->updateWebhookStatus($webhook['id'], 'failure');
+            
+            // Schedule retry if within limits
+            if ($deliveryJob['attempt'] < $this->maxRetries) {
+                $this->scheduleWebhookRetry($deliveryJob);
+            } else {
+                // Disable webhook after max retries
+                $this->disableWebhook($webhook['id'], 'Max retries exceeded');
+            }
+            
+            return [
+                'success' => false,
+                'error' => "HTTP {$httpCode}: {$response}",
+                'curl_error' => $curlError
+            ];
+        }
+    }
+    
+    public function processIncomingWebhook($source, $signature, $payload) {
+        // Verify signature
+        if (!$this->verifyIncomingSignature($source, $signature, $payload)) {
+            throw new SecurityException('Invalid webhook signature');
+        }
+        
+        $data = json_decode($payload, true);
+        if (!$data) {
+            throw new Exception('Invalid JSON payload');
+        }
+        
+        // Route to appropriate handler
+        switch ($source) {
+            case 'coinbase':
+                return $this->handleCoinbaseWebhook($data);
+            case 'facebook':
+                return $this->handleFacebookWebhook($data);
+            case 'opensea':
+                return $this->handleOpenSeaWebhook($data);
+            default:
+                throw new Exception('Unknown webhook source');
+        }
+    }
+    
+    private function generateSignature($payload, $secret) {
+        return 'sha256=' . hash_hmac('sha256', $payload, $secret);
+    }
+    
+    private function scheduleWebhookRetry($deliveryJob) {
+        // Exponential backoff: 2^attempt minutes
+        $delayMinutes = pow(2, $deliveryJob['attempt'] - 1);
+        $scheduledAt = time() + ($delayMinutes * 60);
+        
+        $retryJob = $deliveryJob;
+        $retryJob['attempt']++;
+        $retryJob['scheduled_at'] = $scheduledAt;
+        
+        $this->queueWebhookDelivery($retryJob, $delayMinutes * 60);
+    }
+}
+```
+
+#### Webhook Database Schema
+```sql
+CREATE TABLE webhooks (
+    id VARCHAR(32) PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    url VARCHAR(500) NOT NULL,
+    events JSON NOT NULL,
+    secret VARCHAR(255) NOT NULL,
+    status ENUM('active', 'inactive', 'failed') DEFAULT 'active',
+    failure_count INTEGER DEFAULT 0,
+    last_success_at TIMESTAMP NULL,
+    last_failure_at TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_webhooks_user_status (user_id, status)
+);
+
+CREATE TABLE webhook_events (
+    id VARCHAR(32) PRIMARY KEY,
+    type VARCHAR(100) NOT NULL,
+    data JSON NOT NULL,
+    user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    delivered BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_webhook_events_type_created (type, created_at),
+    INDEX idx_webhook_events_user_created (user_id, created_at)
+);
+
+CREATE TABLE webhook_deliveries (
+    id SERIAL PRIMARY KEY,
+    webhook_id VARCHAR(32) REFERENCES webhooks(id) ON DELETE CASCADE,
+    event_id VARCHAR(32) REFERENCES webhook_events(id) ON DELETE CASCADE,
+    attempt INTEGER NOT NULL,
+    http_code INTEGER,
+    response_body TEXT,
+    curl_error VARCHAR(500),
+    success BOOLEAN NOT NULL,
+    delivered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_webhook_deliveries_webhook_event (webhook_id, event_id)
+);
+```
+
+### Lost Pet Finder System
+
+#### Overview
+The Lost Pet Finder is a comprehensive system for helping reunite lost pets with their owners. It integrates with the main Purrr.love platform while maintaining its own specialized features for pet recovery.
+
+#### System Architecture
+```
+┌─────────────────────────────────────────────────────────┐
+│              Lost Pet Finder Frontend                   │
+├─────────────────────────────────────────────────────────┤
+│ React Web App │ Mobile App │ Facebook Integration       │
+├─────────────────────────────────────────────────────────┤
+│                 API Gateway                             │
+├─────────────────────────────────────────────────────────┤
+│ Search Engine │ Geolocation │ Image Recognition         │
+├─────────────────────────────────────────────────────────┤
+│       PostgreSQL + PostGIS │ Redis │ S3 Storage        │
+├─────────────────────────────────────────────────────────┤
+│   External: Maps API │ Facebook API │ SMS Gateway      │
+└─────────────────────────────────────────────────────────┘
+```
+
+#### Core Lost Pet Finder Class
+```php
+class LostPetFinder {
+    private $pdo;
+    private $redis;
+    private $mapsProvider;
+    private $defaultRadius;
+    
+    public function __construct() {
+        $this->pdo = get_db();
+        $this->redis = getRedisConnection();
+        $this->mapsProvider = getenv('MAPS_PROVIDER') ?: 'mapbox';
+        $this->defaultRadius = (float)(getenv('LOST_PET_FINDER_DEFAULT_RADIUS_KM') ?: 10);
+    }
+    
+    public function reportLostPet($reportData) {
+        // Validate required fields
+        $required = ['pet_name', 'pet_type', 'breed', 'color', 'last_seen_location', 
+                    'last_seen_date', 'contact_phone', 'contact_email'];
+        
+        foreach ($required as $field) {
+            if (empty($reportData[$field])) {
+                throw new ValidationException("Field '{$field}' is required");
+            }
+        }
+        
+        // Geocode location
+        $coordinates = $this->geocodeLocation($reportData['last_seen_location']);
+        
+        // Process uploaded images
+        $imageUrls = [];
+        if (!empty($reportData['images'])) {
+            foreach ($reportData['images'] as $image) {
+                $imageUrl = $this->processAndStoreImage($image, 'lost_pets');
+                $imageUrls[] = $imageUrl;
+            }
+        }
+        
+        // Create lost pet report
+        $stmt = $this->pdo->prepare("
+            INSERT INTO lost_pets (
+                id, pet_name, pet_type, breed, color, size, age, 
+                description, distinctive_features, last_seen_location,
+                last_seen_coordinates, last_seen_date, contact_name,
+                contact_phone, contact_email, reward_amount, images,
+                status, reported_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ST_GeomFromText(?), ?, ?, ?, ?, ?, ?, 'active', NOW())
+        ");
+        
+        $lostPetId = $this->generateId();
+        $geoPoint = "POINT({$coordinates['lng']} {$coordinates['lat']})";
+        
+        $stmt->execute([
+            $lostPetId,
+            $reportData['pet_name'],
+            $reportData['pet_type'],
+            $reportData['breed'],
+            $reportData['color'],
+            $reportData['size'] ?? 'medium',
+            $reportData['age'] ?? null,
+            $reportData['description'] ?? '',
+            $reportData['distinctive_features'] ?? '',
+            $reportData['last_seen_location'],
+            $geoPoint,
+            $reportData['last_seen_date'],
+            $reportData['contact_name'] ?? '',
+            $reportData['contact_phone'],
+            $reportData['contact_email'],
+            $reportData['reward_amount'] ?? 0,
+            json_encode($imageUrls)
+        ]);
+        
+        // Send notifications to nearby users
+        $this->notifyNearbyUsers($lostPetId, $coordinates, $this->defaultRadius);
+        
+        // Create Facebook post if enabled
+        if (getenv('FACEBOOK_AUTO_POST') === 'true') {
+            $this->createFacebookPost($lostPetId);
+        }
+        
+        // Dispatch webhook event
+        $webhookManager = new WebhookManager();
+        $webhookManager->dispatchEvent('lost_pet.reported', [
+            'lost_pet_id' => $lostPetId,
+            'pet_name' => $reportData['pet_name'],
+            'location' => $reportData['last_seen_location'],
+            'contact_phone' => $reportData['contact_phone']
+        ]);
+        
+        return [
+            'success' => true,
+            'lost_pet_id' => $lostPetId,
+            'coordinates' => $coordinates,
+            'nearby_users_notified' => $this->countNearbyUsers($coordinates, $this->defaultRadius)
+        ];
+    }
+    
+    public function reportSighting($sightingData) {
+        // Validate sighting data
+        if (empty($sightingData['lost_pet_id']) || empty($sightingData['location'])) {
+            throw new ValidationException('Lost pet ID and location are required');
+        }
+        
+        // Verify lost pet exists and is active
+        $lostPet = $this->getLostPetById($sightingData['lost_pet_id']);
+        if (!$lostPet || $lostPet['status'] !== 'active') {
+            throw new Exception('Lost pet report not found or inactive');
+        }
+        
+        // Geocode sighting location
+        $coordinates = $this->geocodeLocation($sightingData['location']);
+        
+        // Process sighting images
+        $imageUrls = [];
+        if (!empty($sightingData['images'])) {
+            foreach ($sightingData['images'] as $image) {
+                $imageUrl = $this->processAndStoreImage($image, 'sightings');
+                $imageUrls[] = $imageUrl;
+            }
+        }
+        
+        // Create sighting record
+        $stmt = $this->pdo->prepare("
+            INSERT INTO pet_sightings (
+                id, lost_pet_id, sighting_location, sighting_coordinates,
+                sighting_date, description, contact_name, contact_phone,
+                contact_email, images, confidence_level, verified,
+                reported_at
+            ) VALUES (?, ?, ?, ST_GeomFromText(?), ?, ?, ?, ?, ?, ?, ?, FALSE, NOW())
+        ");
+        
+        $sightingId = $this->generateId();
+        $geoPoint = "POINT({$coordinates['lng']} {$coordinates['lat']})";
+        
+        $stmt->execute([
+            $sightingId,
+            $sightingData['lost_pet_id'],
+            $sightingData['location'],
+            $geoPoint,
+            $sightingData['sighting_date'] ?? date('Y-m-d H:i:s'),
+            $sightingData['description'] ?? '',
+            $sightingData['contact_name'] ?? '',
+            $sightingData['contact_phone'] ?? '',
+            $sightingData['contact_email'] ?? '',
+            json_encode($imageUrls),
+            $sightingData['confidence_level'] ?? 'medium'
+        ]);
+        
+        // Notify pet owner
+        $this->notifyPetOwner($lostPet, $sightingId, $coordinates);
+        
+        // Update lost pet with latest sighting info
+        $this->updateLastSighting($sightingData['lost_pet_id'], $coordinates);
+        
+        return [
+            'success' => true,
+            'sighting_id' => $sightingId,
+            'distance_from_last_seen' => $this->calculateDistance(
+                $lostPet['last_seen_coordinates'], 
+                $coordinates
+            )
+        ];
+    }
+    
+    public function searchLostPets($searchCriteria) {
+        $sql = "
+            SELECT 
+                id, pet_name, pet_type, breed, color, size,
+                description, last_seen_location, last_seen_date,
+                contact_name, contact_phone, reward_amount, images,
+                ST_X(last_seen_coordinates) as lng,
+                ST_Y(last_seen_coordinates) as lat,
+                ST_Distance_Sphere(last_seen_coordinates, ST_GeomFromText(?)) / 1000 as distance_km
+            FROM lost_pets 
+            WHERE status = 'active'
+        ";
+        
+        $params = [];
+        $geoPoint = null;
+        
+        // Add location-based search
+        if (!empty($searchCriteria['location'])) {
+            $coordinates = $this->geocodeLocation($searchCriteria['location']);
+            $geoPoint = "POINT({$coordinates['lng']} {$coordinates['lat']})";
+            $params[] = $geoPoint;
+            
+            $radius = $searchCriteria['radius'] ?? $this->defaultRadius;
+            $sql .= " AND ST_Distance_Sphere(last_seen_coordinates, ST_GeomFromText(?)) <= ? * 1000";
+            $params[] = $geoPoint;
+            $params[] = $radius;
+        }
+        
+        // Add pet type filter
+        if (!empty($searchCriteria['pet_type'])) {
+            $sql .= " AND pet_type = ?";
+            $params[] = $searchCriteria['pet_type'];
+        }
+        
+        // Add breed filter
+        if (!empty($searchCriteria['breed'])) {
+            $sql .= " AND breed LIKE ?";
+            $params[] = '%' . $searchCriteria['breed'] . '%';
+        }
+        
+        // Add color filter
+        if (!empty($searchCriteria['color'])) {
+            $sql .= " AND color LIKE ?";
+            $params[] = '%' . $searchCriteria['color'] . '%';
+        }
+        
+        // Add date range filter
+        if (!empty($searchCriteria['date_from'])) {
+            $sql .= " AND last_seen_date >= ?";
+            $params[] = $searchCriteria['date_from'];
+        }
+        
+        if (!empty($searchCriteria['date_to'])) {
+            $sql .= " AND last_seen_date <= ?";
+            $params[] = $searchCriteria['date_to'];
+        }
+        
+        // Order by relevance (distance if location provided, otherwise date)
+        if ($geoPoint) {
+            $sql .= " ORDER BY distance_km ASC, last_seen_date DESC";
+        } else {
+            $sql .= " ORDER BY last_seen_date DESC";
+        }
+        
+        // Add limit
+        $limit = min((int)($searchCriteria['limit'] ?? 50), 100);
+        $sql .= " LIMIT {$limit}";
+        
+        // If no location provided, add dummy parameter for first placeholder
+        if (!$geoPoint) {
+            array_unshift($params, 'POINT(0 0)');
+        }
+        
+        $stmt = $this->pdo->prepare($sql);
+        $stmt->execute($params);
+        
+        $results = $stmt->fetchAll();
+        
+        // Process results
+        foreach ($results as &$result) {
+            $result['images'] = json_decode($result['images'], true) ?: [];
+            $result['sightings_count'] = $this->countSightings($result['id']);
+            $result['days_missing'] = ceil((time() - strtotime($result['last_seen_date'])) / 86400);
+        }
+        
+        return $results;
+    }
+    
+    private function notifyNearbyUsers($lostPetId, $coordinates, $radius) {
+        // Find users within radius who have opted in for notifications
+        $stmt = $this->pdo->prepare("
+            SELECT DISTINCT u.id, u.email, u.phone, up.notification_preferences
+            FROM users u
+            JOIN user_profiles up ON u.id = up.user_id
+            LEFT JOIN user_locations ul ON u.id = ul.user_id
+            WHERE 
+                up.lost_pet_notifications = TRUE
+                AND ul.coordinates IS NOT NULL
+                AND ST_Distance_Sphere(ul.coordinates, ST_GeomFromText(?)) <= ? * 1000
+        ");
+        
+        $geoPoint = "POINT({$coordinates['lng']} {$coordinates['lat']})";
+        $stmt->execute([$geoPoint, $radius]);
+        
+        $nearbyUsers = $stmt->fetchAll();
+        
+        foreach ($nearbyUsers as $user) {
+            // Queue notification
+            $this->queueNotification($user['id'], 'lost_pet_nearby', [
+                'lost_pet_id' => $lostPetId,
+                'distance' => $this->calculateDistance($user['coordinates'], $coordinates)
+            ]);
+        }
+        
+        return count($nearbyUsers);
+    }
+}
+```
+
+#### Lost Pet Finder Database Schema
+```sql
+CREATE TABLE lost_pets (
+    id VARCHAR(32) PRIMARY KEY,
+    pet_name VARCHAR(100) NOT NULL,
+    pet_type ENUM('cat', 'dog', 'bird', 'rabbit', 'other') NOT NULL,
+    breed VARCHAR(100),
+    color VARCHAR(100) NOT NULL,
+    size ENUM('tiny', 'small', 'medium', 'large', 'giant') DEFAULT 'medium',
+    age VARCHAR(50),
+    description TEXT,
+    distinctive_features TEXT,
+    last_seen_location VARCHAR(500) NOT NULL,
+    last_seen_coordinates POINT NOT NULL,
+    last_seen_date DATETIME NOT NULL,
+    contact_name VARCHAR(100),
+    contact_phone VARCHAR(20) NOT NULL,
+    contact_email VARCHAR(255) NOT NULL,
+    reward_amount DECIMAL(10, 2) DEFAULT 0,
+    images JSON,
+    status ENUM('active', 'found', 'inactive') DEFAULT 'active',
+    reported_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    found_at TIMESTAMP NULL,
+    SPATIAL INDEX idx_lost_pets_coordinates (last_seen_coordinates),
+    INDEX idx_lost_pets_type_status (pet_type, status),
+    INDEX idx_lost_pets_date_status (last_seen_date, status)
+);
+
+CREATE TABLE pet_sightings (
+    id VARCHAR(32) PRIMARY KEY,
+    lost_pet_id VARCHAR(32) REFERENCES lost_pets(id) ON DELETE CASCADE,
+    sighting_location VARCHAR(500) NOT NULL,
+    sighting_coordinates POINT NOT NULL,
+    sighting_date DATETIME NOT NULL,
+    description TEXT,
+    contact_name VARCHAR(100),
+    contact_phone VARCHAR(20),
+    contact_email VARCHAR(255),
+    images JSON,
+    confidence_level ENUM('low', 'medium', 'high') DEFAULT 'medium',
+    verified BOOLEAN DEFAULT FALSE,
+    reported_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    SPATIAL INDEX idx_sightings_coordinates (sighting_coordinates),
+    INDEX idx_sightings_lost_pet_date (lost_pet_id, sighting_date),
+    INDEX idx_sightings_confidence (confidence_level, verified)
+);
+
+CREATE TABLE user_locations (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    coordinates POINT NOT NULL,
+    address VARCHAR(500),
+    location_type ENUM('home', 'work', 'current') DEFAULT 'current',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_user_type (user_id, location_type),
+    SPATIAL INDEX idx_user_locations_coordinates (coordinates)
+);
+```
+
+#### CLI Integration for Lost Pet Finder
+```bash
+# Search for lost pets near a location
+./cli/purrr lost-pet:search --near "37.7749,-122.4194" --radius 10 --type cat
+
+# Report a new lost pet
+./cli/purrr lost-pet:report --name "Fluffy" --type cat --breed "Persian" --location "Central Park, NYC"
+
+# Report a sighting
+./cli/purrr lost-pet:sighting --lost-pet-id abc123 --location "5th Avenue, NYC" --description "Saw a Persian cat"
+
+# Get analytics
+./cli/purrr lost-pet:stats --timeframe 30d
+
+# Seed test data
+./cli/purrr lost-pet:seed --count 50 --area "san-francisco"
+```
 
 ### VR Integration
 

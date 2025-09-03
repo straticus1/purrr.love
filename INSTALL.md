@@ -19,6 +19,12 @@ This document provides comprehensive installation instructions for the Purrr.lov
   - [OAuth2 Setup](#oauth2-setup)
   - [AI Services Integration](#ai-services-integration)
 - [Security Setup](#security-setup)
+- [Advanced Features Setup](#advanced-features-setup)
+  - [Blockchain and NFT Setup](#blockchain-and-nft-setup)
+  - [Machine Learning Personality Models](#machine-learning-personality-models)
+  - [Redis and Queueing](#redis-and-queueing)
+  - [Webhook Integration](#webhook-integration)
+  - [Lost Pet Finder System](#lost-pet-finder-system)
 - [Troubleshooting](#troubleshooting)
 
 ## 📋 Prerequisites
@@ -1099,6 +1105,149 @@ add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'" always;
 add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
 ```
+
+## 🚀 Advanced Features Setup
+
+This section covers setup for the advanced capabilities introduced in v2.1.0: blockchain/NFT support, ML-based cat personality models, webhooks, Redis-backed queues, and the Lost Pet Finder system.
+
+### Blockchain and NFT Setup
+
+1. Configure environment variables (recommended via .env):
+   ```bash
+   # Blockchain
+   WEB3_PROVIDER_URL=https://mainnet.infura.io/v3/{{INFURA_PROJECT_ID}}
+   WEB3_NETWORK=ethereum
+   NFT_CONTRACT_ADDRESS=0xYourContract
+   NFT_MINT_WALLET=0xYourMintWallet
+   NFT_MINT_PRIVATE_KEY={{NFT_MINT_PRIVATE_KEY}}
+   
+   # Optional Solana config
+   SOLANA_RPC_URL=https://api.mainnet-beta.solana.com
+   SOLANA_WALLET_PRIVATE_KEY={{SOLANA_WALLET_PRIVATE_KEY}}
+   ```
+2. Add crypto webhook secret and callback URL:
+   ```bash
+   COINBASE_WEBHOOK_SECRET={{COINBASE_WEBHOOK_SECRET}}
+   CRYPTO_WEBHOOK_URL=https://your-domain.com/api/webhooks/crypto
+   ```
+3. Verify contract addresses in config/crypto.php and run a dry-run:
+   ```bash
+   ./cli/purrr crypto:test
+   ```
+4. If you will mint NFTs, test on a testnet first:
+   ```bash
+   WEB3_NETWORK=sepolia
+   WEB3_PROVIDER_URL=https://sepolia.infura.io/v3/{{INFURA_PROJECT_ID}}
+   ./cli/purrr nft:mint --to 0xRecipient --metadata ./metadata/example.json --network sepolia --dry-run
+   ```
+
+### Machine Learning Personality Models
+
+Purrr.love can score cat personalities with an ML service. You can run the service locally or use a remote endpoint.
+
+1. Local service (Python):
+   ```bash
+   # Create virtualenv
+   python3 -m venv ml_env && source ml_env/bin/activate
+   
+   # Install dependencies
+   pip install -r sdk/python/requirements-ml.txt
+   
+   # Download models (example)
+   python sdk/python/tools/download_models.py --dest models/
+   
+   # Start local service
+   python sdk/python/services/personality_service.py --host 127.0.0.1 --port 8088 --model-dir models/
+   ```
+2. Configure the app to use the service:
+   ```bash
+   ML_SERVICE_URL=http://127.0.0.1:8088
+   ML_TIMEOUT_MS=8000
+   ML_ENABLE_CACHE=true
+   ```
+3. Test ML scoring:
+   ```bash
+   ./cli/purrr ml:score --image ./samples/cat.jpg
+   ```
+
+### Redis and Queueing
+
+Redis is used for caching, rate limiting, and background queues. If you followed Security Setup, Redis is already installed. Add queue configuration:
+```bash
+QUEUE_DRIVER=redis
+QUEUE_REDIS_DB=1
+QUEUE_CONCURRENCY=4
+QUEUE_VISIBILITY_TIMEOUT=60
+```
+Run workers (systemd example):
+```bash
+sudo cp systemd/purrr-queue-worker.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now purrr-queue-worker
+```
+
+### Webhook Integration
+
+1. Enable webhooks in configuration and set secrets:
+   ```bash
+   WEBHOOKS_ENABLED=true
+   WEBHOOK_SIGNING_SECRET={{WEBHOOK_SIGNING_SECRET}}
+   WEBHOOK_RETRY_BACKOFF=2,4,8,16,32
+   WEBHOOK_MAX_RETRIES=5
+   ```
+2. Register outgoing webhooks:
+   ```bash
+   ./cli/purrr webhook:add --event cat.created --url https://example.com/hooks/cat
+   ./cli/purrr webhook:add --event lost_pet.reported --url https://example.com/hooks/lost-pet
+   ./cli/purrr webhook:list
+   ```
+3. Expose inbound webhook endpoints (reverse proxy must forward POSTs):
+   - Crypto: /api/webhooks/crypto
+   - Facebook: /api/webhooks/facebook
+   - General: /api/webhooks/events
+
+### Lost Pet Finder System
+
+The Lost Pet Finder is a standalone module integrated with the main platform.
+
+1. Import schema:
+   ```bash
+   # MySQL
+   mysql -u purrr_user -p purrr_love < database/lost_pet_finder_schema.sql
+   
+   # PostgreSQL
+   psql -U purrr_user -d purrr_love -f database/lost_pet_finder_schema.sql
+   ```
+2. Configure environment:
+   ```bash
+   LOST_PET_FINDER_ENABLED=true
+   MAPS_PROVIDER=mapbox
+   MAPBOX_TOKEN={{MAPBOX_TOKEN}}
+   FACEBOOK_APP_ID={{FACEBOOK_APP_ID}}
+   FACEBOOK_APP_SECRET={{FACEBOOK_APP_SECRET}}
+   LOST_PET_FINDER_DEFAULT_RADIUS_KM=10
+   LOST_PET_FINDER_IMAGE_MAX_MB=8
+   ```
+3. Enable PostGIS (if using PostgreSQL with geospatial search):
+   ```sql
+   CREATE EXTENSION IF NOT EXISTS postgis;
+   ```
+4. Seed data and test CLI:
+   ```bash
+   ./cli/purrr lost-pet:seed --count 10
+   ./cli/purrr lost-pet:search --near "37.7749,-122.4194" --radius 5
+   ```
+5. Configure cron jobs:
+   ```bash
+   # Expire old sightings daily
+   15 1 * * * php /path/to/purrr.love/cli/cron/lost_pet_cleanup.php > /dev/null 2>&1
+   
+   # Rebuild geospatial indexes
+   30 1 * * * php /path/to/purrr.love/cli/cron/lost_pet_reindex.php > /dev/null 2>&1
+   ```
+6. Web interface paths:
+   - User portal: /web/lost_pet_finder.php
+   - Admin: /web/admin/lost_pet_finder_admin.php
 
 ## 🔍 Troubleshooting
 
