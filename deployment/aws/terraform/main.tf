@@ -1,5 +1,5 @@
 # 🚀 Purrr.love AWS Infrastructure
-# Terraform configuration for containerized deployment
+# Production-ready Terraform configuration for containerized deployment
 
 terraform {
   required_version = ">= 1.0"
@@ -7,6 +7,10 @@ terraform {
     aws = {
       source  = "hashicorp/aws"
       version = "~> 5.0"
+    }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.1"
     }
   }
   
@@ -17,16 +21,45 @@ terraform {
   }
 }
 
+# Default AWS provider
 provider "aws" {
   region = var.aws_region
   
   default_tags {
     tags = {
-      Project     = "purrr-love"
+      Project     = "purrr"
       Environment = var.environment
       ManagedBy   = "terraform"
       Owner       = "purrr-love-team"
+      CreatedBy   = "terraform"
     }
+  }
+}
+
+# US East 1 provider for CloudFront and ACM certificates
+provider "aws" {
+  alias  = "us_east_1"
+  region = "us-east-1"
+  
+  default_tags {
+    tags = {
+      Project     = "purrr"
+      Environment = var.environment
+      ManagedBy   = "terraform"
+      Owner       = "purrr-love-team"
+      CreatedBy   = "terraform"
+    }
+  }
+}
+
+# Common tags for all resources
+locals {
+  common_tags = {
+    Project     = "purrr"
+    Environment = var.environment
+    ManagedBy   = "terraform"
+    Owner       = "purrr-love-team"
+    CreatedBy   = "terraform"
   }
 }
 
@@ -34,55 +67,127 @@ provider "aws" {
 module "vpc" {
   source = "./modules/vpc"
   
-  environment = var.environment
-  vpc_cidr   = var.vpc_cidr
-  azs         = var.availability_zones
+  environment    = var.environment
+  project_name   = var.project_name
+  vpc_cidr_block = var.vpc_cidr_block
+  availability_zones = var.availability_zones
   
-  public_subnets  = var.public_subnet_cidrs
-  private_subnets = var.private_subnet_cidrs
+  public_subnet_cidrs   = var.public_subnet_cidrs
+  private_subnet_cidrs  = var.private_subnet_cidrs
+  database_subnet_cidrs = var.database_subnet_cidrs
   
-  enable_nat_gateway = true
-  single_nat_gateway = var.environment != "production"
+  enable_nat_gateway = var.enable_nat_gateway
+  single_nat_gateway = var.single_nat_gateway
+  enable_vpc_endpoints = var.enable_vpc_endpoints
+  enable_flow_logs   = var.enable_flow_logs
+  
+  common_tags = local.common_tags
 }
 
 # Security Groups
 module "security_groups" {
   source = "./modules/security_groups"
   
-  vpc_id = module.vpc.vpc_id
-  environment = var.environment
+  environment      = var.environment
+  project_name     = var.project_name
+  vpc_id          = module.vpc.vpc_id
+  vpc_cidr_block  = var.vpc_cidr_block
+  
+  application_port     = var.application_port
+  database_port        = var.database_port
+  admin_cidr_blocks    = var.admin_cidr_blocks
+  
+  enable_redis         = var.enable_redis
+  enable_bastion       = var.enable_bastion
+  enable_efs           = var.enable_efs
+  enable_vpc_endpoints = var.enable_vpc_endpoints
+  
+  common_tags = local.common_tags
 }
 
 # RDS Database
 module "database" {
   source = "./modules/database"
   
-  environment     = var.environment
-  vpc_id         = module.vpc.vpc_id
-  private_subnets = module.vpc.private_subnets
-  security_group_id = module.security_groups.database_security_group_id
+  environment   = var.environment
+  project_name  = var.project_name
   
-  db_instance_class = var.database_instance_class
-  db_allocated_storage = var.database_allocated_storage
-  db_username = var.database_username
-  db_password = var.database_password
+  # Database Configuration
+  db_engine         = var.db_engine
+  db_engine_version = var.db_engine_version
+  db_instance_class = var.db_instance_class
+  db_name          = var.db_name
+  db_username      = var.db_username
+  db_password      = var.db_password
+  database_port    = var.database_port
+  
+  # Storage
+  db_allocated_storage     = var.db_allocated_storage
+  db_max_allocated_storage = var.db_max_allocated_storage
+  enable_encryption        = var.db_enable_encryption
+  
+  # Network
+  subnet_ids         = module.vpc.database_subnet_ids
+  security_group_ids = [module.security_groups.database_security_group_id]
+  
+  # Backup and Maintenance
+  backup_retention_period = var.db_backup_retention_period
+  backup_window          = var.db_backup_window
+  maintenance_window     = var.db_maintenance_window
+  
+  # High Availability
+  multi_az             = var.environment == "production" ? true : var.db_multi_az
+  create_read_replica  = var.db_create_read_replica
+  
+  # Monitoring
+  enhanced_monitoring_interval     = var.db_enhanced_monitoring_interval
+  enable_performance_insights      = var.db_enable_performance_insights
+  
+  common_tags = local.common_tags
 }
 
-# ECS Cluster
+# ECS Cluster and Service
 module "ecs" {
   source = "./modules/ecs"
   
-  environment = var.environment
-  vpc_id     = module.vpc.vpc_id
+  environment  = var.environment
+  project_name = var.project_name
   
-  public_subnets  = module.vpc.public_subnets
-  private_subnets = module.vpc.private_subnets
+  # Container Configuration
+  container_image  = var.container_image
+  container_port   = var.container_port
+  container_cpu    = var.container_cpu
+  container_memory = var.container_memory
   
-  security_group_id = module.security_groups.ecs_security_group_id
+  # Task Configuration
+  task_cpu    = var.task_cpu
+  task_memory = var.task_memory
   
-  app_image = var.app_image
-  app_port  = var.app_port
-  app_count = var.app_count
+  # Service Configuration
+  desired_count = var.ecs_desired_count
+  
+  # Network Configuration
+  subnet_ids         = var.ecs_use_public_subnets ? module.vpc.public_subnet_ids : module.vpc.private_subnet_ids
+  security_group_ids = [module.security_groups.web_security_group_id]
+  assign_public_ip   = var.ecs_assign_public_ip
+  
+  # Load Balancer Integration
+  target_group_arn = module.alb.target_group_arn
+  
+  # Auto Scaling
+  enable_auto_scaling      = var.ecs_enable_auto_scaling
+  autoscaling_min_capacity = var.ecs_autoscaling_min_capacity
+  autoscaling_max_capacity = var.ecs_autoscaling_max_capacity
+  
+  # Fargate Configuration
+  enable_fargate     = var.ecs_enable_fargate
+  use_fargate_spot   = var.ecs_use_fargate_spot
+  
+  # Monitoring
+  enable_container_insights = var.ecs_enable_container_insights
+  log_retention_days       = var.log_retention_days
+  
+  common_tags = local.common_tags
   
   depends_on = [module.database]
 }
@@ -91,58 +196,31 @@ module "ecs" {
 module "alb" {
   source = "./modules/alb"
   
-  environment = var.environment
-  vpc_id     = module.vpc.vpc_id
+  environment  = var.environment
+  project_name = var.project_name
   
-  public_subnets = module.vpc.public_subnets
-  security_group_id = module.security_groups.alb_security_group_id
+  # Network Configuration
+  vpc_id             = module.vpc.vpc_id
+  subnet_ids         = module.vpc.public_subnet_ids
+  security_group_ids = [module.security_groups.alb_security_group_id]
   
-  app_port = var.app_port
-}
-
-# S3 and CloudFront
-module "storage" {
-  source = "./modules/storage"
+  # Target Configuration
+  target_port = var.container_port
+  target_type = "ip"
   
-  environment = var.environment
-  domain_name = var.domain_name
-}
-
-# ElastiCache Redis
-module "redis" {
-  source = "./modules/redis"
+  # SSL Configuration
+  certificate_arn = var.certificate_arn
+  ssl_policy     = var.ssl_policy
   
-  environment = var.environment
-  vpc_id     = module.vpc.vpc_id
+  # Health Check
+  health_check_path = var.health_check_path
   
-  private_subnets = module.vpc.private_subnets
-  security_group_id = module.security_groups.redis_security_group_id
+  # Load Balancer Settings
+  enable_deletion_protection = var.environment == "production" ? true : var.alb_enable_deletion_protection
+  enable_access_logs        = var.alb_enable_access_logs
+  access_logs_bucket        = var.alb_access_logs_bucket
   
-  node_type = var.redis_node_type
-  num_cache_nodes = var.redis_num_cache_nodes
-}
-
-# CloudWatch Monitoring
-module "monitoring" {
-  source = "./modules/monitoring"
-  
-  environment = var.environment
-  ecs_cluster_name = module.ecs.cluster_name
-  rds_instance_id = module.database.instance_id
-}
-
-# Route53 DNS
-module "dns" {
-  source = "./modules/dns"
-  
-  environment = var.environment
-  domain_name = var.domain_name
-  
-  alb_dns_name = module.alb.dns_name
-  alb_zone_id = module.alb.zone_id
-  
-  cloudfront_domain_name = module.storage.cloudfront_domain_name
-  cloudfront_zone_id = module.storage.cloudfront_zone_id
+  common_tags = local.common_tags
 }
 
 # Outputs
