@@ -1,8 +1,11 @@
 <?php
 /**
- * 🐱 Purrr.love - AI Cat Personality Analysis
- * ✨ Beautiful, animated, and feature-rich AI personality interface
+ * 🧠 Purrr.love - AI Personality Analysis
+ * AI-powered cat personality insights and recommendations
  */
+
+// Define secure access for includes
+define('SECURE_ACCESS', true);
 
 session_start();
 require_once '../includes/functions.php';

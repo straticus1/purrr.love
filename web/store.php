@@ -1,7 +1,11 @@
 <?php
 /**
- * 🐱 Purrr.love - Cat Store
+ * 🛒 Purrr.love - Virtual Store
+ * Shop for cat items, toys, and accessories
  */
+
+// Define secure access for includes
+define('SECURE_ACCESS', true);
 
 session_start();
 require_once '../includes/functions.php';

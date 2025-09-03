@@ -1,8 +1,11 @@
 <?php
 /**
- * 🐱 Purrr.love - Modern Cat Management Interface
- * ✨ Beautiful, animated, and feature-rich cat management
+ * 🐱 Purrr.love - Cat Management
+ * Manage your feline companions with love and care
  */
+
+// Define secure access for includes
+define('SECURE_ACCESS', true);
 
 session_start();
 require_once '../includes/functions.php';

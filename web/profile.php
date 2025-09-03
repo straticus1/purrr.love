@@ -1,7 +1,11 @@
 <?php
 /**
- * 🐱 Purrr.love - User Profile
+ * 👤 Purrr.love - User Profile
+ * Manage your account settings and preferences
  */
+
+// Define secure access for includes
+define('SECURE_ACCESS', true);
 
 session_start();
 require_once '../includes/functions.php';

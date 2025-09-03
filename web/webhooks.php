@@ -1,7 +1,11 @@
 <?php
 /**
- * 🐱 Purrr.love - Webhook Management
+ * 🔌 Purrr.love - Webhooks & API
+ * External integrations and API endpoints
  */
+
+// Define secure access for includes
+define('SECURE_ACCESS', true);
 
 session_start();
 require_once '../includes/functions.php';

@@ -1,7 +1,11 @@
 <?php
 /**
- * 🐱 Purrr.love - Blockchain & NFT
+ * 🔗 Purrr.love - Blockchain & NFT
+ * Cryptocurrency and NFT integration for cats
  */
+
+// Define secure access for includes
+define('SECURE_ACCESS', true);
 
 session_start();
 require_once '../includes/functions.php';

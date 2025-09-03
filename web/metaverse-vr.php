@@ -1,7 +1,11 @@
 <?php
 /**
- * 🐱 Purrr.love - Metaverse & VR
+ * 🥽 Purrr.love - Metaverse & VR
+ * Virtual reality experiences and 3D worlds
  */
+
+// Define secure access for includes
+define('SECURE_ACCESS', true);
 
 session_start();
 require_once '../includes/functions.php';

@@ -226,7 +226,7 @@ resource "aws_lb_target_group" "app" {
     healthy_threshold   = 2
     interval            = 30
     matcher             = "200"
-    path                = "/"
+    path                = "/health.php"
     port                = "traffic-port"
     protocol            = "HTTP"
     timeout             = 5
@@ -301,7 +301,7 @@ resource "aws_ecs_task_definition" "app" {
   container_definitions = jsonencode([
     {
       name  = "app"
-      image = "515966511618.dkr.ecr.us-east-1.amazonaws.com/purrr-love:final-v2"
+      image = "515966511618.dkr.ecr.us-east-1.amazonaws.com/purrr-love:v2.1.2"
       portMappings = [
         {
           containerPort = 80

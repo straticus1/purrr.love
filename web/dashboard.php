@@ -1,8 +1,11 @@
 <?php
 /**
- * 🐱 Purrr.love - Modern User Dashboard
- * ✨ Beautiful, animated, and feature-rich interface
+ * 🐱 Purrr.love - User Dashboard
+ * Central hub for user activities and cat management
  */
+
+// Define secure access for includes
+define('SECURE_ACCESS', true);
 
 session_start();
 require_once '../includes/functions.php';

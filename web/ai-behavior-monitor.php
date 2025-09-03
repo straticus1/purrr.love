@@ -1,8 +1,11 @@
 <?php
 /**
  * 🧠 Purrr.love - AI Behavior Monitor
- * ✨ Real-time cat behavior analysis and monitoring
+ * Real-time AI-powered cat behavior analysis and monitoring
  */
+
+// Define secure access for includes
+define('SECURE_ACCESS', true);
 
 session_start();
 require_once '../includes/functions.php';

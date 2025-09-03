@@ -1,7 +1,11 @@
 <?php
 /**
- * 🐱 Purrr.love - Admin Panel
+ * ⚙️ Purrr.love - Admin Panel
+ * System administration and management tools
  */
+
+// Define secure access for includes
+define('SECURE_ACCESS', true);
 
 session_start();
 require_once '../includes/functions.php';

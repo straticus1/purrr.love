@@ -5,8 +5,7 @@
  */
 
 session_start();
-require_once '../includes/functions.php';
-require_once '../includes/authentication.php';
+require_once 'includes/db_config.php';
 
 // Check if user is logged in
 $isLoggedIn = isset($_SESSION['user_id']);
@@ -14,7 +13,12 @@ $user = null;
 
 if ($isLoggedIn) {
     try {
-        $user = getUserById($_SESSION['user_id']);
+        $user = get_web_user_by_id($_SESSION['user_id']);
+        if (!$user) {
+            // User not found, clear session
+            session_destroy();
+            $isLoggedIn = false;
+        }
     } catch (Exception $e) {
         // User not found, clear session
         session_destroy();
@@ -36,12 +40,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
     $password = $_POST['password'] ?? '';
     
     try {
-        $user = authenticateUser($email, $password);
+        $user = authenticate_web_user($email, $password);
         if ($user) {
             $_SESSION['user_id'] = $user['id'];
             $_SESSION['user_email'] = $user['email'];
             $_SESSION['user_role'] = $user['role'];
-            header('Location: index.php');
+            header('Location: dashboard.php');
             exit;
         } else {
             $loginError = 'Invalid email or password';
