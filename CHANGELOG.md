@@ -5,6 +5,107 @@ All notable changes to Purrr.love will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2025-09-03 🌙 **Night Watch: Save the Strays**
+
+### 🌟 Revolutionary New Feature - Nighttime Cat Protection Network
+
+> *"BanditCat knows what it's like to face death. Now, every night, he patrols the neighborhood, protecting stray cats from the same fate he narrowly escaped."*
+
+Introducing the most meaningful addition to Purrr.love: a revolutionary nighttime protection system where players deploy their guardian cats to patrol neighborhoods and protect stray cats from bobcat attacks. This feature transforms gaming into real-world impact simulation, inspired by the true story of BanditCat's rescue from euthanasia.
+
+### ✅ Added - Night Watch Core System
+- **🌙 Nighttime-Only Operation**: System only active during realistic night hours (9 PM - 6 AM)
+- **🛡️ Guardian Cat Roles**: Four specialized roles with unique abilities and personality bonuses
+  - **Scout Cats**: Early bobcat detection and stealth patrol (Curious/Independent)
+  - **Guardian Cats**: Direct confrontation and deterrence (Aggressive/Playful)
+  - **Healer Cats**: Stray rehabilitation and comfort (Calm/Social)
+  - **Alarm Cats**: Emergency alerts and coordination (Playful/Curious)
+- **🏗️ Protection Zone Infrastructure**: Four types of defensive structures
+  - Cat Condo (500 coins): Elevated shelter bobcats cannot reach
+  - Motion Sensor (200 coins): Early threat detection system  
+  - Safe Haven (300 coins): Emergency shelter for attacked strays
+  - Community Alert (150 coins): Network-wide threat notifications
+- **🦁 Advanced Threat Detection**: Real-time bobcat activity monitoring with weather integration
+- **🐱 Stray Cat Rescue**: Find, rescue, and rehabilitate cats in dangerous situations
+- **👥 Community Coordination**: Multi-player cooperation for city-wide protection
+
+### ✅ Added - Special Cat Enhanced Abilities
+- **⭐ BanditCat (Ultimate Guardian)**: Based on real rescue story
+  - Guardian Instinct: +100% protection bonus against all bobcat attacks
+  - Stray Savior: Can rescue cats from life-threatening situations
+  - Bobcat Deterrence Max: Maximum threat deterrence capability
+  - Emergency Response Max: Fastest response time to critical alerts
+- **🌙 LunaCat (Mystery Guardian)**: Enhanced night vision abilities
+  - Mystery Sense: Can detect hidden dangers and concealed threats
+  - Explorer Protection: Enhanced protection in unknown territories
+- **🔧 RyCat (Tech Coordinator)**: Strategic planning specialist
+  - Tech Coordination: Manages multiple cats simultaneously
+  - Strategic Planning: Optimizes patrol routes and protection strategies
+
+### ✅ Added - Achievement System
+- **🏆 Night Watch Achievements**: 10 specialized achievements for protection activities
+  - First Night Watch: Deploy your first night patrol
+  - Stray Savior: Save 10 stray cats from danger
+  - Bobcat Buster: Successfully deter 5 bobcat encounters
+  - Guardian Master: Level 20 guardian specialization
+  - Community Hero: Respond to 25 community alerts
+  - Night Protector: Complete 100 night patrols
+  - Zone Master: Create and maintain 10 protection zones
+  - Emergency Responder: 10 critical alerts under 5 minutes
+  - Stray Rehabilitator: Rehabilitate 50 injured strays
+  - Bobcat Expert: Master all bobcat behavior patterns
+
+### ✅ Added - Technical Infrastructure
+- **🗄️ Database Schema**: 9 new tables for complete night watch functionality
+  - night_watch_systems: User configuration and statistics
+  - night_patrols: Patrol session management
+  - protection_zones: Safe area management
+  - bobcat_encounters: Threat encounter logging
+  - stray_cat_encounters: Rescue operation records
+  - guardian_cat_specializations: Role training and experience
+  - community_alerts: Network-wide notifications
+  - night_watch_achievements: Achievement tracking
+  - night_watch_events: Comprehensive event logging
+
+- **🌐 Web Interface**: Beautiful night-themed UI with real-time updates
+  - Dark gradient design with moon glow effects
+  - Interactive cat selection with personality matching
+  - Live patrol monitoring with 30-second auto-refresh
+  - Protection zone creation and management
+  - Detailed patrol history and outcome tracking
+
+- **💻 CLI Integration**: Complete command-line night watch management
+  ```bash
+  purrr nightwatch deploy 1 3 5          # Deploy patrol with cat IDs
+  purrr nightwatch status                 # Show system status
+  purrr nightwatch zones                  # List protection zones  
+  purrr nightwatch create-zone <params>   # Create protection zone
+  purrr nightwatch stats                  # View statistics
+  ```
+
+- **🔌 API Endpoints**: RESTful API for all night watch operations
+  - POST /api/v1/night-watch/deploy: Deploy night patrol
+  - GET /api/v1/night-watch/status: System status
+  - POST /api/v1/night-watch/zones: Create protection zones
+  - GET /api/v1/night-watch/zones: List user zones
+  - GET /api/v1/night-watch/stats: Detailed statistics
+
+### ✅ Added - Analytics & Reporting
+- **📊 Performance Metrics**: Cats saved, bobcat encounters, protection effectiveness
+- **🌍 Community Impact**: Neighborhood safety improvements and collaboration stats
+- **📈 Progress Tracking**: Daily reports, weekly analytics, monthly achievements
+- **🔍 Trend Analysis**: Bobcat activity patterns and seasonal behavioral variations
+- **⚡ Real-time Monitoring**: Live patrol status with automatic threat detection
+
+### 🎨 Enhanced User Experience
+- **💔 Emotional Storytelling**: Deep integration of BanditCat's rescue story
+- **🌍 Meaningful Impact**: Transform gaming into real-world cat protection simulation
+- **👥 Community Building**: Neighborhood coordination with shared protection goals
+- **🖥️ Rich Visual Feedback**: Night-themed UI with immersive design elements
+- **⏰ Time-Based Gameplay**: Realistic night-only operation creates urgency
+
+---
+
 ## [1.0.0] - 2025-09-03
 
 ### 🎉 Initial Release - Complete Feline Gaming Ecosystem

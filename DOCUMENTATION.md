@@ -145,9 +145,75 @@ Each cat has a unique personality type that influences behavior:
    - Prefers multiplayer activities
    - Higher charisma stat growth
    - Better breeding compatibility with all personalities
+```
+
+## 🌙 Night Watch System
+
+See also: NIGHT_WATCH_README.md for a narrative/feature overview.
+
+### Overview
+The Night Watch: Save the Strays system enables players to deploy guardian cats between 21:00 and 06:00 to patrol neighborhoods, deter bobcats, rescue stray cats, and build community protection networks. It includes role-based deployment, protection zones, real-time threat detection, a rescue system, achievements, and CLI/API/web interfaces.
+
+### Key Concepts
+- Night-only activation window (configurable)
+- Guardian roles: scout, guardian, healer, alarm
+- Personality-based effectiveness bonuses
+- Special cats with enhanced abilities (BanditCat, LunaCat, RyCat)
+- Protection zones: cat_condo, motion_sensor, safe_haven, community_alert
+- Weather/seasonal modifiers on bobcat activity
+- Emergency alerts and community coordination
+
+### CLI Examples
+```bash
+# Deploy cats for night patrol
+purrr nightwatch deploy 1 3 5
+
+# View current status and protection zones
+purrr nightwatch status
+purrr nightwatch zones
+
+# Create a protection zone
+purrr nightwatch create-zone safe_haven "Home Base" "Central Park" 75
+```
+
+### Web Interface
+- Path: /night_watch.php
+- Features: night-themed UI, real-time status, cat selection, zone management, patrol history
+
+### API Endpoints
+- POST /api/v1/night-watch/deploy
+- GET  /api/v1/night-watch/status
+- POST /api/v1/night-watch/zones
+- GET  /api/v1/night-watch/zones
+- GET  /api/v1/night-watch/stats
+
+### Database Objects
+- Tables: night_watch_systems, night_patrols, protection_zones, bobcat_encounters, stray_cat_encounters, guardian_cat_specializations, community_alerts, night_watch_achievements, night_watch_events
+- See database/night_watch_schema.sql for definitions
+
+### Configuration
+- ENABLE_NIGHT_WATCH=true
+- NIGHT_WATCH_START_HOUR=21, NIGHT_WATCH_END_HOUR=6
+- NIGHT_WATCH_AUTO_REFRESH=30, NIGHT_WATCH_MAX_DEPLOYED_CATS=10
+
+### Pseudocode: Threat Detection
+```php
+$weather = getCurrentWeather();
+$base = BOBCAT_ACTIVITY_LEVELS['low'];
+if (in_array($weather['condition'], ['rain','snow'])) { $base *= 0.7; }
+if (in_array((int)date('n'), [3,4,5,6])) { $base *= 1.3; }
+$encounter = mt_rand(1,100)/100 < $base;
+```
+
+### Achievements
+- First Night Watch, Stray Savior, Bobcat Buster, Guardian Master, Community Hero, Night Protector, Zone Master, Emergency Responder, Stray Rehabilitator, Bobcat Expert
+
+### Testing
+- Unit test patrol deployment, bobcat detection, zone creation
+
+---
 
 ### Cat Genetics System
-
 The breeding system uses advanced genetics simulation:
 
 #### Genetic Traits

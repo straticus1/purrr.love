@@ -573,6 +573,48 @@ echo "Predicted coat color: {$offspring['coat_color']}";
 ```
 
 See [Genetics Documentation](docs/genetics.md) for detailed information.
+
+### 🌙 New Feature: Night Watch System
+
+We've added a revolutionary nighttime cat protection system that transforms gaming into meaningful impact:
+
+- **Guardian Cat Roles**: Scout, Guardian, Healer, and Alarm cats with specialized abilities
+- **Protection Zones**: Build Cat Condos, Motion Sensors, Safe Havens, and Community Alerts
+- **Real-time Threat Detection**: Weather-influenced bobcat activity monitoring
+- **Stray Cat Rescue**: Find and save cats in danger during night patrols
+- **Community Coordination**: Work with other players to create city-wide protection
+
+#### CLI Usage Example
+
+```bash
+# Deploy cats for night patrol
+purrr nightwatch deploy 1 3 5
+
+# Check current status
+purrr nightwatch status
+
+# Create a protection zone
+purrr nightwatch create-zone safe_haven "Home Base" "Central Park" 75
+```
+
+#### API Usage Example
+
+```php
+// Deploy night patrol via API
+$result = deployNightPatrol($userId, [1, 2, 3], 'neighborhood');
+if ($result['success']) {
+    echo "Deployed {$result['deployed_cats']} guardian cats!";
+}
+
+// Create protection zone
+$zone = createProtectionZone($userId, 'safe_haven', [
+    'name' => 'Emergency Shelter',
+    'location' => 'downtown',
+    'radius' => 100
+]);
+```
+
+See [Night Watch Documentation](NIGHT_WATCH_README.md) for complete feature overview.
 ```
 
 ## 📤 Submitting Changes
@@ -660,6 +702,18 @@ Add support for rare genetic mutations in cat breeding:
 - Include mutation tracking in breeding history
 
 Closes #456
+
+feat(nightwatch): implement bobcat threat detection system
+
+Add real-time bobcat activity monitoring for Night Watch patrols:
+- Weather-based activity calculation with seasonal patterns
+- Threat level classification (low, medium, high, critical)
+- Emergency alert system for community coordination
+- Integration with protection zones for enhanced security
+
+This enables meaningful cat protection simulation and community engagement.
+
+Closes #789
 
 fix(security): prevent XSS in cat name display
 

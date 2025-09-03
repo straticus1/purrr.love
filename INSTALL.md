@@ -583,8 +583,11 @@ mysql -u root -p -e "CREATE USER 'purrr_user'@'localhost' IDENTIFIED BY 'secure_
 mysql -u root -p -e "GRANT ALL PRIVILEGES ON purrr_love.* TO 'purrr_user'@'localhost';"
 mysql -u root -p -e "FLUSH PRIVILEGES;"
 
-# Import the schema
+# Import the main schema
 mysql -u purrr_user -p purrr_love < database/schema.sql
+
+# Import Night Watch system schema
+mysql -u purrr_user -p purrr_love < database/night_watch_schema.sql
 ```
 
 ### PostgreSQL Setup
@@ -599,8 +602,11 @@ sudo -u postgres createuser --interactive --pwprompt purrr_user
 # Grant privileges
 sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE purrr_love TO purrr_user;"
 
-# Import the schema
+# Import the main schema
 psql -U purrr_user -d purrr_love -f database/api_schema.sql
+
+# Import Night Watch system schema  
+psql -U purrr_user -d purrr_love -f database/night_watch_schema.sql
 ```
 
 ### SQLite Setup (Development Only)
@@ -647,13 +653,20 @@ define('UPLOADS_DIR', __DIR__ . '/../uploads/');
 define('CACHE_DIR', __DIR__ . '/../cache/');
 define('LOGS_DIR', __DIR__ . '/../logs/');
 
-// Feature flags
+# Feature flags
 define('ENABLE_CRYPTO', true);
 define('ENABLE_OAUTH2', true);
 define('ENABLE_AI_GENERATION', true);
 define('ENABLE_BREEDING', true);
 define('ENABLE_VR', true);
 define('ENABLE_MULTIPLAYER', true);
+define('ENABLE_NIGHT_WATCH', true);
+
+// Night Watch Configuration
+define('NIGHT_WATCH_START_HOUR', 21); // 9 PM
+define('NIGHT_WATCH_END_HOUR', 6);    // 6 AM
+define('NIGHT_WATCH_AUTO_REFRESH', 30); // seconds
+define('NIGHT_WATCH_MAX_DEPLOYED_CATS', 10);
 ```
 
 ### Database Configuration

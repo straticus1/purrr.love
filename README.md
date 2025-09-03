@@ -59,6 +59,20 @@ Purrr.love is a revolutionary feline gaming ecosystem that combines cryptocurren
 
 ## 🎯 Core Features (Enhanced from Dog Game)
 
+### 🌙 **Night Watch: Save the Strays** ⭐ *NEW*
+> *"BanditCat knows what it's like to face death. Now, every night, he patrols the neighborhood, protecting stray cats from the same fate he narrowly escaped."*
+
+- **Nighttime Protection Network**: Deploy guardian cats to patrol neighborhoods (9 PM - 6 AM)
+- **Real-time Bobcat Detection**: Advanced threat monitoring and emergency response
+- **Protection Zones**: Build Cat Condos, Motion Sensors, Safe Havens, and Community Alerts
+- **Guardian Cat Roles**: Scout, Guardian, Healer, and Alarm cats with specialized abilities
+- **BanditCat's Story**: From rescued to rescuer - inspired by real events of survival
+- **Community Impact**: Work with other players to create city-wide protection networks
+- **Stray Cat Rescue**: Find and save cats in danger, provide shelter and rehabilitation
+- **Achievement System**: Unlock rewards for protecting strays and deterring bobcats
+- **Weather Integration**: Bobcat activity affected by real weather patterns
+- **Emergency Response**: Critical alerts with coordinated community response
+
 ### 🐕 Pet Management & Social
 - **Cat Gallery**: Browse and interact with cat images from the community
 - **Cat Upload**: Upload your own cat photos with descriptions and privacy controls
@@ -319,12 +333,33 @@ define('ENABLE_AI_GENERATION', true);
 
 ## 🐱 Cat-Specific Features in Detail
 
+### 🌙 Night Watch Guardian System
+The revolutionary nighttime protection system transforms your cats into neighborhood guardians:
+
+#### **Guardian Cat Roles**
+- **Scout Cats** (Curious/Independent): Early bobcat detection and stealth patrol
+- **Guardian Cats** (Aggressive/Playful): Direct confrontation and bobcat deterrence
+- **Healer Cats** (Calm/Social): Tend to injured strays and provide comfort
+- **Alarm Cats** (Playful/Curious): Emergency alerts and response coordination
+
+#### **Special Cat Abilities**
+- **BanditCat** 🛡️: Guardian Instinct (+100% protection), Stray Savior, Emergency Response Max
+- **LunaCat** 🔍: Mystery Sense (detect hidden dangers), Explorer Protection
+- **RyCat** 🔧: Tech Coordination (multi-cat management), Strategic Planning
+
+#### **Protection Zone Types**
+- **Cat Condo** (500 coins): Elevated shelter bobcats can't reach
+- **Motion Sensor** (200 coins): Early detection system for approaching threats
+- **Safe Haven** (300 coins): Emergency shelter for cats under attack
+- **Community Alert** (150 coins): Network-wide threat notifications
+
 ### Personality System
 Each cat has a unique personality that affects:
 - **Behavior patterns** (when they sleep, play, eat)
 - **Social interactions** (how they interact with other cats)
 - **Quest preferences** (which activities they enjoy most)
 - **Training effectiveness** (how quickly they learn new tricks)
+- **Night Watch effectiveness** (role assignment and protection bonuses)
 
 ### Territory System
 Cats can claim and defend territories:
@@ -366,6 +401,18 @@ Special activities throughout the year:
 - ✅ Cat show competitions with beauty and talent contests
 - ✅ Territory system with cat ownership and defense mechanics
 - ✅ Seasonal events and personality-based quest system
+
+### 🌙 **Night Watch: Save the Strays (v1.1) - September 2025**
+- ✅ **Nighttime Protection System**: 9 PM - 6 AM guardian cat deployment
+- ✅ **Guardian Cat Roles**: Scout, Guardian, Healer, and Alarm specializations
+- ✅ **BanditCat Origin Story**: From rescued to rescuer - real inspiration
+- ✅ **Protection Zones**: Cat Condos, Motion Sensors, Safe Havens, Community Alerts
+- ✅ **Bobcat Detection**: Real-time threat monitoring with weather integration
+- ✅ **Stray Cat Rescue**: Find, rescue, and rehabilitate cats in danger
+- ✅ **Community Network**: Multi-player coordination and emergency response
+- ✅ **Achievement System**: Night Watch specific achievements and rewards
+- ✅ **CLI Integration**: Complete command-line patrol management
+- ✅ **Web Interface**: Beautiful night-themed UI with real-time updates
 
 ### 🚧 **In Development (v1.1) - Q4 2025**
 - 🚧 Advanced analytics dashboard with user behavior insights

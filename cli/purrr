@@ -113,6 +113,10 @@ class PurrrCLI {
             case 'special':
                 $this->commandSpecial($args);
                 break;
+            case 'nightwatch':
+            case 'night':
+                $this->commandNightWatch($args);
+                break;
             case 'config':
                 $this->commandConfig($args);
                 break;
@@ -556,6 +560,194 @@ class PurrrCLI {
                 $this->showSpecialHelp();
                 break;
         }
+    }
+
+    private function commandNightWatch($args) {
+        if (empty($args)) {
+            $this->showNightWatchHelp();
+            return;
+        }
+
+        $action = array_shift($args);
+        switch ($action) {
+            case 'deploy':
+                if (empty($args)) {
+                    echo Colors::RED . "❌ Please specify cat IDs to deploy" . Colors::NC . "\n";
+                    return;
+                }
+                $this->deployNightPatrol($args);
+                break;
+            case 'status':
+                $this->showNightWatchStatus();
+                break;
+            case 'zones':
+                $this->listProtectionZones();
+                break;
+            case 'create-zone':
+                if (count($args) < 3) {
+                    echo Colors::RED . "❌ Usage: nightwatch create-zone <type> <name> <location> [radius]" . Colors::NC . "\n";
+                    return;
+                }
+                $this->createProtectionZone($args);
+                break;
+            case 'stats':
+                $this->showNightWatchStats();
+                break;
+            default:
+                echo Colors::RED . "❌ Unknown night watch command: $action" . Colors::NC . "\n";
+                $this->showNightWatchHelp();
+                break;
+        }
+    }
+
+    private function deployNightPatrol($args) {
+        $catIds = $args;
+        $patrolArea = 'neighborhood';
+        
+        try {
+            $response = $this->apiRequest('POST', '/api/v1/night-watch/deploy', [
+                'cat_ids' => $catIds,
+                'patrol_area' => $patrolArea
+            ]);
+            
+            if (isset($response['success']) && $response['success']) {
+                echo Colors::GREEN . "🌙 " . $response['message'] . Colors::NC . "\n";
+                echo "  Patrol ID: " . $response['patrol_id'] . "\n";
+                echo "  Cats Deployed: " . count($response['deployed_cats']) . "\n";
+                
+                foreach ($response['deployed_cats'] as $cat) {
+                    $roleColor = $this->getRoleColor($cat['role']);
+                    echo "    " . $roleColor . $cat['cat_id'] . " (" . $cat['role'] . ")" . Colors::NC . "\n";
+                }
+            } else {
+                echo Colors::RED . "❌ Failed to deploy patrol: " . ($response['message'] ?? 'Unknown error') . Colors::NC . "\n";
+            }
+        } catch (Exception $e) {
+            echo Colors::RED . "❌ Failed to deploy patrol: " . $e->getMessage() . Colors::NC . "\n";
+        }
+    }
+
+    private function showNightWatchStatus() {
+        try {
+            $response = $this->apiRequest('GET', '/api/v1/night-watch/status');
+            
+            if (isset($response['data'])) {
+                $status = $response['data'];
+                echo Colors::GREEN . "🌙 Night Watch Status:" . Colors::NC . "\n";
+                echo "  Protection Level: " . $status['protection_level'] . "\n";
+                echo "  Active Patrols: " . $status['active_patrols'] . "\n";
+                echo "  Protection Zones: " . $status['protection_zones'] . "\n";
+                echo "  Cats Saved: " . $status['total_cats_saved'] . "\n";
+                echo "  Bobcat Encounters: " . $status['total_bobcat_encounters'] . "\n";
+                echo "  Community Reputation: " . $status['community_reputation'] . "\n";
+                
+                if (isset($status['is_night_time']) && $status['is_night_time']) {
+                    echo Colors::GREEN . "  🌙 Night Watch is ACTIVE" . Colors::NC . "\n";
+                } else {
+                    echo Colors::YELLOW . "  ☀️ Night Watch is INACTIVE (daytime)" . Colors::NC . "\n";
+                }
+            } else {
+                echo Colors::YELLOW . "📝 No night watch status found." . Colors::NC . "\n";
+            }
+        } catch (Exception $e) {
+            echo Colors::RED . "❌ Failed to fetch night watch status: " . $e->getMessage() . Colors::NC . "\n";
+        }
+    }
+
+    private function listProtectionZones() {
+        try {
+            $response = $this->apiRequest('GET', '/api/v1/night-watch/zones');
+            
+            if (isset($response['data']) && !empty($response['data'])) {
+                echo Colors::GREEN . "🛡️ Protection Zones:" . Colors::NC . "\n";
+                foreach ($response['data'] as $zone) {
+                    echo "  " . Colors::BLUE . $zone['name'] . Colors::NC . " (" . $zone['zone_type'] . ")\n";
+                    echo "    📍 " . $zone['location'] . "\n";
+                    echo "    🛡️ " . round($zone['protection_level'] * 100) . "% protection\n";
+                    echo "    📏 Radius: " . $zone['radius'] . "m\n";
+                    echo "\n";
+                }
+            } else {
+                echo Colors::YELLOW . "📝 No protection zones found." . Colors::NC . "\n";
+            }
+        } catch (Exception $e) {
+            echo Colors::RED . "❌ Failed to fetch protection zones: " . $e->getMessage() . Colors::NC . "\n";
+        }
+    }
+
+    private function createProtectionZone($args) {
+        $zoneType = $args[0];
+        $zoneName = $args[1];
+        $zoneLocation = $args[2];
+        $zoneRadius = isset($args[3]) ? (int)$args[3] : 50;
+        
+        try {
+            $response = $this->apiRequest('POST', '/api/v1/night-watch/zones', [
+                'zone_type' => $zoneType,
+                'name' => $zoneName,
+                'location' => $zoneLocation,
+                'radius' => $zoneRadius
+            ]);
+            
+            if (isset($response['success']) && $response['success']) {
+                echo Colors::GREEN . "🛡️ " . $response['message'] . Colors::NC . "\n";
+                echo "  Zone ID: " . $response['zone_id'] . "\n";
+            } else {
+                echo Colors::RED . "❌ Failed to create protection zone: " . ($response['message'] ?? 'Unknown error') . Colors::NC . "\n";
+            }
+        } catch (Exception $e) {
+            echo Colors::RED . "❌ Failed to create protection zone: " . $e->getMessage() . Colors::NC . "\n";
+        }
+    }
+
+    private function showNightWatchStats() {
+        try {
+            $response = $this->apiRequest('GET', '/api/v1/night-watch/stats');
+            
+            if (isset($response['data'])) {
+                $stats = $response['data'];
+                echo Colors::GREEN . "🌙 Night Watch Statistics:" . Colors::NC . "\n";
+                echo "  Total Patrols: " . $stats['total_patrols'] . "\n";
+                echo "  Active Patrols: " . $stats['active_patrols'] . "\n";
+                echo "  Protection Zones: " . $stats['protection_zones'] . "\n";
+                echo "  Achievements Unlocked: " . $stats['achievements_unlocked'] . "\n";
+                echo "  Total Score: " . $stats['total_score'] ?? 'N/A' . "\n";
+            } else {
+                echo Colors::YELLOW . "📝 No night watch statistics found." . Colors::NC . "\n";
+            }
+        } catch (Exception $e) {
+            echo Colors::RED . "❌ Failed to fetch night watch statistics: " . $e->getMessage() . Colors::NC . "\n";
+        }
+    }
+
+    private function getRoleColor($role) {
+        switch ($role) {
+            case 'guardian':
+                return Colors::RED;
+            case 'scout':
+                return Colors::BLUE;
+            case 'healer':
+                return Colors::GREEN;
+            case 'alarm':
+                return Colors::YELLOW;
+            default:
+                return Colors::WHITE;
+        }
+    }
+
+    private function showNightWatchHelp() {
+        echo "🌙 Night Watch Commands:\n";
+        echo "  deploy <cat_id1> [cat_id2] ... - Deploy cats for night patrol\n";
+        echo "  status                        - Show night watch status\n";
+        echo "  zones                         - List protection zones\n";
+        echo "  create-zone <type> <name> <location> [radius] - Create protection zone\n";
+        echo "  stats                         - Show night watch statistics\n";
+        echo "\n";
+        echo "Zone Types:\n";
+        echo "  cat_condo     - Elevated shelter (500 coins)\n";
+        echo "  motion_sensor - Bobcat detection (200 coins)\n";
+        echo "  safe_haven    - Emergency shelter (300 coins)\n";
+        echo "  community_alert - Alert system (150 coins)\n";
     }
 
     private function commandConfig($args) {
@@ -1022,6 +1214,7 @@ class PurrrCLI {
         echo "  health                  - Health monitoring\n";
         echo "  analytics               - Analytics and insights\n";
         echo "  special                 - Manage special cats\n";
+        echo "  nightwatch              - Night Watch system\n";
         echo "  config                  - Manage configuration\n";
         echo "  version                 - Show version information\n";
         echo "  help                    - Show this help message\n\n";
