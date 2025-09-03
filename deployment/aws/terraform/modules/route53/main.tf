@@ -83,20 +83,30 @@ resource "aws_route53_record" "subdomains" {
   zone_id = local.hosted_zone_id
   name    = "${each.key}.${var.domain_name}"
   type    = each.value.type
-  ttl     = each.value.ttl
+  ttl     = (each.value.type == "A" || each.value.type == "AAAA") && (each.value.alias_to_alb || each.value.alias_to_cloudfront) ? null : each.value.ttl
 
   # For A/AAAA records pointing to ALB
   dynamic "alias" {
-    for_each = each.value.type == "A" || each.value.type == "AAAA" ? [1] : []
+    for_each = (each.value.type == "A" || each.value.type == "AAAA") && each.value.alias_to_alb && var.load_balancer_dns_name != "" ? [1] : []
     content {
       name                   = var.load_balancer_dns_name
       zone_id               = var.load_balancer_zone_id
       evaluate_target_health = var.enable_health_checks
     }
   }
+  
+  # For A/AAAA records pointing to CloudFront
+  dynamic "alias" {
+    for_each = (each.value.type == "A" || each.value.type == "AAAA") && each.value.alias_to_cloudfront && var.cloudfront_dns_name != "" ? [1] : []
+    content {
+      name                   = var.cloudfront_dns_name
+      zone_id               = var.cloudfront_zone_id
+      evaluate_target_health = var.enable_health_checks
+    }
+  }
 
-  # For other record types
-  records = each.value.type != "A" && each.value.type != "AAAA" ? each.value.records : null
+  # For other record types or when not using alias
+  records = !(each.value.type == "A" || each.value.type == "AAAA") || (!each.value.alias_to_alb && !each.value.alias_to_cloudfront) ? each.value.records : null
 }
 
 # MX Records for email
