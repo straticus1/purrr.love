@@ -1,0 +1,9 @@
+# Docker ignore file for Purrr.love
+.git
+.gitignore
+Dockerfile
+.dockerignore
+deployment/
+.env
+.DS_Store
+Thumbs.db

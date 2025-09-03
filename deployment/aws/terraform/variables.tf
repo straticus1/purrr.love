@@ -1,5 +1,12 @@
 # 🚀 Purrr.love AWS Infrastructure Variables
 
+# Project Configuration
+variable "project_name" {
+  description = "Project name for resource naming"
+  type        = string
+  default     = "purrr"
+}
+
 # Environment Configuration
 variable "environment" {
   description = "Environment name (dev, staging, production)"
@@ -202,18 +209,38 @@ variable "enable_ssl" {
 variable "enable_waf" {
   description = "Enable AWS WAF protection"
   type        = bool
-  default     = var.environment == "production"
+  default     = false
 }
 
 # Cost Optimization
 variable "enable_spot_instances" {
   description = "Enable spot instances for cost optimization"
   type        = bool
-  default     = var.environment != "production"
+  default     = false
 }
 
 variable "enable_auto_scaling" {
   description = "Enable auto-scaling based on demand"
+  type        = bool
+  default     = true
+}
+
+# Email Configuration
+variable "enable_email" {
+  description = "Enable email MX records for domain"
+  type        = bool
+  default     = false
+}
+
+# Route53 Configuration
+variable "create_route53_hosted_zone" {
+  description = "Whether to create Route53 hosted zone"
+  type        = bool
+  default     = true
+}
+
+variable "enable_route53_health_checks" {
+  description = "Enable Route53 health checks for production"
   type        = bool
   default     = true
 }

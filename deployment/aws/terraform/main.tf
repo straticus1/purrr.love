@@ -14,11 +14,11 @@ terraform {
     }
   }
   
-  backend "s3" {
-    bucket = "purrr-love-terraform-state"
-    key    = "terraform.tfstate"
-    region = "us-east-1"
-  }
+  # backend "s3" {
+  #   bucket = "purrr-love-terraform-state"
+  #   key    = "terraform.tfstate"
+  #   region = "us-east-1"
+  # }
 }
 
 # Default AWS provider
@@ -67,21 +67,17 @@ locals {
 module "vpc" {
   source = "./modules/vpc"
   
-  environment    = var.environment
-  project_name   = var.project_name
-  vpc_cidr_block = var.vpc_cidr_block
-  availability_zones = var.availability_zones
+  environment = var.environment
+  vpc_cidr    = var.vpc_cidr
+  azs         = var.availability_zones
   
-  public_subnet_cidrs   = var.public_subnet_cidrs
-  private_subnet_cidrs  = var.private_subnet_cidrs
-  database_subnet_cidrs = var.database_subnet_cidrs
+  public_subnets  = var.public_subnet_cidrs
+  private_subnets = var.private_subnet_cidrs
   
-  enable_nat_gateway = var.enable_nat_gateway
-  single_nat_gateway = var.single_nat_gateway
-  enable_vpc_endpoints = var.enable_vpc_endpoints
-  enable_flow_logs   = var.enable_flow_logs
-  
-  common_tags = local.common_tags
+  enable_nat_gateway   = true
+  single_nat_gateway   = var.environment != "production"
+  enable_vpc_endpoints = true
+  enable_flow_logs     = true
 }
 
 # Security Groups
@@ -223,6 +219,115 @@ module "alb" {
   common_tags = local.common_tags
 }
 
+# Route53 DNS Configuration
+module "route53" {
+  source = "./modules/route53"
+  
+  environment  = var.environment
+  project_name = var.project_name
+  domain_name  = var.domain_name
+  
+  # Create hosted zone for domain
+  create_hosted_zone = true
+  
+  # Load balancer integration
+  load_balancer_dns_name = module.alb.dns_name
+  load_balancer_zone_id  = module.alb.zone_id
+  
+  # CloudFront integration (when available)
+  # cloudfront_dns_name = module.cloudfront.domain_name
+  # cloudfront_zone_id  = module.cloudfront.hosted_zone_id
+  
+  # Subdomains configuration
+  subdomains = {
+    # API subdomain - main API endpoints
+    "api" = {
+      type    = "A"
+      ttl     = 300
+      records = []
+      alias_to_alb = true
+    }
+    
+    # App subdomain - application interface
+    "app" = {
+      type    = "A"
+      ttl     = 300
+      records = []
+      alias_to_alb = true
+    }
+    
+    # Admin subdomain - administrative dashboard
+    "admin" = {
+      type    = "A"
+      ttl     = 300
+      records = []
+      alias_to_alb = true
+    }
+    
+    # Webhooks subdomain - enterprise webhook endpoints
+    "webhooks" = {
+      type    = "A"
+      ttl     = 300
+      records = []
+      alias_to_alb = true
+    }
+    
+    # CDN subdomain - content delivery network
+    "cdn" = {
+      type    = "A"
+      ttl     = 300
+      records = []
+      alias_to_alb = true  # Will change to CloudFront when available
+    }
+    
+    # Static assets subdomain
+    "static" = {
+      type    = "A"
+      ttl     = 300
+      records = []
+      alias_to_alb = true  # Will change to S3/CloudFront when available
+    }
+    
+    # Assets subdomain for media content
+    "assets" = {
+      type    = "A"
+      ttl     = 300
+      records = []
+      alias_to_alb = true  # Will change to S3/CloudFront when available
+    }
+  }
+  
+  # Security and validation
+  enable_ipv6 = true
+  enable_health_checks = var.environment == "production"
+  health_check_path = "/health"
+  
+  # Email configuration (optional)
+  mx_records = var.enable_email ? [
+    "10 mail.purrr.love"
+  ] : []
+  
+  # TXT records for domain verification and security
+  txt_records = {
+    "@" = [
+      "v=spf1 include:_spf.google.com ~all",  # SPF record
+    ]
+    "_dmarc" = [
+      "v=DMARC1; p=quarantine; rua=mailto:dmarc@purrr.love"
+    ]
+  }
+  
+  # CAA records for certificate authority authorization
+  caa_records = [
+    "0 issue \"amazon.com\"",
+    "0 issue \"letsencrypt.org\""
+  ]
+  
+  common_tags = local.common_tags
+  
+  depends_on = [module.alb]
+}
+
 # Outputs
 output "vpc_id" {
   description = "VPC ID"
@@ -262,4 +367,35 @@ output "cloudfront_domain" {
 output "app_url" {
   description = "Application URL"
   value       = "https://${var.domain_name}"
+}
+
+# Route53 Outputs
+output "hosted_zone_id" {
+  description = "Route53 hosted zone ID"
+  value       = module.route53.hosted_zone_id
+}
+
+output "name_servers" {
+  description = "Authoritative DNS servers for domain registrar configuration"
+  value       = module.route53.name_servers
+}
+
+output "domain_delegation" {
+  description = "Complete delegation information for registrar"
+  value       = module.route53.delegation_set
+}
+
+output "subdomain_urls" {
+  description = "URLs for all configured subdomains"
+  value = {
+    main     = "https://${var.domain_name}"
+    www      = "https://www.${var.domain_name}"
+    api      = "https://api.${var.domain_name}"
+    app      = "https://app.${var.domain_name}"
+    admin    = "https://admin.${var.domain_name}"
+    webhooks = "https://webhooks.${var.domain_name}"
+    cdn      = "https://cdn.${var.domain_name}"
+    static   = "https://static.${var.domain_name}"
+    assets   = "https://assets.${var.domain_name}"
+  }
 }
