@@ -774,6 +774,222 @@ define('AI_GENERATION_COOLDOWN', 300); // 5 minutes between generations
 
 ## 🔒 Security Setup
 
+### 🎉 **NEW: Enterprise Security Framework v1.2.0**
+
+**🚀 Your Purrr.love installation now includes enterprise-grade security out of the box!**
+
+Version 1.2.0 introduces a comprehensive security overhaul that makes Purrr.love production-ready with enterprise-grade protection. Here's how to configure the advanced security features:
+
+### 🔧 **Environment Configuration**
+
+1. **Create Environment Configuration**:
+   ```bash
+   # Copy the environment template
+   cp env.example .env
+   
+   # Edit environment variables
+   nano .env
+   ```
+
+2. **Configure Security Environment Variables**:
+   ```bash
+   # .env file configuration
+   # Production Environment
+   APP_ENV=production
+   APP_DEBUG=false
+   
+   # Database Security
+   DB_CONNECTION_POOL_SIZE=10
+   DB_ENABLE_SSL=true
+   DB_SSL_VERIFY_CERT=true
+   
+   # Redis Caching & Rate Limiting
+   REDIS_HOST=127.0.0.1
+   REDIS_PORT=6379
+   REDIS_PASSWORD=secure_redis_password
+   REDIS_DB=0
+   
+   # Security Settings
+   CSRF_TOKEN_LIFETIME=3600
+   SESSION_REGENERATE_INTERVAL=300
+   RATE_LIMIT_ENABLED=true
+   SECURITY_HEADERS_ENABLED=true
+   
+   # Health Monitoring
+   HEALTH_CHECKS_ENABLED=true
+   HEALTH_CHECK_SECRET=secure_health_secret
+   
+   # Logging & Monitoring
+   SECURITY_LOGGING_ENABLED=true
+   LOG_LEVEL=info
+   LOG_CHANNEL=database
+   ```
+
+### 🗄️ **Security Database Schema Setup**
+
+**Import the new security schema that includes logging and monitoring tables:**
+
+```bash
+# Import security schema (MySQL)
+mysql -u purrr_user -p purrr_love < database/security_schema.sql
+
+# OR for PostgreSQL
+psql -U purrr_user -d purrr_love -f database/security_schema.sql
+```
+
+### 🔐 **Authentication & Session Security**
+
+The new authentication system includes:
+
+- **Argon2id Password Hashing**: Industry-standard memory-hard hashing
+- **Session Regeneration**: Automatic session ID regeneration
+- **Secure Cookie Settings**: HttpOnly, Secure, SameSite protection
+- **Login Attempt Monitoring**: Real-time brute force protection
+
+**Configuration in `config/config.php`:**
+```php
+// Enhanced Authentication Settings
+define('AUTH_PASSWORD_ALGORITHM', PASSWORD_ARGON2ID);
+define('AUTH_ARGON2_MEMORY_COST', 65536);    // 64 MB
+define('AUTH_ARGON2_TIME_COST', 4);          // 4 iterations
+define('AUTH_ARGON2_THREADS', 3);            // 3 threads
+
+// Session Security
+define('SESSION_REGENERATE_INTERVAL', 300);   // 5 minutes
+define('SESSION_COOKIE_HTTPONLY', true);
+define('SESSION_COOKIE_SECURE', true);        // HTTPS only
+define('SESSION_COOKIE_SAMESITE', 'Strict');
+```
+
+### 🛡️ **CSRF Protection System**
+
+Advanced CSRF protection with multiple validation methods:
+
+- **Token-Based Protection**: Unique tokens for each form
+- **Header Validation**: X-Requested-With validation
+- **Origin Verification**: Referrer and origin header checks
+- **Automatic Cleanup**: Expired token garbage collection
+
+**Configuration:**
+```php
+// CSRF Protection Settings
+define('CSRF_TOKEN_LIFETIME', 3600);         // 1 hour
+define('CSRF_CLEANUP_PROBABILITY', 100);     // Always cleanup
+define('CSRF_VALIDATE_ORIGIN', true);
+define('CSRF_VALIDATE_REFERRER', true);
+```
+
+### ⚡ **Redis Rate Limiting**
+
+**Install and Configure Redis:**
+
+```bash
+# Install Redis (Ubuntu/Debian)
+sudo apt update
+sudo apt install redis-server
+
+# Install Redis (Rocky Linux/RHEL)
+sudo dnf install redis
+
+# Start Redis
+sudo systemctl start redis
+sudo systemctl enable redis
+
+# Configure Redis password
+sudo nano /etc/redis/redis.conf
+# Uncomment and set: requirepass your_secure_password
+
+# Restart Redis
+sudo systemctl restart redis
+```
+
+**Rate Limiting Configuration:**
+```php
+// Rate Limiting Settings
+define('RATE_LIMIT_ENABLED', true);
+define('RATE_LIMIT_STORE', 'redis');
+define('RATE_LIMIT_FREE_TIER', 100);         // 100 requests/hour
+define('RATE_LIMIT_PREMIUM_TIER', 1000);     // 1000 requests/hour
+define('RATE_LIMIT_ENTERPRISE_TIER', 10000); // 10000 requests/hour
+define('RATE_LIMIT_VIOLATION_THRESHOLD', 5);
+define('RATE_LIMIT_BAN_DURATION', 3600);     // 1 hour ban
+```
+
+### 🌐 **Secure CORS Configuration**
+
+Replace dangerous wildcard CORS with secure origin validation:
+
+```php
+// Secure CORS Settings
+define('CORS_ENABLED', true);
+define('CORS_ALLOWED_ORIGINS', [
+    'https://your-domain.com',
+    'https://api.your-domain.com',
+    'https://admin.your-domain.com'
+]);
+define('CORS_ALLOWED_METHODS', ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']);
+define('CORS_ALLOWED_HEADERS', ['Content-Type', 'Authorization', 'X-Requested-With']);
+define('CORS_EXPOSE_HEADERS', ['X-RateLimit-Remaining', 'X-RateLimit-Limit']);
+define('CORS_MAX_AGE', 86400); // 24 hours
+```
+
+### 📊 **Health Monitoring System**
+
+Comprehensive health checks for production monitoring:
+
+**Access Health Endpoints:**
+```bash
+# Basic health check
+curl https://your-domain.com/api/health
+
+# Detailed health check (authenticated)
+curl -H "Authorization: Bearer YOUR_TOKEN" https://your-domain.com/api/health/detailed
+
+# Security health check
+curl -H "X-Health-Secret: YOUR_SECRET" https://your-domain.com/api/health/security
+```
+
+**Health Check Configuration:**
+```php
+// Health Monitoring Settings
+define('HEALTH_CHECKS_ENABLED', true);
+define('HEALTH_CHECK_SECRET', 'secure_random_string');
+define('HEALTH_MEMORY_THRESHOLD', 80);       // Alert at 80% memory usage
+define('HEALTH_DISK_THRESHOLD', 90);         // Alert at 90% disk usage
+define('HEALTH_RESPONSE_TIME_THRESHOLD', 1000); // Alert at 1s response time
+```
+
+### 🗋 **High-Performance Caching**
+
+Redis-backed caching system with tag-based invalidation:
+
+**Cache Configuration:**
+```php
+// Caching Settings
+define('CACHE_ENABLED', true);
+define('CACHE_DRIVER', 'redis');
+define('CACHE_DEFAULT_TTL', 3600);           // 1 hour
+define('CACHE_TAG_TTL', 86400);              // 24 hours
+define('CACHE_COMPRESSION', true);
+define('CACHE_KEY_PREFIX', 'purrr_');
+```
+
+### 🔍 **Security Event Logging**
+
+Comprehensive security event tracking:
+
+**Logging Configuration:**
+```php
+// Security Logging Settings
+define('SECURITY_LOGGING_ENABLED', true);
+define('LOG_SECURITY_EVENTS', true);
+define('LOG_FAILED_LOGINS', true);
+define('LOG_RATE_LIMIT_VIOLATIONS', true);
+define('LOG_CSRF_FAILURES', true);
+define('LOG_UNAUTHORIZED_ACCESS', true);
+define('LOG_RETENTION_DAYS', 90);            // Keep logs for 90 days
+```
+
 ### SSL Configuration
 
 For secure HTTPS connections:

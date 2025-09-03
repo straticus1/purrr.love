@@ -4,16 +4,31 @@
  * Complete API ecosystem with OAuth2 and API key authentication
  */
 
+// Define secure access constant
+define('SECURE_ACCESS', true);
+
+require_once '../config/config.php';
 require_once '../includes/functions.php';
 require_once '../includes/crypto.php';
 require_once '../includes/cat_behavior.php';
 require_once '../includes/oauth2.php';
 require_once '../includes/api_keys.php';
 require_once '../includes/rate_limiting.php';
+require_once '../includes/authentication.php';
 
 // Set JSON content type
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
+
+// Secure CORS configuration
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+if (isAllowedOrigin($origin)) {
+    header("Access-Control-Allow-Origin: $origin");
+    header('Access-Control-Allow-Credentials: true');
+} else {
+    // Log unauthorized origin attempt
+    logSecurityEvent('unauthorized_cors_attempt', ['origin' => $origin, 'ip' => getClientIP()]);
+}
+
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization, X-API-Key');
 
@@ -60,12 +75,20 @@ try {
     $response['data'] = $result;
     
 } catch (Exception $e) {
-    // Error response
+    // Log the error securely
+    logSecurityEvent('api_error', [
+        'message' => $e->getMessage(),
+        'code' => $e->getCode(),
+        'endpoint' => $path ?? 'unknown',
+        'method' => $method ?? 'unknown'
+    ], 'ERROR');
+    
+    // Error response (production-safe)
     $response['success'] = false;
     $response['error'] = [
         'code' => getErrorCode($e->getCode()),
-        'message' => $e->getMessage(),
-        'details' => $e->getCode() === 422 ? $e->getTrace() : null
+        'message' => defined('DEVELOPMENT_MODE') && DEVELOPMENT_MODE ? $e->getMessage() : 'An error occurred',
+        'details' => null // Never expose stack traces in production
     ];
     
     // Set HTTP status code
@@ -86,19 +109,19 @@ function parseRequest() {
     $method = $_SERVER['REQUEST_METHOD'];
     $params = [];
     
-    // Parse query parameters
+    // Parse and validate query parameters
     if (isset($_GET)) {
-        $params = array_merge($params, $_GET);
+        $params = array_merge($params, array_map('sanitizeInput', $_GET));
     }
     
-    // Parse POST/PUT data
+    // Parse and validate POST/PUT data
     if (in_array($method, ['POST', 'PUT', 'PATCH'])) {
         $input = file_get_contents('php://input');
         $jsonData = json_decode($input, true);
         if ($jsonData) {
-            $params = array_merge($params, $jsonData);
+            $params = array_merge($params, array_map('sanitizeInput', $jsonData));
         } else {
-            $params = array_merge($params, $_POST);
+            $params = array_merge($params, array_map('sanitizeInput', $_POST));
         }
     }
     
