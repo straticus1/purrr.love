@@ -1877,6 +1877,955 @@ class EnterpriseWebhookManager {
 - **Signature Testing**: Validate HMAC signature generation and verification
 - **Performance Testing**: Test webhook delivery under load
 
+### Metaverse & VR Guidelines
+
+#### Overview
+Our Metaverse & VR system provides immersive virtual worlds where cats can interact, play, and explore in 3D environments using WebGL, Three.js, and WebVR technologies.
+
+#### Prerequisites
+- Experience with WebGL and 3D graphics programming
+- Knowledge of Three.js or similar 3D libraries
+- Understanding of WebVR/WebXR APIs
+- Familiarity with spatial interaction design
+- Experience with real-time multiplayer systems
+
+#### Development Standards
+
+**VR World Creation:**
+```php
+// ✅ GOOD - Secure VR world management with validation
+class SecureMetaverseManager {
+    private SecurityLogger $securityLogger;
+    private array $validWorldTypes;
+    private int $maxPlayersPerWorld;
+    
+    public function __construct() {
+        $this->securityLogger = new SecurityLogger();
+        $this->validWorldTypes = ['social', 'adventure', 'training', 'competition', 'relaxation', 'exploration', 'custom'];
+        $this->maxPlayersPerWorld = 100;
+    }
+    
+    public function createVirtualWorld(int $userId, array $worldData): array {
+        try {
+            // Validate user permissions
+            if (!$this->canCreateWorld($userId)) {
+                throw new UnauthorizedException('Insufficient permissions to create worlds');
+            }
+            
+            // Validate world data
+            $validatedData = $this->validateWorldData($worldData);
+            
+            // Check world limits
+            $userWorldCount = $this->getUserWorldCount($userId);
+            $maxWorlds = $this->getMaxWorldsForUser($userId);
+            
+            if ($userWorldCount >= $maxWorlds) {
+                throw new LimitExceededException("Maximum world limit reached: {$maxWorlds}");
+            }
+            
+            // Generate secure world ID
+            $worldId = $this->generateSecureWorldId();
+            
+            $world = [
+                'id' => $worldId,
+                'creator_id' => $userId,
+                'name' => $validatedData['name'],
+                'type' => $validatedData['type'],
+                'description' => $validatedData['description'],
+                'max_players' => min($validatedData['max_players'], $this->maxPlayersPerWorld),
+                'is_public' => $validatedData['is_public'] ?? true,
+                'world_settings' => $this->sanitizeWorldSettings($validatedData['settings'] ?? []),
+                'created_at' => time(),
+                'status' => 'active'
+            ];
+            
+            // Store world in database
+            $this->storeWorld($world);
+            
+            // Initialize world environment
+            $this->initializeWorldEnvironment($worldId, $validatedData);
+            
+            // Log world creation
+            $this->securityLogger->logSecurityEvent('VR_WORLD_CREATED', [
+                'world_id' => $worldId,
+                'creator_id' => $userId,
+                'world_type' => $validatedData['type'],
+                'max_players' => $world['max_players']
+            ]);
+            
+            return [
+                'success' => true,
+                'world_id' => $worldId,
+                'world_data' => $world,
+                'initialization_status' => 'complete'
+            ];
+            
+        } catch (Exception $e) {
+            $this->securityLogger->logSecurityEvent('VR_WORLD_CREATION_ERROR', [
+                'user_id' => $userId,
+                'error' => $e->getMessage(),
+                'world_name' => $worldData['name'] ?? 'unknown'
+            ]);
+            throw $e;
+        }
+    }
+    
+    public function joinVirtualWorld(int $userId, string $worldId, int $catId): array {
+        try {
+            // Validate world exists and is accessible
+            $world = $this->getWorldById($worldId);
+            if (!$world) {
+                throw new NotFoundException('Virtual world not found');
+            }
+            
+            // Check if world is at capacity
+            $currentPlayers = $this->getCurrentPlayerCount($worldId);
+            if ($currentPlayers >= $world['max_players']) {
+                throw new CapacityException('World is at maximum capacity');
+            }
+            
+            // Validate cat ownership
+            if (!$this->userOwnsCat($userId, $catId)) {
+                throw new UnauthorizedException('Cat access denied');
+            }
+            
+            // Check if cat is already in a world
+            $currentWorld = $this->getCatCurrentWorld($catId);
+            if ($currentWorld) {
+                $this->leaveCatFromWorld($catId, $currentWorld['world_id']);
+            }
+            
+            // Create world session
+            $session = [
+                'world_id' => $worldId,
+                'user_id' => $userId,
+                'cat_id' => $catId,
+                'joined_at' => time(),
+                'position' => $this->getWorldSpawnPosition($worldId),
+                'status' => 'active'
+            ];
+            
+            // Store session
+            $this->storeWorldSession($session);
+            
+            // Update world player count
+            $this->incrementWorldPlayerCount($worldId);
+            
+            // Notify other players
+            $this->broadcastPlayerJoin($worldId, $session);
+            
+            // Log world join
+            $this->securityLogger->logSecurityEvent('VR_WORLD_JOINED', [
+                'world_id' => $worldId,
+                'user_id' => $userId,
+                'cat_id' => $catId,
+                'current_players' => $currentPlayers + 1
+            ]);
+            
+            return [
+                'success' => true,
+                'session_data' => $session,
+                'world_data' => $world,
+                'spawn_position' => $session['position']
+            ];
+            
+        } catch (Exception $e) {
+            $this->securityLogger->logSecurityEvent('VR_WORLD_JOIN_ERROR', [
+                'world_id' => $worldId,
+                'user_id' => $userId,
+                'cat_id' => $catId,
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
+        }
+    }
+}
+```
+
+**JavaScript WebVR Integration:**
+```javascript
+// ✅ GOOD - Secure WebVR implementation with proper error handling
+class PurrrVRManager {
+    constructor(apiUrl, authToken) {
+        this.apiUrl = apiUrl;
+        this.authToken = authToken;
+        this.scene = null;
+        this.camera = null;
+        this.renderer = null;
+        this.vrButton = null;
+        this.controllers = [];
+        this.catModels = new Map();
+        this.worldData = null;
+        this.websocket = null;
+        
+        this.initializeVR();
+    }
+    
+    async initializeVR() {
+        try {
+            // Check VR support
+            if (!navigator.xr) {
+                console.warn('WebXR not supported, falling back to standard 3D mode');
+                this.initializeStandard3D();
+                return;
+            }
+            
+            // Initialize Three.js scene
+            this.scene = new THREE.Scene();
+            this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            
+            this.renderer = new THREE.WebGLRenderer({ antialias: true });
+            this.renderer.setSize(window.innerWidth, window.innerHeight);
+            this.renderer.xr.enabled = true;
+            
+            document.body.appendChild(this.renderer.domElement);
+            
+            // Add VR button
+            this.vrButton = VRButton.createButton(this.renderer);
+            document.body.appendChild(this.vrButton);
+            
+            // Initialize controllers
+            this.initializeControllers();
+            
+            // Set up lighting
+            this.setupLighting();
+            
+            // Start render loop
+            this.renderer.setAnimationLoop(this.render.bind(this));
+            
+        } catch (error) {
+            console.error('VR initialization failed:', error);
+            this.handleVRError(error);
+        }
+    }
+    
+    async joinWorld(worldId, catId) {
+        try {
+            // Request world access
+            const response = await fetch(`${this.apiUrl}/api/v1/metaverse/join`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.authToken}`
+                },
+                body: JSON.stringify({
+                    world_id: worldId,
+                    cat_id: catId
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            if (!data.success) {
+                throw new Error(data.error || 'Failed to join world');
+            }
+            
+            this.worldData = data.world_data;
+            
+            // Load world environment
+            await this.loadWorldEnvironment(this.worldData);
+            
+            // Position user cat
+            await this.spawnUserCat(catId, data.spawn_position);
+            
+            // Connect to multiplayer WebSocket
+            this.connectMultiplayer(worldId);
+            
+            // Start world simulation
+            this.startWorldSimulation();
+            
+            return data;
+            
+        } catch (error) {
+            console.error('Failed to join world:', error);
+            throw error;
+        }
+    }
+    
+    async loadWorldEnvironment(worldData) {
+        try {
+            // Clear existing world
+            this.clearScene();
+            
+            // Load world geometry
+            const loader = new THREE.GLTFLoader();
+            const worldModel = await new Promise((resolve, reject) => {
+                loader.load(
+                    `/api/v1/metaverse/worlds/${worldData.id}/model`,
+                    resolve,
+                    null,
+                    reject
+                );
+            });
+            
+            this.scene.add(worldModel.scene);
+            
+            // Set up world physics
+            this.setupWorldPhysics(worldData);
+            
+            // Load ambient sounds
+            this.loadAmbientSounds(worldData);
+            
+            // Set up interactive objects
+            this.setupInteractiveObjects(worldData);
+            
+        } catch (error) {
+            console.error('Failed to load world environment:', error);
+            throw error;
+        }
+    }
+    
+    async spawnUserCat(catId, position) {
+        try {
+            // Load cat model
+            const catModel = await this.loadCatModel(catId);
+            
+            // Position cat
+            catModel.position.set(position.x, position.y, position.z);
+            
+            // Add to scene
+            this.scene.add(catModel);
+            
+            // Store reference
+            this.catModels.set(catId, catModel);
+            
+            // Set up cat animations
+            this.setupCatAnimations(catModel);
+            
+            // Enable cat interactions
+            this.enableCatInteractions(catModel);
+            
+        } catch (error) {
+            console.error('Failed to spawn cat:', error);
+            throw error;
+        }
+    }
+    
+    connectMultiplayer(worldId) {
+        try {
+            const wsUrl = `wss://ws.purrr.love/metaverse/${worldId}`;
+            this.websocket = new WebSocket(wsUrl);
+            
+            this.websocket.onopen = () => {
+                console.log('Connected to multiplayer server');
+                
+                // Authenticate
+                this.websocket.send(JSON.stringify({
+                    type: 'auth',
+                    token: this.authToken
+                }));
+            };
+            
+            this.websocket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                this.handleMultiplayerMessage(data);
+            };
+            
+            this.websocket.onerror = (error) => {
+                console.error('WebSocket error:', error);
+            };
+            
+            this.websocket.onclose = () => {
+                console.log('Disconnected from multiplayer server');
+                // Attempt reconnection
+                setTimeout(() => this.connectMultiplayer(worldId), 5000);
+            };
+            
+        } catch (error) {
+            console.error('Failed to connect to multiplayer:', error);
+        }
+    }
+    
+    handleMultiplayerMessage(data) {
+        switch (data.type) {
+            case 'player_joined':
+                this.spawnOtherPlayerCat(data.cat_id, data.position);
+                break;
+                
+            case 'player_left':
+                this.removeOtherPlayerCat(data.cat_id);
+                break;
+                
+            case 'player_moved':
+                this.updateOtherPlayerPosition(data.cat_id, data.position, data.rotation);
+                break;
+                
+            case 'interaction':
+                this.handlePlayerInteraction(data);
+                break;
+                
+            case 'world_event':
+                this.handleWorldEvent(data);
+                break;
+        }
+    }
+}
+```
+
+#### Testing Requirements
+- **VR Compatibility Testing**: Test across different VR headsets and devices
+- **Performance Testing**: Maintain 90fps for VR (60fps minimum for standard 3D)
+- **Multiplayer Testing**: Test concurrent user interactions and synchronization
+- **Accessibility Testing**: Ensure non-VR users can participate
+
+#### Documentation Requirements
+- VR setup instructions for different headsets
+- World creation and customization guides
+- Multiplayer interaction patterns
+- Performance optimization strategies
+
+### Night Watch System Guidelines
+
+#### Overview
+The Night Watch System is a revolutionary community-based cat protection platform that gamifies real-world pet safety. Players deploy guardian cats on virtual night patrols, create protection zones, and coordinate community responses to keep stray cats safe from threats like bobcats.
+
+#### Prerequisites
+- Understanding of real-time gaming mechanics
+- Knowledge of geolocation and mapping systems
+- Experience with WebSocket/real-time communication
+- Familiarity with community coordination features
+- Understanding of gamification principles
+
+#### Development Standards
+
+**Night Watch Patrol System:**
+```php
+// ✅ GOOD - Secure night watch patrol management
+class SecureNightWatchManager {
+    private SecurityLogger $securityLogger;
+    private array $validGuardianRoles;
+    private float $maxPatrolRadius;
+    private int $maxCatsPerPatrol;
+    
+    public function __construct() {
+        $this->securityLogger = new SecurityLogger();
+        $this->validGuardianRoles = ['scout', 'guardian', 'healer', 'alarm'];
+        $this->maxPatrolRadius = 5.0; // 5km maximum patrol radius
+        $this->maxCatsPerPatrol = 8;
+    }
+    
+    public function deployNightPatrol(int $userId, array $catIds, string $patrolArea): array {
+        try {
+            // Validate user permissions
+            if (!$this->canDeployPatrol($userId)) {
+                throw new UnauthorizedException('Insufficient permissions for night watch deployment');
+            }
+            
+            // Validate patrol parameters
+            if (count($catIds) > $this->maxCatsPerPatrol) {
+                throw new ValidationException("Maximum {$this->maxCatsPerPatrol} cats allowed per patrol");
+            }
+            
+            // Validate cat ownership and availability
+            $availableCats = [];
+            foreach ($catIds as $catId) {
+                $cat = $this->validateCatForPatrol($userId, $catId);
+                if (!$cat) {
+                    throw new ValidationException("Cat {$catId} is not available for patrol");
+                }
+                $availableCats[] = $cat;
+            }
+            
+            // Calculate threat level for patrol area
+            $threatLevel = $this->calculateThreatLevel($patrolArea, $this->getCurrentWeatherConditions());
+            
+            // Assign guardian roles based on cat personalities and skills
+            $deployedCats = [];
+            foreach ($availableCats as $cat) {
+                $guardianRole = $this->assignGuardianRole($cat, $threatLevel);
+                $position = $this->calculatePatrolPosition($patrolArea, $guardianRole);
+                
+                $deployedCat = [
+                    'cat_id' => $cat['id'],
+                    'role' => $guardianRole,
+                    'position' => $position,
+                    'energy_level' => $cat['energy'],
+                    'patrol_effectiveness' => $this->calculateEffectiveness($cat, $guardianRole),
+                    'deployed_at' => time()
+                ];
+                
+                // Update cat status
+                $this->updateCatPatrolStatus($cat['id'], 'active_patrol', $guardianRole);
+                
+                $deployedCats[] = $deployedCat;
+            }
+            
+            // Create patrol record
+            $patrolId = $this->generateSecurePatrolId();
+            $patrol = [
+                'id' => $patrolId,
+                'user_id' => $userId,
+                'patrol_area' => $patrolArea,
+                'threat_level' => $threatLevel,
+                'deployed_cats' => $deployedCats,
+                'status' => 'active',
+                'started_at' => time(),
+                'estimated_duration' => $this->calculatePatrolDuration($threatLevel),
+                'protection_coverage' => $this->calculateCoverageArea($deployedCats)
+            ];
+            
+            // Store patrol data
+            $this->storeNightPatrol($patrol);
+            
+            // Initialize real-time patrol monitoring
+            $this->startPatrolMonitoring($patrolId);
+            
+            // Notify community of new patrol
+            $this->broadcastPatrolDeployment($patrolArea, $patrol);
+            
+            // Log patrol deployment
+            $this->securityLogger->logSecurityEvent('NIGHT_PATROL_DEPLOYED', [
+                'patrol_id' => $patrolId,
+                'user_id' => $userId,
+                'cats_deployed' => count($deployedCats),
+                'patrol_area' => $patrolArea,
+                'threat_level' => $threatLevel
+            ]);
+            
+            return [
+                'success' => true,
+                'patrol_id' => $patrolId,
+                'message' => 'Night patrol deployed successfully!',
+                'deployed_cats' => $deployedCats,
+                'estimated_duration' => $patrol['estimated_duration'],
+                'protection_coverage' => $patrol['protection_coverage']
+            ];
+            
+        } catch (Exception $e) {
+            $this->securityLogger->logSecurityEvent('NIGHT_PATROL_DEPLOYMENT_ERROR', [
+                'user_id' => $userId,
+                'cat_ids' => $catIds,
+                'patrol_area' => $patrolArea,
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
+        }
+    }
+    
+    public function createProtectionZone(int $userId, array $zoneData): array {
+        try {
+            // Validate zone data
+            $validatedData = $this->validateZoneData($zoneData);
+            
+            // Check zone limits for user
+            $userZoneCount = $this->getUserZoneCount($userId);
+            $maxZones = $this->getMaxZonesForUser($userId);
+            
+            if ($userZoneCount >= $maxZones) {
+                throw new LimitExceededException("Maximum zone limit reached: {$maxZones}");
+            }
+            
+            // Validate zone placement (no overlap with existing zones)
+            if ($this->hasZoneOverlap($validatedData['location'], $validatedData['radius'])) {
+                throw new ValidationException('Zone overlaps with existing protection zones');
+            }
+            
+            // Calculate zone cost and deduct coins
+            $zoneCost = $this->calculateZoneCost($validatedData['zone_type'], $validatedData['radius']);
+            if (!$this->deductUserCoins($userId, $zoneCost)) {
+                throw new InsufficientFundsException("Insufficient coins: {$zoneCost} required");
+            }
+            
+            // Create protection zone
+            $zoneId = $this->generateSecureZoneId();
+            $zone = [
+                'id' => $zoneId,
+                'creator_id' => $userId,
+                'name' => $validatedData['name'],
+                'zone_type' => $validatedData['zone_type'],
+                'location' => $validatedData['location'],
+                'coordinates' => $this->geocodeLocation($validatedData['location']),
+                'radius' => $validatedData['radius'],
+                'protection_level' => $this->calculateProtectionLevel($validatedData['zone_type']),
+                'cost' => $zoneCost,
+                'status' => 'active',
+                'created_at' => time(),
+                'effectiveness' => $this->calculateZoneEffectiveness($validatedData)
+            ];
+            
+            // Store zone data
+            $this->storeProtectionZone($zone);
+            
+            // Update community protection coverage
+            $this->updateCommunityProtection($validatedData['location'], $zone['protection_level']);
+            
+            // Award achievement if applicable
+            $this->checkZoneAchievements($userId, $userZoneCount + 1);
+            
+            // Log zone creation
+            $this->securityLogger->logSecurityEvent('PROTECTION_ZONE_CREATED', [
+                'zone_id' => $zoneId,
+                'creator_id' => $userId,
+                'zone_type' => $validatedData['zone_type'],
+                'location' => $validatedData['location'],
+                'cost' => $zoneCost
+            ]);
+            
+            return [
+                'success' => true,
+                'zone_id' => $zoneId,
+                'message' => 'Protection zone created successfully!',
+                'zone_data' => $zone,
+                'community_impact' => $this->calculateCommunityImpact($zone)
+            ];
+            
+        } catch (Exception $e) {
+            $this->securityLogger->logSecurityEvent('PROTECTION_ZONE_CREATION_ERROR', [
+                'user_id' => $userId,
+                'zone_data' => $zoneData,
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
+        }
+    }
+    
+    public function processPatrolEvent(string $patrolId, string $eventType, array $eventData): array {
+        try {
+            $patrol = $this->getActivePatrol($patrolId);
+            if (!$patrol) {
+                throw new NotFoundException('Active patrol not found');
+            }
+            
+            $eventResult = [];
+            
+            switch ($eventType) {
+                case 'stray_cat_encounter':
+                    $eventResult = $this->handleStrayCatEncounter($patrol, $eventData);
+                    break;
+                    
+                case 'bobcat_threat':
+                    $eventResult = $this->handleBobcatThreat($patrol, $eventData);
+                    break;
+                    
+                case 'weather_change':
+                    $eventResult = $this->handleWeatherChange($patrol, $eventData);
+                    break;
+                    
+                case 'community_alert':
+                    $eventResult = $this->handleCommunityAlert($patrol, $eventData);
+                    break;
+                    
+                case 'safe_rescue':
+                    $eventResult = $this->handleSafeRescue($patrol, $eventData);
+                    break;
+                    
+                default:
+                    throw new InvalidArgumentException("Unknown event type: {$eventType}");
+            }
+            
+            // Update patrol status and log event
+            $this->logPatrolEvent($patrolId, $eventType, $eventData, $eventResult);
+            
+            // Award experience and coins based on event outcome
+            if ($eventResult['success']) {
+                $this->awardPatrolRewards($patrol['user_id'], $eventType, $eventResult);
+            }
+            
+            // Check for patrol completion
+            if ($this->isPatrolComplete($patrol, $eventResult)) {
+                $completionResult = $this->completePatrol($patrolId);
+                $eventResult['patrol_completed'] = $completionResult;
+            }
+            
+            return $eventResult;
+            
+        } catch (Exception $e) {
+            $this->securityLogger->logSecurityEvent('NIGHT_PATROL_EVENT_ERROR', [
+                'patrol_id' => $patrolId,
+                'event_type' => $eventType,
+                'error' => $e->getMessage()
+            ]);
+            throw $e;
+        }
+    }
+}
+```
+
+**Real-time Community Coordination:**
+```javascript
+// ✅ GOOD - Real-time night watch coordination system
+class NightWatchCoordinator {
+    constructor(apiUrl, authToken, userId) {
+        this.apiUrl = apiUrl;
+        this.authToken = authToken;
+        this.userId = userId;
+        this.websocket = null;
+        this.activePatrols = new Map();
+        this.protectionZones = new Map();
+        this.communityAlerts = new Map();
+        this.threatLevel = 'low';
+        
+        this.initializeCoordination();
+    }
+    
+    async initializeCoordination() {
+        try {
+            // Connect to Night Watch WebSocket
+            this.connectNightWatchSocket();
+            
+            // Load user's active patrols
+            await this.loadActivePatrols();
+            
+            // Load nearby protection zones
+            await this.loadNearbyProtectionZones();
+            
+            // Subscribe to community alerts
+            this.subscribeToAlerts();
+            
+            // Start threat level monitoring
+            this.startThreatMonitoring();
+            
+        } catch (error) {
+            console.error('Failed to initialize Night Watch coordination:', error);
+        }
+    }
+    
+    connectNightWatchSocket() {
+        const wsUrl = `wss://ws.purrr.love/night-watch/${this.userId}`;
+        this.websocket = new WebSocket(wsUrl);
+        
+        this.websocket.onopen = () => {
+            console.log('Connected to Night Watch coordination server');
+            
+            // Authenticate connection
+            this.websocket.send(JSON.stringify({
+                type: 'auth',
+                token: this.authToken,
+                user_id: this.userId
+            }));
+        };
+        
+        this.websocket.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            this.handleCoordinationMessage(data);
+        };
+        
+        this.websocket.onerror = (error) => {
+            console.error('Night Watch WebSocket error:', error);
+        };
+        
+        this.websocket.onclose = () => {
+            console.log('Disconnected from Night Watch coordination server');
+            // Attempt reconnection
+            setTimeout(() => this.connectNightWatchSocket(), 5000);
+        };
+    }
+    
+    handleCoordinationMessage(data) {
+        switch (data.type) {
+            case 'patrol_event':
+                this.handlePatrolEvent(data);
+                break;
+                
+            case 'community_alert':
+                this.handleCommunityAlert(data);
+                break;
+                
+            case 'threat_level_change':
+                this.handleThreatLevelChange(data);
+                break;
+                
+            case 'stray_cat_spotted':
+                this.handleStrayCatSpotted(data);
+                break;
+                
+            case 'bobcat_warning':
+                this.handleBobcatWarning(data);
+                break;
+                
+            case 'rescue_success':
+                this.handleRescueSuccess(data);
+                break;
+                
+            case 'patrol_coordination':
+                this.handlePatrolCoordination(data);
+                break;
+        }
+    }
+    
+    async deployPatrol(catIds, patrolArea) {
+        try {
+            const response = await fetch(`${this.apiUrl}/api/v1/night-watch/deploy`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.authToken}`
+                },
+                body: JSON.stringify({
+                    cat_ids: catIds,
+                    patrol_area: patrolArea,
+                    coordination_enabled: true
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Store active patrol
+                this.activePatrols.set(data.patrol_id, data);
+                
+                // Start patrol monitoring
+                this.monitorPatrol(data.patrol_id);
+                
+                // Notify UI
+                this.notifyUI('patrol_deployed', data);
+                
+                return data;
+            } else {
+                throw new Error(data.message || 'Failed to deploy patrol');
+            }
+            
+        } catch (error) {
+            console.error('Failed to deploy night patrol:', error);
+            throw error;
+        }
+    }
+    
+    async createProtectionZone(zoneType, name, location, radius) {
+        try {
+            const response = await fetch(`${this.apiUrl}/api/v1/night-watch/zones`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.authToken}`
+                },
+                body: JSON.stringify({
+                    zone_type: zoneType,
+                    name: name,
+                    location: location,
+                    radius: radius
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Store protection zone
+                this.protectionZones.set(data.zone_id, data.zone_data);
+                
+                // Update community protection map
+                this.updateProtectionMap(data.zone_data);
+                
+                // Notify UI
+                this.notifyUI('zone_created', data);
+                
+                return data;
+            } else {
+                throw new Error(data.message || 'Failed to create protection zone');
+            }
+            
+        } catch (error) {
+            console.error('Failed to create protection zone:', error);
+            throw error;
+        }
+    }
+    
+    handlePatrolEvent(eventData) {
+        const patrol = this.activePatrols.get(eventData.patrol_id);
+        if (!patrol) {
+            return;
+        }
+        
+        // Update patrol status
+        patrol.last_event = eventData;
+        patrol.updated_at = Date.now();
+        
+        // Handle specific event types
+        switch (eventData.event_type) {
+            case 'stray_cat_encounter':
+                this.handleStrayCatEvent(patrol, eventData);
+                break;
+                
+            case 'bobcat_threat':
+                this.handleBobcatEvent(patrol, eventData);
+                break;
+                
+            case 'rescue_opportunity':
+                this.handleRescueEvent(patrol, eventData);
+                break;
+        }
+        
+        // Notify UI of patrol event
+        this.notifyUI('patrol_event', eventData);
+    }
+    
+    handleCommunityAlert(alertData) {
+        // Store community alert
+        this.communityAlerts.set(alertData.alert_id, alertData);
+        
+        // Check if any of user's patrols can respond
+        for (const [patrolId, patrol] of this.activePatrols) {
+            if (this.canPatrolRespond(patrol, alertData)) {
+                this.suggestPatrolResponse(patrol, alertData);
+            }
+        }
+        
+        // Notify UI of community alert
+        this.notifyUI('community_alert', alertData);
+    }
+    
+    async coordinateEmergencyResponse(alertId, responseType) {
+        try {
+            const response = await fetch(`${this.apiUrl}/api/v1/night-watch/emergency-response`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.authToken}`
+                },
+                body: JSON.stringify({
+                    alert_id: alertId,
+                    response_type: responseType,
+                    available_patrols: Array.from(this.activePatrols.keys())
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Update patrol assignments
+                if (data.patrol_assignments) {
+                    for (const assignment of data.patrol_assignments) {
+                        this.updatePatrolAssignment(assignment.patrol_id, assignment.mission);
+                    }
+                }
+                
+                return data;
+            } else {
+                throw new Error(data.message || 'Emergency response coordination failed');
+            }
+            
+        } catch (error) {
+            console.error('Failed to coordinate emergency response:', error);
+            throw error;
+        }
+    }
+}
+```
+
+#### Testing Requirements
+- **Real-time Testing**: Test WebSocket connections and real-time event handling
+- **Community Testing**: Test multi-user coordination and alert systems
+- **Geolocation Testing**: Validate location-based patrol and zone mechanics
+- **Performance Testing**: Test system performance with multiple active patrols
+
+#### Documentation Requirements
+- Guardian role explanations and optimal deployment strategies
+- Protection zone types and their effectiveness calculations
+- Community coordination protocols and emergency response procedures
+- Threat level calculation algorithms and weather impact factors
+
 ### Lost Pet Finder Guidelines
 
 #### Overview
@@ -2109,6 +3058,399 @@ class SecureLostPetFinder {
 - **Image Testing**: Validate image upload, processing, and storage
 - **Notification Testing**: Test SMS, email, and push notifications
 - **Performance Testing**: Test search performance with large datasets
+
+### CLI Administrative Commands Guidelines
+
+#### Overview
+The Purrr.love CLI tool (`cli/purrr`) includes comprehensive administrative commands for system management, database operations, user support, and advanced feature management. These commands require special authentication keys for security.
+
+#### Prerequisites
+- Understanding of system administration and database management
+- Access to appropriate administrative keys
+- Knowledge of CLI tool development patterns
+- Experience with secure command authentication
+
+#### Authentication System
+
+**Key Types:**
+- **Admin Key**: Required for user management and system setup operations
+- **Database Key**: Required for database repair, backup, and migration operations  
+- **System Key**: Required for system health checks, cache management, and service control
+- **Support Key**: Required for viewing support tickets and user assistance operations
+
+**Setting Keys:**
+```bash
+# Set administrative keys
+purrr keys set admin <your_admin_key>
+purrr keys set database <your_database_key>
+purrr keys set system <your_system_key>
+purrr keys set support <your_support_key>
+
+# View current key status
+purrr keys show
+```
+
+#### Development Standards
+
+**Secure Command Implementation:**
+```php
+// ✅ GOOD - Secure administrative command with proper authentication
+class SecureAdminCommands {
+    private SecurityLogger $securityLogger;
+    private array $config;
+    
+    public function __construct() {
+        $this->securityLogger = new SecurityLogger();
+        $this->loadConfiguration();
+    }
+    
+    private function commandAdmin($args) {
+        // Require admin authentication
+        if (!$this->requireAdminKey()) {
+            return;
+        }
+
+        if (empty($args)) {
+            $this->showAdminHelp();
+            return;
+        }
+
+        $subcommand = array_shift($args);
+        switch ($subcommand) {
+            case 'status':
+                $this->adminStatus($args);
+                break;
+            case 'users':
+                $this->adminUsers($args);
+                break;
+            case 'keys':
+                $this->adminKeys($args);
+                break;
+            case 'logs':
+                $this->adminLogs($args);
+                break;
+            default:
+                echo Colors::RED . "❌ Unknown admin command: $subcommand" . Colors::NC . "\n";
+                $this->showAdminHelp();
+                break;
+        }
+    }
+    
+    private function requireAdminKey(): bool {
+        if (!$this->hasAdminKey()) {
+            echo Colors::RED . "❌ Error: Admin key required for this operation" . Colors::NC . "\n";
+            echo "   Use: purrr keys set admin <admin_key>\n";
+            
+            // Log unauthorized access attempt
+            $this->securityLogger->logSecurityEvent('ADMIN_ACCESS_DENIED', [
+                'command' => 'admin',
+                'ip' => $_SERVER['HTTP_CLIENT_IP'] ?? $_SERVER['REMOTE_ADDR'] ?? 'unknown',
+                'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'CLI'
+            ]);
+            
+            return false;
+        }
+        return true;
+    }
+    
+    private function adminStatus($args) {
+        try {
+            echo Colors::CYAN . "🔧 Admin Status Check" . Colors::NC . "\n";
+            echo "====================\n";
+            
+            // System health check
+            $health = $this->apiRequest('GET', '/api/health.php');
+            if ($health) {
+                echo "✅ System Health: " . ($health['status'] ?? 'Unknown') . "\n";
+                echo "   Database: " . ($health['database']['status'] ?? 'Unknown') . "\n";
+                echo "   Cache: " . ($health['cache']['status'] ?? 'Unknown') . "\n";
+                echo "   Security: " . ($health['security']['status'] ?? 'Unknown') . "\n";
+            }
+            
+            // User statistics
+            $users = $this->apiRequest('GET', '/api/v1/admin/users/stats');
+            if ($users) {
+                echo "👥 Total Users: " . ($users['total'] ?? 'Unknown') . "\n";
+                echo "   Active Today: " . ($users['active_today'] ?? 'Unknown') . "\n";
+                echo "   New This Week: " . ($users['new_this_week'] ?? 'Unknown') . "\n";
+            }
+            
+            // System performance metrics
+            $performance = $this->apiRequest('GET', '/api/v1/admin/performance');
+            if ($performance) {
+                echo "📊 Performance Metrics:\n";
+                echo "   Average Response Time: " . ($performance['avg_response_time'] ?? 'Unknown') . "ms\n";
+                echo "   Memory Usage: " . ($performance['memory_usage'] ?? 'Unknown') . "%\n";
+                echo "   CPU Usage: " . ($performance['cpu_usage'] ?? 'Unknown') . "%\n";
+            }
+            
+            // Log admin status check
+            $this->securityLogger->logSecurityEvent('ADMIN_STATUS_CHECK', [
+                'admin_key_hash' => hash('sha256', $this->config['admin_key']),
+                'system_health' => $health['status'] ?? 'unknown'
+            ]);
+            
+        } catch (Exception $e) {
+            echo Colors::RED . "❌ Failed to retrieve admin status: " . $e->getMessage() . Colors::NC . "\n";
+            
+            $this->securityLogger->logSecurityEvent('ADMIN_STATUS_ERROR', [
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+    
+    private function adminUsers($args) {
+        try {
+            if (empty($args)) {
+                // List all users
+                $users = $this->apiRequest('GET', '/api/v1/admin/users?limit=50');
+                if ($users && isset($users['data'])) {
+                    echo Colors::CYAN . "👥 User List (showing first 50)" . Colors::NC . "\n";
+                    echo "==============================\n";
+                    foreach ($users['data'] as $user) {
+                        $statusColor = $user['status'] === 'active' ? Colors::GREEN : Colors::RED;
+                        echo sprintf("ID: %d | Email: %s | Status: %s%s%s | Created: %s\n",
+                            $user['id'], 
+                            $user['email'], 
+                            $statusColor,
+                            $user['status'],
+                            Colors::NC,
+                            $user['created_at']
+                        );
+                    }
+                }
+            } else {
+                // Get specific user details
+                $userId = $args[0];
+                $user = $this->apiRequest('GET', "/api/v1/admin/users/{$userId}");
+                if ($user) {
+                    echo Colors::CYAN . "👤 User Details" . Colors::NC . "\n";
+                    echo "===============\n";
+                    echo "ID: " . $user['id'] . "\n";
+                    echo "Email: " . $user['email'] . "\n";
+                    echo "Name: " . ($user['name'] ?? 'Not set') . "\n";
+                    echo "Status: " . $user['status'] . "\n";
+                    echo "Role: " . ($user['role'] ?? 'user') . "\n";
+                    echo "Cats: " . ($user['cat_count'] ?? 0) . "\n";
+                    echo "Coins: " . ($user['coins'] ?? 0) . "\n";
+                    echo "Created: " . $user['created_at'] . "\n";
+                    echo "Last Login: " . ($user['last_login'] ?? 'Never') . "\n";
+                }
+            }
+            
+            // Log user management access
+            $this->securityLogger->logSecurityEvent('ADMIN_USER_ACCESS', [
+                'action' => empty($args) ? 'list_users' : 'view_user',
+                'target_user' => $args[0] ?? null
+            ]);
+            
+        } catch (Exception $e) {
+            echo Colors::RED . "❌ Failed to retrieve user information: " . $e->getMessage() . Colors::NC . "\n";
+        }
+    }
+}
+```
+
+**Database Management Commands:**
+```php
+// ✅ GOOD - Secure database management with comprehensive validation
+class SecureDatabaseCommands {
+    private function commandDatabase($args) {
+        if (!$this->requireDatabaseKey()) {
+            return;
+        }
+
+        if (empty($args)) {
+            $this->showDatabaseHelp();
+            return;
+        }
+
+        $subcommand = array_shift($args);
+        switch ($subcommand) {
+            case 'status':
+                $this->dbStatus($args);
+                break;
+            case 'repair':
+                $this->dbRepair($args);
+                break;
+            case 'backup':
+                $this->dbBackup($args);
+                break;
+            case 'restore':
+                $this->dbRestore($args);
+                break;
+            case 'optimize':
+                $this->dbOptimize($args);
+                break;
+            case 'migrate':
+                $this->dbMigrate($args);
+                break;
+            default:
+                $this->showDatabaseHelp();
+                break;
+        }
+    }
+    
+    private function dbStatus($args) {
+        try {
+            echo Colors::CYAN . "🗄️ Database Status" . Colors::NC . "\n";
+            echo "===================\n";
+            
+            $status = $this->apiRequest('GET', '/api/v1/admin/database/status');
+            
+            if ($status) {
+                echo "Connection: " . ($status['connection'] ? Colors::GREEN . "✅ Connected" : Colors::RED . "❌ Disconnected") . Colors::NC . "\n";
+                echo "Version: " . ($status['version'] ?? 'Unknown') . "\n";
+                echo "Tables: " . ($status['table_count'] ?? 0) . "\n";
+                echo "Total Records: " . number_format($status['total_records'] ?? 0) . "\n";
+                echo "Database Size: " . ($status['size'] ?? 'Unknown') . "\n";
+                
+                if (isset($status['tables'])) {
+                    echo "\nTable Status:\n";
+                    foreach ($status['tables'] as $table) {
+                        $healthColor = $table['health'] === 'OK' ? Colors::GREEN : Colors::YELLOW;
+                        echo "  {$table['name']}: {$healthColor}{$table['health']}{Colors::NC} ({$table['rows']} rows)\n";
+                    }
+                }
+            }
+            
+        } catch (Exception $e) {
+            echo Colors::RED . "❌ Failed to get database status: " . $e->getMessage() . Colors::NC . "\n";
+        }
+    }
+    
+    private function dbBackup($args) {
+        $backupName = $args[0] ?? ('backup_' . date('Y-m-d_H-i-s'));
+        
+        try {
+            echo Colors::YELLOW . "📦 Creating database backup: $backupName" . Colors::NC . "\n";
+            
+            $result = $this->apiRequest('POST', '/api/v1/admin/database/backup', [
+                'backup_name' => $backupName,
+                'compression' => 'gzip',
+                'include_logs' => false
+            ]);
+            
+            if ($result && $result['success']) {
+                echo Colors::GREEN . "✅ Backup created successfully!" . Colors::NC . "\n";
+                echo "Backup file: " . $result['backup_file'] . "\n";
+                echo "Size: " . $result['size'] . "\n";
+                echo "Duration: " . $result['duration'] . " seconds\n";
+            } else {
+                throw new Exception($result['error'] ?? 'Backup failed');
+            }
+            
+        } catch (Exception $e) {
+            echo Colors::RED . "❌ Backup failed: " . $e->getMessage() . Colors::NC . "\n";
+        }
+    }
+}
+```
+
+#### Command Categories
+
+**Administrative Commands (`purrr admin`):**
+- `status` - System health and performance overview
+- `users [user_id]` - User management and details
+- `keys` - API key management and statistics
+- `logs [level]` - View system logs with filtering
+
+**Database Commands (`purrr db`):**
+- `status` - Database connection and table health
+- `repair` - Repair corrupted tables
+- `backup [filename]` - Create database backups
+- `restore <backup_file>` - Restore from backup
+- `optimize` - Optimize database performance
+- `migrate` - Run pending database migrations
+
+**System Commands (`purrr system`):**
+- `status` - System resource usage and health
+- `health` - Comprehensive system diagnostics
+- `logs [service]` - View system service logs
+- `cache [clear|warm]` - Cache management operations
+- `restart` - Restart system services
+
+**Support Commands (`purrr support`):**
+- `tickets` - View and manage support tickets
+- `users [user_id]` - Get user support information
+- `logs` - View support interaction logs
+
+#### Usage Examples
+
+**System Management:**
+```bash
+# Check overall system status
+purrr admin status
+
+# View specific user details
+purrr admin users 123
+
+# Create database backup
+purrr db backup production_backup_2024
+
+# Check database health
+purrr db status
+
+# Clear system cache
+purrr system cache clear
+
+# View recent support tickets
+purrr support tickets
+```
+
+**Advanced Feature Management:**
+```bash
+# Deploy night watch patrol
+purrr nightwatch deploy 1 3 5
+
+# Create protection zone
+purrr nightwatch create-zone safe_haven "Emergency Shelter" "Downtown" 100
+
+# Check blockchain NFT status
+purrr blockchain status
+
+# Test webhook delivery
+purrr webhooks test WH_MAIN
+
+# Search lost pets
+purrr lost-pet search "Golden Retriever" "Golden" 10
+```
+
+#### Security Considerations
+
+**Key Management:**
+- Store administrative keys securely using environment variables or key management systems
+- Rotate keys regularly (recommended: every 90 days)
+- Use different keys for different environments (development, staging, production)
+- Audit key usage through security logs
+
+**Access Control:**
+- Limit admin key distribution to authorized personnel only
+- Implement role-based access for different administrative functions
+- Monitor and log all administrative command usage
+- Require two-factor authentication for key generation/distribution
+
+**Audit Trail:**
+```php
+// All administrative commands must log their usage
+$this->securityLogger->logSecurityEvent('ADMIN_COMMAND_EXECUTED', [
+    'command' => $command,
+    'subcommand' => $subcommand,
+    'arguments' => $this->sanitizeArguments($args),
+    'key_type' => $keyType,
+    'key_hash' => hash('sha256', $keyValue),
+    'ip_address' => $this->getClientIP(),
+    'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'CLI',
+    'timestamp' => time(),
+    'success' => $operationResult
+]);
+```
+
+#### Testing Requirements
+- **Authentication Testing**: Verify key validation and access control
+- **Command Testing**: Test all administrative commands with valid/invalid inputs
+- **Security Testing**: Attempt unauthorized access and verify proper blocking
+- **Integration Testing**: Test CLI commands against actual API endpoints
 
 ## 🌟 Recognition
 

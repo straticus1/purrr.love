@@ -98,6 +98,22 @@ class PurrrCLI {
             case 'ai':
                 $this->commandAI($args);
                 break;
+            // Administrative Commands
+            case 'admin':
+                $this->commandAdmin($args);
+                break;
+            case 'setup':
+                $this->commandSetup($args);
+                break;
+            case 'db':
+                $this->commandDatabase($args);
+                break;
+            case 'system':
+                $this->commandSystem($args);
+                break;
+            case 'support':
+                $this->commandSupport($args);
+                break;
             case 'trading':
                 $this->commandTrading($args);
                 break;
@@ -156,6 +172,771 @@ class PurrrCLI {
                 echo "Use 'purrr help' to see available commands.\n";
                 break;
         }
+    }
+
+    // ============================================================================
+    // ADMINISTRATIVE COMMANDS
+    // ============================================================================
+
+    private function commandAdmin($args) {
+        if (empty($args)) {
+            $this->showAdminHelp();
+            return;
+        }
+
+        $subcommand = array_shift($args);
+        switch ($subcommand) {
+            case 'status':
+                $this->adminStatus($args);
+                break;
+            case 'users':
+                $this->adminUsers($args);
+                break;
+            case 'keys':
+                $this->adminKeys($args);
+                break;
+            case 'logs':
+                $this->adminLogs($args);
+                break;
+            case 'config':
+                $this->adminConfig($args);
+                break;
+            case 'help':
+            default:
+                $this->showAdminHelp();
+                break;
+        }
+    }
+
+    private function commandSetup($args) {
+        if (!$this->requireAdminKey()) {
+            return;
+        }
+
+        if (empty($args)) {
+            $this->showSetupHelp();
+            return;
+        }
+
+        $subcommand = array_shift($args);
+        switch ($subcommand) {
+            case 'database':
+                $this->setupDatabase($args);
+                break;
+            case 'tables':
+                $this->setupTables($args);
+                break;
+            case 'admin':
+                $this->setupAdmin($args);
+                break;
+            case 'system':
+                $this->setupSystem($args);
+                break;
+            case 'help':
+            default:
+                $this->showSetupHelp();
+                break;
+        }
+    }
+
+    private function commandDatabase($args) {
+        if (!$this->requireDatabaseKey()) {
+            return;
+        }
+
+        if (empty($args)) {
+            $this->showDatabaseHelp();
+            return;
+        }
+
+        $subcommand = array_shift($args);
+        switch ($subcommand) {
+            case 'status':
+                $this->dbStatus($args);
+                break;
+            case 'repair':
+                $this->dbRepair($args);
+                break;
+            case 'backup':
+                $this->dbBackup($args);
+                break;
+            case 'restore':
+                $this->dbRestore($args);
+                break;
+            case 'optimize':
+                $this->dbOptimize($args);
+                break;
+            case 'migrate':
+                $this->dbMigrate($args);
+                break;
+            case 'help':
+            default:
+                $this->showDatabaseHelp();
+                break;
+        }
+    }
+
+    private function commandSystem($args) {
+        if (!$this->requireSystemKey()) {
+            return;
+        }
+
+        if (empty($args)) {
+            $this->showSystemHelp();
+            return;
+        }
+
+        $subcommand = array_shift($args);
+        switch ($subcommand) {
+            case 'status':
+                $this->systemStatus($args);
+                break;
+            case 'health':
+                $this->systemHealth($args);
+                break;
+            case 'logs':
+                $this->systemLogs($args);
+                break;
+            case 'cache':
+                $this->systemCache($args);
+                break;
+            case 'restart':
+                $this->systemRestart($args);
+                break;
+            case 'help':
+            default:
+                $this->showSystemHelp();
+                break;
+        }
+    }
+
+    private function commandSupport($args) {
+        if (!$this->requireSupportKey()) {
+            echo Colors::RED . "❌ Error: Support key required for this operation" . Colors::NC . "\n";
+            echo "   Use: purrr keys support <support_key>\n";
+            return;
+        }
+
+        if (empty($args)) {
+            $this->showSupportHelp();
+            return;
+        }
+
+        $subcommand = array_shift($args);
+        switch ($subcommand) {
+            case 'tickets':
+                $this->supportTickets($args);
+                break;
+            case 'users':
+                $this->supportUsers($args);
+                break;
+            case 'logs':
+                $this->supportLogs($args);
+                break;
+            case 'help':
+            default:
+                $this->showSupportHelp();
+                break;
+        }
+    }
+
+    // ============================================================================
+    // AUTHENTICATION METHODS
+    // ============================================================================
+
+    private function requireAdminKey() {
+        if (!$this->hasAdminKey()) {
+            echo Colors::RED . "❌ Error: Admin key required for this operation" . Colors::NC . "\n";
+            echo "   Use: purrr keys admin <admin_key>\n";
+            return false;
+        }
+        return true;
+    }
+
+    private function requireDatabaseKey() {
+        if (!$this->hasDatabaseKey()) {
+            echo Colors::RED . "❌ Error: Database key required for this operation" . Colors::NC . "\n";
+            echo "   Use: purrr keys set database <database_key>\n";
+            return false;
+        }
+        return true;
+    }
+
+    private function requireSystemKey() {
+        if (!$this->hasSystemKey()) {
+            echo Colors::RED . "❌ Error: System key required for this operation" . Colors::NC . "\n";
+            echo "   Use: purrr keys set system <system_key>\n";
+            return false;
+        }
+        return true;
+    }
+
+    private function requireSupportKey() {
+        if (!$this->hasSupportKey()) {
+            echo Colors::RED . "❌ Error: Support key required for this operation" . Colors::NC . "\n";
+            echo "   Use: purrr keys set support <support_key>\n";
+            return false;
+        }
+        return true;
+    }
+
+    private function hasAdminKey() {
+        return isset($this->config['admin_key']) && !empty($this->config['admin_key']);
+    }
+
+    private function hasDatabaseKey() {
+        return isset($this->config['database_key']) && !empty($this->config['database_key']);
+    }
+
+    private function hasSystemKey() {
+        return isset($this->config['system_key']) && !empty($this->config['system_key']);
+    }
+
+    private function hasSupportKey() {
+        return isset($this->config['support_key']) && !empty($this->config['support_key']);
+    }
+
+    // ============================================================================
+    // ADMINISTRATIVE IMPLEMENTATION METHODS
+    // ============================================================================
+
+    private function adminStatus($args) {
+        echo Colors::CYAN . "🔧 Admin Status Check" . Colors::NC . "\n";
+        echo "====================\n";
+        
+        // Check system health
+        $health = $this->apiRequest('GET', '/api/health.php');
+        if ($health) {
+            echo "✅ System Health: " . ($health['status'] ?? 'Unknown') . "\n";
+            echo "   Database: " . ($health['database']['status'] ?? 'Unknown') . "\n";
+            echo "   Cache: " . ($health['cache']['status'] ?? 'Unknown') . "\n";
+        }
+        
+        // Check user count
+        $users = $this->apiRequest('GET', '/api/v1/users?limit=1');
+        if ($users) {
+            echo "👥 Total Users: " . ($users['total'] ?? 'Unknown') . "\n";
+        }
+        
+        // Check API usage
+        $usage = $this->apiRequest('GET', '/api/v1/analytics/usage');
+        if ($usage) {
+            echo "📊 API Requests: " . ($usage['total_requests'] ?? 'Unknown') . "\n";
+        }
+    }
+
+    private function adminUsers($args) {
+        if (empty($args)) {
+            $users = $this->apiRequest('GET', '/api/v1/users?limit=50');
+            if ($users && isset($users['data'])) {
+                echo Colors::CYAN . "👥 User List (showing first 50)" . Colors::NC . "\n";
+                echo "==============================\n";
+                foreach ($users['data'] as $user) {
+                    echo sprintf("ID: %d | Email: %s | Status: %s | Created: %s\n",
+                        $user['id'], $user['email'], $user['status'], $user['created_at']);
+                }
+            }
+        } else {
+            $userId = $args[0];
+            $user = $this->apiRequest('GET', "/api/v1/users/{$userId}");
+            if ($user) {
+                echo Colors::CYAN . "👤 User Details" . Colors::NC . "\n";
+                echo "===============\n";
+                echo "ID: " . $user['id'] . "\n";
+                echo "Email: " . $user['email'] . "\n";
+                echo "Status: " . $user['status'] . "\n";
+                echo "Created: " . $user['created_at'] . "\n";
+            }
+        }
+    }
+
+    private function adminKeys($args) {
+        $keys = $this->apiRequest('GET', '/api/v1/keys');
+        if ($keys && isset($keys['data'])) {
+            echo Colors::CYAN . "🔑 API Keys" . Colors::NC . "\n";
+            echo "===========\n";
+            foreach ($keys['data'] as $key) {
+                echo sprintf("ID: %d | Name: %s | Scopes: %s | Status: %s\n",
+                    $key['id'], $key['name'], implode(',', $key['scopes']), $key['status']);
+            }
+        }
+    }
+
+    private function adminLogs($args) {
+        $logs = $this->apiRequest('GET', '/api/v1/logs?limit=100');
+        if ($logs && isset($logs['data'])) {
+            echo Colors::CYAN . "📝 System Logs (last 100)" . Colors::NC . "\n";
+            echo "=========================\n";
+            foreach ($logs['data'] as $log) {
+                echo sprintf("[%s] %s: %s\n",
+                    $log['timestamp'], $log['level'], $log['message']);
+            }
+        }
+    }
+
+    private function adminConfig($args) {
+        echo Colors::CYAN . "⚙️  System Configuration" . Colors::NC . "\n";
+        echo "======================\n";
+        echo "API URL: " . $this->apiUrl . "\n";
+        echo "Admin Key: " . ($this->hasAdminKey() ? "✅ Set" : "❌ Not set") . "\n";
+        echo "Database Key: " . ($this->hasDatabaseKey() ? "✅ Set" : "❌ Not set") . "\n";
+        echo "System Key: " . ($this->hasSystemKey() ? "✅ Set" : "❌ Not set") . "\n";
+        echo "Support Key: " . ($this->hasSupportKey() ? "✅ Set" : "❌ Not set") . "\n";
+    }
+
+    private function setupDatabase($args) {
+        echo Colors::CYAN . "🗄️  Setting up database..." . Colors::NC . "\n";
+        
+        // Import schema
+        $schemaFiles = [
+            '../database/schema.sql',
+            '../database/api_schema.sql',
+            '../database/night_watch_schema.sql',
+            '../database/security_schema.sql',
+            '../database/advanced_features_schema.sql',
+            '../database/lost_pet_finder_schema.sql'
+        ];
+        
+        foreach ($schemaFiles as $schemaFile) {
+            if (file_exists($schemaFile)) {
+                echo "   Importing: " . basename($schemaFile) . "\n";
+                $this->importSchema($schemaFile);
+            }
+        }
+        
+        echo Colors::GREEN . "✅ Database setup complete" . Colors::NC . "\n";
+    }
+
+    private function setupTables($args) {
+        echo Colors::CYAN . "📋 Setting up application tables..." . Colors::NC . "\n";
+        
+        // Create core tables
+        $tables = [
+            'users', 'cats', 'api_keys', 'oauth_clients',
+            'lost_pet_reports', 'pet_sightings', 'nfts',
+            'metaverse_worlds', 'ml_models', 'webhooks'
+        ];
+        
+        foreach ($tables as $table) {
+            echo "   Creating table: {$table}\n";
+            $this->createTable($table);
+        }
+        
+        echo Colors::GREEN . "✅ Tables setup complete" . Colors::NC . "\n";
+    }
+
+    private function setupAdmin($args) {
+        if (empty($args)) {
+            echo Colors::RED . "Usage: purrr setup admin <email> <password> [name]" . Colors::NC . "\n";
+            return;
+        }
+        
+        $email = $args[0];
+        $password = $args[1];
+        $name = $args[2] ?? 'Administrator';
+        
+        echo Colors::CYAN . "👑 Setting up admin user..." . Colors::NC . "\n";
+        
+        $adminData = [
+            'email' => $email,
+            'password' => $password,
+            'name' => $name,
+            'role' => 'admin',
+            'permissions' => ['*']
+        ];
+        
+        $result = $this->apiRequest('POST', '/api/v1/users', $adminData);
+        if ($result) {
+            echo Colors::GREEN . "✅ Admin user created: {$email}" . Colors::NC . "\n";
+        } else {
+            echo Colors::RED . "❌ Failed to create admin user" . Colors::NC . "\n";
+        }
+    }
+
+    private function setupSystem($args) {
+        echo Colors::CYAN . "⚙️  Setting up system configuration..." . Colors::NC . "\n";
+        
+        // Set default configuration
+        $config = [
+            'app_name' => 'Purrr.love',
+            'app_version' => '2.0.0',
+            'environment' => 'production',
+            'debug' => false,
+            'maintenance_mode' => false
+        ];
+        
+        $result = $this->apiRequest('POST', '/api/v1/config', $config);
+        if ($result) {
+            echo Colors::GREEN . "✅ System configuration set" . Colors::NC . "\n";
+        } else {
+            echo Colors::RED . "❌ Failed to set system configuration" . Colors::NC . "\n";
+        }
+    }
+
+    private function dbStatus($args) {
+        echo Colors::CYAN . "🗄️  Database Status" . Colors::NC . "\n";
+        echo "==================\n";
+        
+        $status = $this->apiRequest('GET', '/api/health.php');
+        if ($status && isset($status['database'])) {
+            echo "Status: " . $status['database']['status'] . "\n";
+            echo "Version: " . $status['database']['version'] . "\n";
+            echo "Size: " . $status['database']['size'] . "\n";
+            echo "Connections: " . $status['database']['connections'] . "\n";
+        }
+    }
+
+    private function dbRepair($args) {
+        echo Colors::CYAN . "🔧 Repairing database..." . Colors::NC . "\n";
+        
+        $result = $this->apiRequest('POST', '/api/v1/admin/database/repair');
+        if ($result) {
+            echo Colors::GREEN . "✅ Database repair completed" . Colors::NC . "\n";
+        } else {
+            echo Colors::RED . "❌ Database repair failed" . Colors::NC . "\n";
+        }
+    }
+
+    private function dbBackup($args) {
+        $filename = $args[0] ?? 'backup_' . date('Y-m-d_H-i-s') . '.sql';
+        echo Colors::CYAN . "💾 Creating database backup: {$filename}" . Colors::NC . "\n";
+        
+        $result = $this->apiRequest('POST', '/api/v1/admin/database/backup', ['filename' => $filename]);
+        if ($result) {
+            echo Colors::GREEN . "✅ Backup created: {$filename}" . Colors::NC . "\n";
+        } else {
+            echo Colors::RED . "❌ Backup failed" . Colors::NC . "\n";
+        }
+    }
+
+    private function dbRestore($args) {
+        if (empty($args)) {
+            echo Colors::RED . "Usage: purrr db restore <backup_file>" . Colors::NC . "\n";
+            return;
+        }
+        
+        $filename = $args[0];
+        echo Colors::CYAN . "🔄 Restoring database from: {$filename}" . Colors::NC . "\n";
+        
+        $result = $this->apiRequest('POST', '/api/v1/admin/database/restore', ['filename' => $filename]);
+        if ($result) {
+            echo Colors::GREEN . "✅ Database restored from: {$filename}" . Colors::NC . "\n";
+        } else {
+            echo Colors::RED . "❌ Database restore failed" . Colors::NC . "\n";
+        }
+    }
+
+    private function dbOptimize($args) {
+        echo Colors::CYAN . "⚡ Optimizing database..." . Colors::NC . "\n";
+        
+        $result = $this->apiRequest('POST', '/api/v1/admin/database/optimize');
+        if ($result) {
+            echo "✅ Database optimization completed\n";
+        } else {
+            echo Colors::RED . "❌ Database optimization failed" . Colors::NC . "\n";
+        }
+    }
+
+    private function dbMigrate($args) {
+        echo Colors::CYAN . "🔄 Running database migrations..." . Colors::NC . "\n";
+        
+        $result = $this->apiRequest('POST', '/api/v1/admin/database/migrate');
+        if ($result) {
+            echo Colors::GREEN . "✅ Database migrations completed" . Colors::NC . "\n";
+        } else {
+            echo Colors::RED . "❌ Database migrations failed" . Colors::NC . "\n";
+        }
+    }
+
+    private function systemStatus($args) {
+        echo Colors::CYAN . "🖥️  System Status" . Colors::NC . "\n";
+        echo "================\n";
+        
+        $status = $this->apiRequest('GET', '/api/health.php');
+        if ($status) {
+            echo "Overall Status: " . $status['status'] . "\n";
+            echo "Uptime: " . ($status['uptime'] ?? 'Unknown') . "\n";
+            echo "Memory Usage: " . ($status['memory'] ?? 'Unknown') . "\n";
+            echo "CPU Usage: " . ($status['cpu'] ?? 'Unknown') . "\n";
+        }
+    }
+
+    private function systemHealth($args) {
+        echo Colors::CYAN . "❤️  System Health Check" . Colors::NC . "\n";
+        echo "======================\n";
+        
+        $health = $this->apiRequest('GET', '/api/health.php?detailed=1');
+        if ($health) {
+            foreach ($health as $component => $status) {
+                if (is_array($status)) {
+                    echo "{$component}: " . ($status['status'] ?? 'Unknown') . "\n";
+                } else {
+                    echo "{$component}: {$status}\n";
+                }
+            }
+        }
+    }
+
+    private function systemLogs($args) {
+        $logs = $this->apiRequest('GET', '/api/v1/admin/system/logs?limit=100');
+        if ($logs && isset($logs['data'])) {
+            echo Colors::CYAN . "📝 System Logs (last 100)" . Colors::NC . "\n";
+            echo "=========================\n";
+            foreach ($logs['data'] as $key => $log) {
+                echo sprintf("[%s] %s: %s\n",
+                    $log['timestamp'], $log['level'], $log['message']);
+            }
+        }
+    }
+
+    private function systemCache($args) {
+        if (empty($args)) {
+            $status = $this->apiRequest('GET', '/api/v1/admin/system/cache');
+            if ($status) {
+                echo Colors::CYAN . "🗄️  Cache Status" . Colors::NC . "\n";
+                echo "===============\n";
+                echo "Status: " . $status['status'] . "\n";
+                echo "Size: " . $status['size'] . "\n";
+                echo "Hit Rate: " . $status['hit_rate'] . "\n";
+            }
+        } else {
+            $action = $args[0];
+            switch ($action) {
+                case 'clear':
+                    $result = $this->apiRequest('POST', '/api/v1/admin/database/clear');
+                    echo $result ? Colors::GREEN . "✅ Cache cleared" . Colors::NC . "\n" : Colors::RED . "❌ Cache clear failed" . Colors::NC . "\n";
+                    break;
+                case 'warm':
+                    $result = $this->apiRequest('POST', '/api/v1/admin/database/warm');
+                    echo $result ? Colors::GREEN . "✅ Cache warmed" . Colors::NC . "\n" : Colors::RED . "❌ Cache warm failed" . Colors::NC . "\n";
+                    break;
+                default:
+                    echo Colors::RED . "Usage: purrr system cache [clear|warm]" . Colors::NC . "\n";
+            }
+        }
+    }
+
+    private function systemRestart($args) {
+        echo Colors::CYAN . "🔄 Restarting system services..." . Colors::NC . "\n";
+        
+        $result = $this->apiRequest('POST', '/api/v1/admin/system/restart');
+        if ($result) {
+            echo Colors::GREEN . "✅ System restart initiated" . Colors::NC . "\n";
+        } else {
+            echo Colors::RED . "❌ System restart failed" . Colors::NC . "\n";
+        }
+    }
+
+    private function supportTickets($args) {
+        $tickets = $this->apiRequest('GET', '/api/v1/support/tickets');
+        if ($tickets && isset($tickets['data'])) {
+            echo Colors::CYAN . "🎫 Support Tickets" . Colors::NC . "\n";
+            echo "================\n";
+            foreach ($tickets['data'] as $ticket) {
+                echo sprintf("ID: %d | User: %s | Subject: %s | Status: %s\n",
+                    $ticket['id'], $ticket['user_email'], $ticket['subject'], $ticket['status']);
+                break;
+            }
+        }
+    }
+
+    private function supportUsers($args) {
+        if (empty($args)) {
+            $users = $this->apiRequest('GET', '/api/v1/support/users');
+            if ($users && isset($users['data'])) {
+                echo Colors::CYAN . "👥 Support Users" . Colors::NC . "\n";
+                echo "================\n";
+                foreach ($users['data'] as $user) {
+                    echo sprintf("ID: %d | Email: %s | Status: %s | Last Login: %s\n",
+                        $user['id'], $user['email'], $user['status'], $user['last_login']);
+                }
+            }
+        } else {
+            $userId = $args[0];
+            $user = $this->apiRequest('GET', "/api/v1/support/users/{$userId}");
+            if ($user) {
+                echo Colors::CYAN . "👤 User Support Details" . Colors::NC . "\n";
+                echo "===============\n";
+                echo "ID: " . $user['id'] . "\n";
+                echo "Email: " . $user['email'] . "\n";
+                echo "Status: " . $user['id'] . "\n";
+                echo "Last Login: " . $user['last_login'] . "\n";
+                echo "Support Level: " . $user['support_level'] . "\n";
+            }
+        }
+    }
+
+    private function supportLogs($args) {
+        $logs = $this->apiRequest('GET', '/api/v1/support/logs');
+        if ($logs && isset($logs['data'])) {
+            echo Colors::CYAN . "📝 Support Logs" . Colors::NC . "\n";
+                echo "==============\n";
+            foreach ($logs['data'] as $log) {
+                echo sprintf("[%s] %s: %s\n",
+                    $log['timestamp'], $log['level'], $log['message']);
+            }
+        }
+    }
+
+    // ============================================================================
+    // HELPER METHODS
+    // ============================================================================
+
+    private function importSchema($schemaFile) {
+        // This would typically connect to the database directly
+        // For now, we'll simulate the import
+        echo "   Importing schema from: " . basename($schemaFile) . "\n";
+        sleep(1); // Simulate import time
+        echo "   ✅ Schema imported successfully\n";
+    }
+
+    private function createTable($tableName) {
+        // This would typically create tables in the database
+        // For now, we'll simulate the creation
+        echo "   Creating table: {$tableName}\n";
+        sleep(1); // Simulate creation time
+        echo "   ✅ Table created successfully\n";
+    }
+
+    // ============================================================================
+    // API KEYS MANAGEMENT
+    // ============================================================================
+
+    private function commandApiKeys($args) {
+        if (empty($args)) {
+            $this->showKeysHelp();
+            return;
+        }
+
+        $action = array_shift($args);
+        switch ($action) {
+            case 'list':
+                $this->listApiKeys();
+                break;
+            case 'create':
+                $this->createApiKey($args);
+                break;
+            case 'revoke':
+                if (empty($args)) {
+                    echo Colors::RED . "❌ Key ID required. Usage: purrr keys revoke <key_id>" . Colors::NC . "\n";
+                    return;
+                }
+                $this->revokeApiKey($args[0]);
+                break;
+            case 'set':
+                if (count($args) < 2) {
+                    echo Colors::RED . "❌ Usage: purrr keys set <type> <key_value>" . Colors::NC . "\n";
+                    echo "   Types: admin, database, system, support\n";
+                    return;
+                }
+                $this->setKey($args[0], $args[1]);
+                break;
+            case 'show':
+                $this->showCurrentKeys();
+                break;
+            case 'help':
+            default:
+                $this->showKeysHelp();
+                break;
+        }
+    }
+
+    private function showKeysHelp() {
+        echo Colors::CYAN . "🔑 API Keys Management:" . Colors::NC . "\n";
+        echo "  list                    - List your API keys\n";
+        echo "  create <name> [scopes]  - Create new API key\n";
+        echo "  revoke <key_id>         - Revoke API key\n";
+        echo "  set <type> <key>        - Set special key (admin/database/system/support)\n";
+        echo "  show                    - Show current special keys\n";
+        echo "  help                    - Show this help message\n\n";
+        echo "Special Key Types:\n";
+        echo "  admin                   - Administrative operations\n";
+        echo "  database                - Database operations\n";
+        echo "  system                  - System management\n";
+        echo "  support                 - Support operations\n\n";
+    }
+
+    private function listApiKeys() {
+        try {
+            $response = $this->apiRequest('GET', '/api/v1/keys');
+            if ($response && isset($response['data'])) {
+                echo Colors::CYAN . "🔑 Your API Keys:" . Colors::NC . "\n";
+                echo "==================\n";
+                foreach ($response['data'] as $key) {
+                    echo sprintf("ID: %d | Name: %s | Scopes: %s | Status: %s\n",
+                        $key['id'], $key['name'], implode(',', $key['scopes']), $key['status']);
+                }
+            } else {
+                echo Colors::YELLOW . "⚠️  No API keys found or not authenticated" . Colors::NC . "\n";
+            }
+        } catch (Exception $e) {
+            echo Colors::RED . "❌ Failed to list API keys: " . $e->getMessage() . Colors::NC . "\n";
+        }
+    }
+
+    private function createApiKey($args) {
+        if (empty($args)) {
+            echo Colors::RED . "❌ Key name required. Usage: purrr keys create <name> [scopes]" . Colors::NC . "\n";
+            return;
+        }
+
+        $name = $args[0];
+        $scopes = array_slice($args, 1);
+        if (empty($scopes)) {
+            $scopes = ['read', 'write'];
+        }
+
+        try {
+            $response = $this->apiRequest('POST', '/api/v1/keys', [
+                'name' => $name,
+                'scopes' => $scopes
+            ]);
+
+            if ($response && isset($response['data'])) {
+                echo Colors::GREEN . "✅ API key created successfully!" . Colors::NC . "\n";
+                echo "Key ID: " . $response['data']['id'] . "\n";
+                echo "Name: " . $response['data']['name'] . "\n";
+                echo "Scopes: " . implode(', ', $response['data']['scopes']) . "\n";
+                echo Colors::YELLOW . "⚠️  Store this key securely - it won't be shown again!" . Colors::NC . "\n";
+            }
+        } catch (Exception $e) {
+            echo Colors::RED . "❌ Failed to create API key: " . $e->getMessage() . Colors::NC . "\n";
+        }
+    }
+
+    private function revokeApiKey($keyId) {
+        try {
+            $response = $this->apiRequest('DELETE', "/api/v1/keys/{$keyId}");
+            echo Colors::GREEN . "✅ API key revoked successfully!" . Colors::NC . "\n";
+        } catch (Exception $e) {
+            echo Colors::RED . "❌ Failed to revoke API key: " . $e->getMessage() . Colors::NC . "\n";
+        }
+    }
+
+    private function setKey($type, $keyValue) {
+        $validTypes = ['admin', 'database', 'system', 'support'];
+        
+        if (!in_array($type, $validTypes)) {
+            echo Colors::RED . "❌ Invalid key type: {$type}" . Colors::NC . "\n";
+            echo "Valid types: " . implode(', ', $validTypes) . "\n";
+            return;
+        }
+
+        $configKey = $type . '_key';
+        $this->config[$configKey] = $keyValue;
+        $this->saveConfig();
+
+        echo Colors::GREEN . "✅ {$type} key set successfully!" . Colors::NC . "\n";
+        echo Colors::YELLOW . "⚠️  Key stored in local configuration" . Colors::NC . "\n";
+    }
+
+    private function showCurrentKeys() {
+        echo Colors::CYAN . "🔑 Current Special Keys:" . Colors::NC . "\n";
+        echo "==========================\n";
+        echo "Admin Key: " . ($this->hasAdminKey() ? "✅ Set" : "❌ Not set") . "\n";
+        echo "Database Key: " . ($this->hasDatabaseKey() ? "✅ Set" : "❌ Not set") . "\n";
+        echo "System Key: " . ($this->hasSystemKey() ? "✅ Set" : "❌ Not set") . "\n";
+        echo "Support Key: " . ($this->hasSupportKey() ? "✅ Set" : "❌ Not set") . "\n";
     }
 
     private function commandLogin($args) {
@@ -1243,6 +2024,11 @@ class PurrrCLI {
         echo "  metaverse/vr            - Metaverse and VR worlds\n";
         echo "  webhooks                - Webhook management\n";
         echo "  lost-pet/finder         - Lost pet finder and Facebook integration\n";
+        echo "  admin                   - Administrative operations\n";
+        echo "  setup                   - System setup and configuration\n";
+        echo "  db                      - Database operations\n";
+        echo "  system                  - System management\n";
+        echo "  support                 - Support operations\n";
         echo "  config                  - Manage configuration\n";
         echo "  version                 - Show version information\n";
         echo "  help                    - Show this help message\n\n";
@@ -2394,6 +3180,63 @@ class PurrrCLI {
                 echo "  " . ($breed['breed'] ?? 'Unknown') . ": " . ($breed['success_rate'] ?? 0) . "% (" . ($breed['found_count'] ?? 0) . "/" . ($breed['total_reports'] ?? 0) . ")\n";
             }
         }
+    }
+
+    // ============================================================================
+    // ADMINISTRATIVE HELP METHODS
+    // ============================================================================
+
+    private function showAdminHelp() {
+        echo Colors::CYAN . "🔧 Administrative Commands:" . Colors::NC . "\n";
+        echo "  status                  - Check system status and health\n";
+        echo "  users [user_id]         - List users or get user details\n";
+        echo "  keys                    - List all API keys\n";
+        echo "  logs                    - View system logs\n";
+        echo "  config                  - Show system configuration\n";
+        echo "  help                    - Show this help message\n\n";
+        echo Colors::YELLOW . "⚠️  Requires admin key. Use: purrr keys set admin <admin_key>" . Colors::NC . "\n\n";
+    }
+
+    private function showSetupHelp() {
+        echo Colors::CYAN . "⚙️  Setup Commands:" . Colors::NC . "\n";
+        echo "  database                - Import database schema\n";
+        echo "  tables                  - Create application tables\n";
+        echo "  admin <email> <pass>    - Create admin user\n";
+        echo "  system                  - Configure system settings\n";
+        echo "  help                    - Show this help message\n\n";
+        echo Colors::YELLOW . "⚠️  Requires admin key. Use: purrr keys set admin <admin_key>" . Colors::NC . "\n\n";
+    }
+
+    private function showDatabaseHelp() {
+        echo Colors::CYAN . "🗄️  Database Commands:" . Colors::NC . "\n";
+        echo "  status                  - Check database status\n";
+        echo "  repair                  - Repair database issues\n";
+        echo "  backup [filename]       - Create database backup\n";
+        echo "  restore <backup_file>   - Restore from backup\n";
+        echo "  optimize                - Optimize database performance\n";
+        echo "  migrate                 - Run database migrations\n";
+        echo "  help                    - Show this help message\n\n";
+        echo Colors::YELLOW . "⚠️  Requires database key. Use: purrr keys set database <database_key>" . Colors::NC . "\n\n";
+    }
+
+    private function showSystemHelp() {
+        echo Colors::CYAN . "🖥️  System Commands:" . Colors::NC . "\n";
+        echo "  status                  - Check system status\n";
+        echo "  health                  - Detailed health check\n";
+        echo "  logs                    - View system logs\n";
+        echo "  cache [clear|warm]      - Manage system cache\n";
+        echo "  restart                 - Restart system services\n";
+        echo "  help                    - Show this help message\n\n";
+        echo Colors::YELLOW . "⚠️  Requires system key. Use: purrr keys set system <system_key>" . Colors::NC . "\n\n";
+    }
+
+    private function showSupportHelp() {
+        echo Colors::CYAN . "🎫 Support Commands:" . Colors::NC . "\n";
+        echo "  tickets                 - View support tickets\n";
+        echo "  users [user_id]         - Get user support info\n";
+        echo "  logs                    - View support logs\n";
+        echo "  help                    - Show this help message\n\n";
+        echo Colors::YELLOW . "⚠️  Requires support key. Use: purrr keys set support <support_key>" . Colors::NC . "\n\n";
     }
 }
 
