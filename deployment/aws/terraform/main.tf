@@ -1,5 +1,4 @@
-# 🚀 Purrr.love AWS Infrastructure
-# Production-ready Terraform configuration for containerized deployment
+# Simplified Terraform Configuration for Purrr.love ALB Setup
 
 terraform {
   required_version = ">= 1.0"
@@ -8,394 +7,464 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
-    random = {
-      source  = "hashicorp/random"
-      version = "~> 3.1"
-    }
-  }
-  
-  # backend "s3" {
-  #   bucket = "purrr-love-terraform-state"
-  #   key    = "terraform.tfstate"
-  #   region = "us-east-1"
-  # }
-}
-
-# Default AWS provider
-provider "aws" {
-  region = var.aws_region
-  
-  default_tags {
-    tags = {
-      Project     = "purrr"
-      Environment = var.environment
-      ManagedBy   = "terraform"
-      Owner       = "purrr-love-team"
-      CreatedBy   = "terraform"
-    }
   }
 }
 
-# US East 1 provider for CloudFront and ACM certificates
 provider "aws" {
-  alias  = "us_east_1"
   region = "us-east-1"
   
   default_tags {
     tags = {
       Project     = "purrr"
-      Environment = var.environment
+      Environment = "production"
       ManagedBy   = "terraform"
       Owner       = "purrr-love-team"
-      CreatedBy   = "terraform"
     }
   }
 }
 
-# Common tags for all resources
-locals {
-  common_tags = {
-    Project     = "purrr"
-    Environment = var.environment
-    ManagedBy   = "terraform"
-    Owner       = "purrr-love-team"
-    CreatedBy   = "terraform"
+# Data sources for existing Route53 zones
+data "aws_route53_zone" "purrr_love" {
+  name = "purrr.love"
+}
+
+data "aws_route53_zone" "purrr_me" {
+  name = "purrr.me"
+}
+
+# Get default VPC and subnets for quick deployment
+data "aws_vpc" "default" {
+  default = true
+}
+
+data "aws_subnets" "default" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.default.id]
   }
 }
 
-# VPC and Networking
-module "vpc" {
-  source = "./modules/vpc"
-  
-  environment = var.environment
-  vpc_cidr    = var.vpc_cidr
-  azs         = var.availability_zones
-  
-  public_subnets  = var.public_subnet_cidrs
-  private_subnets = var.private_subnet_cidrs
-  
-  enable_nat_gateway   = true
-  single_nat_gateway   = var.environment != "production"
-  enable_vpc_endpoints = true
-  enable_flow_logs     = true
+# Security group for ALB
+resource "aws_security_group" "alb" {
+  name_prefix = "purrr-alb-"
+  vpc_id      = data.aws_vpc.default.id
+
+  # HTTP
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "HTTP"
+  }
+
+  # HTTPS
+  ingress {
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "HTTPS"
+  }
+
+  # All outbound traffic
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "All outbound traffic"
+  }
+
+  tags = {
+    Name = "purrr-alb-security-group"
+  }
 }
 
-# Security Groups
-module "security_groups" {
-  source = "./modules/security_groups"
-  
-  environment      = var.environment
-  project_name     = var.project_name
-  vpc_id          = module.vpc.vpc_id
-  vpc_cidr_block  = var.vpc_cidr_block
-  
-  application_port     = var.application_port
-  database_port        = var.database_port
-  admin_cidr_blocks    = var.admin_cidr_blocks
-  
-  enable_redis         = var.enable_redis
-  enable_bastion       = var.enable_bastion
-  enable_efs           = var.enable_efs
-  enable_vpc_endpoints = var.enable_vpc_endpoints
-  
-  common_tags = local.common_tags
+# Security group for ECS tasks
+resource "aws_security_group" "ecs" {
+  name_prefix = "purrr-ecs-"
+  vpc_id      = data.aws_vpc.default.id
+
+  # HTTP from ALB
+  ingress {
+    from_port       = 80
+    to_port         = 80
+    protocol        = "tcp"
+    security_groups = [aws_security_group.alb.id]
+    description     = "HTTP from ALB"
+  }
+
+  # All outbound traffic
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+    description = "All outbound traffic"
+  }
+
+  tags = {
+    Name = "purrr-ecs-security-group"
+  }
 }
 
-# RDS Database
-module "database" {
-  source = "./modules/database"
-  
-  environment   = var.environment
-  project_name  = var.project_name
-  
-  # Database Configuration
-  db_engine         = var.db_engine
-  db_engine_version = var.db_engine_version
-  db_instance_class = var.db_instance_class
-  db_name          = var.db_name
-  db_username      = var.db_username
-  db_password      = var.db_password
-  database_port    = var.database_port
-  
-  # Storage
-  db_allocated_storage     = var.db_allocated_storage
-  db_max_allocated_storage = var.db_max_allocated_storage
-  enable_encryption        = var.db_enable_encryption
-  
-  # Network
-  subnet_ids         = module.vpc.database_subnet_ids
-  security_group_ids = [module.security_groups.database_security_group_id]
-  
-  # Backup and Maintenance
-  backup_retention_period = var.db_backup_retention_period
-  backup_window          = var.db_backup_window
-  maintenance_window     = var.db_maintenance_window
-  
-  # High Availability
-  multi_az             = var.environment == "production" ? true : var.db_multi_az
-  create_read_replica  = var.db_create_read_replica
-  
-  # Monitoring
-  enhanced_monitoring_interval     = var.db_enhanced_monitoring_interval
-  enable_performance_insights      = var.db_enable_performance_insights
-  
-  common_tags = local.common_tags
+# ACM Certificate for purrr.love
+resource "aws_acm_certificate" "purrr_love" {
+  domain_name = "purrr.love"
+  subject_alternative_names = [
+    "*.purrr.love"
+  ]
+  validation_method = "DNS"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  tags = {
+    Name = "purrr.love-certificate"
+  }
 }
 
-# ECS Cluster and Service
-module "ecs" {
-  source = "./modules/ecs"
-  
-  environment  = var.environment
-  project_name = var.project_name
-  
-  # Container Configuration
-  container_image  = var.container_image
-  container_port   = var.container_port
-  container_cpu    = var.container_cpu
-  container_memory = var.container_memory
-  
-  # Task Configuration
-  task_cpu    = var.task_cpu
-  task_memory = var.task_memory
-  
-  # Service Configuration
-  desired_count = var.ecs_desired_count
-  
-  # Network Configuration
-  subnet_ids         = var.ecs_use_public_subnets ? module.vpc.public_subnet_ids : module.vpc.private_subnet_ids
-  security_group_ids = [module.security_groups.web_security_group_id]
-  assign_public_ip   = var.ecs_assign_public_ip
-  
-  # Load Balancer Integration
-  target_group_arn = module.alb.target_group_arn
-  
-  # Auto Scaling
-  enable_auto_scaling      = var.ecs_enable_auto_scaling
-  autoscaling_min_capacity = var.ecs_autoscaling_min_capacity
-  autoscaling_max_capacity = var.ecs_autoscaling_max_capacity
-  
-  # Fargate Configuration
-  enable_fargate     = var.ecs_enable_fargate
-  use_fargate_spot   = var.ecs_use_fargate_spot
-  
-  # Monitoring
-  enable_container_insights = var.ecs_enable_container_insights
-  log_retention_days       = var.log_retention_days
-  
-  common_tags = local.common_tags
-  
-  depends_on = [module.database]
+# ACM Certificate for purrr.me
+resource "aws_acm_certificate" "purrr_me" {
+  domain_name = "purrr.me"
+  subject_alternative_names = [
+    "*.purrr.me"
+  ]
+  validation_method = "DNS"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  tags = {
+    Name = "purrr.me-certificate"
+  }
+}
+
+# Certificate validation records for purrr.love
+resource "aws_route53_record" "purrr_love_cert_validation" {
+  for_each = {
+    for dvo in aws_acm_certificate.purrr_love.domain_validation_options : dvo.domain_name => {
+      name   = dvo.resource_record_name
+      record = dvo.resource_record_value
+      type   = dvo.resource_record_type
+    }
+  }
+
+  allow_overwrite = true
+  name            = each.value.name
+  records         = [each.value.record]
+  ttl             = 60
+  type            = each.value.type
+  zone_id         = data.aws_route53_zone.purrr_love.zone_id
+}
+
+# Certificate validation records for purrr.me
+resource "aws_route53_record" "purrr_me_cert_validation" {
+  for_each = {
+    for dvo in aws_acm_certificate.purrr_me.domain_validation_options : dvo.domain_name => {
+      name   = dvo.resource_record_name
+      record = dvo.resource_record_value
+      type   = dvo.resource_record_type
+    }
+  }
+
+  allow_overwrite = true
+  name            = each.value.name
+  records         = [each.value.record]
+  ttl             = 60
+  type            = each.value.type
+  zone_id         = data.aws_route53_zone.purrr_me.zone_id
+}
+
+# Certificate validation
+resource "aws_acm_certificate_validation" "purrr_love" {
+  certificate_arn         = aws_acm_certificate.purrr_love.arn
+  validation_record_fqdns = [for record in aws_route53_record.purrr_love_cert_validation : record.fqdn]
+
+  timeouts {
+    create = "10m"
+  }
+}
+
+resource "aws_acm_certificate_validation" "purrr_me" {
+  certificate_arn         = aws_acm_certificate.purrr_me.arn
+  validation_record_fqdns = [for record in aws_route53_record.purrr_me_cert_validation : record.fqdn]
+
+  timeouts {
+    create = "10m"
+  }
 }
 
 # Application Load Balancer
-module "alb" {
-  source = "./modules/alb"
-  
-  environment  = var.environment
-  project_name = var.project_name
-  
-  # Network Configuration
-  vpc_id             = module.vpc.vpc_id
-  subnet_ids         = module.vpc.public_subnet_ids
-  security_group_ids = [module.security_groups.alb_security_group_id]
-  
-  # Target Configuration
-  target_port = var.container_port
-  target_type = "ip"
-  
-  # SSL Configuration
-  certificate_arn = var.certificate_arn
-  ssl_policy     = var.ssl_policy
-  
-  # Health Check
-  health_check_path = var.health_check_path
-  
-  # Load Balancer Settings
-  enable_deletion_protection = var.environment == "production" ? true : var.alb_enable_deletion_protection
-  enable_access_logs        = var.alb_enable_access_logs
-  access_logs_bucket        = var.alb_access_logs_bucket
-  
-  common_tags = local.common_tags
+resource "aws_lb" "main" {
+  name               = "purrr-alb"
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = [aws_security_group.alb.id]
+  subnets           = data.aws_subnets.default.ids
+
+  enable_deletion_protection = false
+
+  tags = {
+    Name = "purrr-application-load-balancer"
+  }
 }
 
-# Route53 DNS Configuration
-module "route53" {
-  source = "./modules/route53"
-  
-  environment  = var.environment
-  project_name = var.project_name
-  domain_name  = var.domain_name
-  
-  # Create hosted zone for domain
-  create_hosted_zone = true
-  
-  # Load balancer integration
-  load_balancer_dns_name = module.alb.dns_name
-  load_balancer_zone_id  = module.alb.zone_id
-  
-  # CloudFront integration (when available)
-  # cloudfront_dns_name = module.cloudfront.domain_name
-  # cloudfront_zone_id  = module.cloudfront.hosted_zone_id
-  
-  # Subdomains configuration
-  subdomains = {
-    # API subdomain - main API endpoints
-    "api" = {
-      type    = "A"
-      ttl     = 300
-      records = []
-      alias_to_alb = true
-    }
-    
-    # App subdomain - application interface
-    "app" = {
-      type    = "A"
-      ttl     = 300
-      records = []
-      alias_to_alb = true
-    }
-    
-    # Admin subdomain - administrative dashboard
-    "admin" = {
-      type    = "A"
-      ttl     = 300
-      records = []
-      alias_to_alb = true
-    }
-    
-    # Webhooks subdomain - enterprise webhook endpoints
-    "webhooks" = {
-      type    = "A"
-      ttl     = 300
-      records = []
-      alias_to_alb = true
-    }
-    
-    # CDN subdomain - content delivery network
-    "cdn" = {
-      type    = "A"
-      ttl     = 300
-      records = []
-      alias_to_alb = true  # Will change to CloudFront when available
-    }
-    
-    # Static assets subdomain
-    "static" = {
-      type    = "A"
-      ttl     = 300
-      records = []
-      alias_to_alb = true  # Will change to S3/CloudFront when available
-    }
-    
-    # Assets subdomain for media content
-    "assets" = {
-      type    = "A"
-      ttl     = 300
-      records = []
-      alias_to_alb = true  # Will change to S3/CloudFront when available
+# Target Group for ECS
+resource "aws_lb_target_group" "app" {
+  name        = "purrr-app-tg"
+  port        = 80
+  protocol    = "HTTP"
+  vpc_id      = data.aws_vpc.default.id
+  target_type = "ip"
+
+  health_check {
+    enabled             = true
+    healthy_threshold   = 2
+    interval            = 30
+    matcher             = "200"
+    path                = "/"
+    port                = "traffic-port"
+    protocol            = "HTTP"
+    timeout             = 5
+    unhealthy_threshold = 3
+  }
+
+  tags = {
+    Name = "purrr-app-target-group"
+  }
+}
+
+# HTTP Listener (redirects to HTTPS)
+resource "aws_lb_listener" "http" {
+  load_balancer_arn = aws_lb.main.arn
+  port              = "80"
+  protocol          = "HTTP"
+
+  default_action {
+    type = "redirect"
+
+    redirect {
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301"
     }
   }
-  
-  # Security and validation
-  enable_ipv6 = true
-  enable_health_checks = var.environment == "production"
-  health_check_path = "/health"
-  
-  # Email configuration (optional)
-  mx_records = var.enable_email ? [
-    "10 mail.purrr.love"
-  ] : []
-  
-  # TXT records for domain verification and security
-  txt_records = {
-    "@" = [
-      "v=spf1 include:_spf.google.com ~all",  # SPF record
-    ]
-    "_dmarc" = [
-      "v=DMARC1; p=quarantine; rua=mailto:dmarc@purrr.love"
-    ]
+}
+
+# HTTPS Listener for purrr.love
+resource "aws_lb_listener" "https" {
+  load_balancer_arn = aws_lb.main.arn
+  port              = "443"
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
+  certificate_arn   = aws_acm_certificate_validation.purrr_love.certificate_arn
+
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.app.arn
   }
-  
-  # CAA records for certificate authority authorization
-  caa_records = [
-    "0 issue \"amazon.com\"",
-    "0 issue \"letsencrypt.org\""
-  ]
-  
-  common_tags = local.common_tags
-  
-  depends_on = [module.alb]
+}
+
+# Additional certificate for purrr.me
+resource "aws_lb_listener_certificate" "purrr_me" {
+  listener_arn    = aws_lb_listener.https.arn
+  certificate_arn = aws_acm_certificate_validation.purrr_me.certificate_arn
+}
+
+# ECS Cluster
+resource "aws_ecs_cluster" "main" {
+  name = "purrr-cluster"
+
+  setting {
+    name  = "containerInsights"
+    value = "enabled"
+  }
+
+  tags = {
+    Name = "purrr-ecs-cluster"
+  }
+}
+
+# ECS Task Definition
+resource "aws_ecs_task_definition" "app" {
+  family                   = "purrr-app"
+  requires_compatibilities = ["FARGATE"]
+  network_mode             = "awsvpc"
+  cpu                      = 256
+  memory                   = 512
+  execution_role_arn       = aws_iam_role.ecs_execution.arn
+
+  container_definitions = jsonencode([
+    {
+      name  = "app"
+      image = var.container_image
+      portMappings = [
+        {
+          containerPort = 80
+          hostPort      = 80
+        }
+      ]
+      logConfiguration = {
+        logDriver = "awslogs"
+        options = {
+          "awslogs-group"         = aws_cloudwatch_log_group.app.name
+          "awslogs-region"        = "us-east-1"
+          "awslogs-stream-prefix" = "ecs"
+        }
+      }
+    }
+  ])
+
+  tags = {
+    Name = "purrr-app-task-definition"
+  }
+}
+
+# CloudWatch Log Group
+resource "aws_cloudwatch_log_group" "app" {
+  name              = "/ecs/purrr-app"
+  retention_in_days = 7
+
+  tags = {
+    Name = "purrr-app-logs"
+  }
+}
+
+# ECS Execution Role
+resource "aws_iam_role" "ecs_execution" {
+  name = "purrr-ecs-execution-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "ecs-tasks.amazonaws.com"
+        }
+      }
+    ]
+  })
+
+  tags = {
+    Name = "purrr-ecs-execution-role"
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "ecs_execution" {
+  role       = aws_iam_role.ecs_execution.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+}
+
+# ECS Service
+resource "aws_ecs_service" "app" {
+  name            = "purrr-app"
+  cluster         = aws_ecs_cluster.main.id
+  task_definition = aws_ecs_task_definition.app.arn
+  desired_count   = 2
+  launch_type     = "FARGATE"
+
+  network_configuration {
+    security_groups = [aws_security_group.ecs.id]
+    subnets         = data.aws_subnets.default.ids
+    assign_public_ip = true
+  }
+
+  load_balancer {
+    target_group_arn = aws_lb_target_group.app.arn
+    container_name   = "app"
+    container_port   = 80
+  }
+
+  depends_on = [aws_lb_listener.https]
+
+  tags = {
+    Name = "purrr-app-service"
+  }
+}
+
+# Update DNS records to point to ALB for purrr.love
+resource "aws_route53_record" "purrr_love_domains" {
+  for_each = toset([
+    "purrr.love",
+    "api.purrr.love", 
+    "app.purrr.love",
+    "admin.purrr.love",
+    "webhooks.purrr.love",
+    "cdn.purrr.love",
+    "static.purrr.love",
+    "assets.purrr.love"
+  ])
+
+  zone_id = data.aws_route53_zone.purrr_love.zone_id
+  name    = each.key
+  type    = "A"
+
+  alias {
+    name                   = aws_lb.main.dns_name
+    zone_id               = aws_lb.main.zone_id
+    evaluate_target_health = true
+  }
+}
+
+# Update DNS records to point to ALB for purrr.me
+resource "aws_route53_record" "purrr_me_domains" {
+  for_each = toset([
+    "purrr.me",
+    "api.purrr.me",
+    "app.purrr.me", 
+    "admin.purrr.me",
+    "webhooks.purrr.me",
+    "cdn.purrr.me",
+    "static.purrr.me",
+    "assets.purrr.me"
+  ])
+
+  zone_id = data.aws_route53_zone.purrr_me.zone_id
+  name    = each.key
+  type    = "A"
+
+  alias {
+    name                   = aws_lb.main.dns_name
+    zone_id               = aws_lb.main.zone_id
+    evaluate_target_health = true
+  }
 }
 
 # Outputs
-output "vpc_id" {
-  description = "VPC ID"
-  value       = module.vpc.vpc_id
-}
-
-output "public_subnets" {
-  description = "Public subnet IDs"
-  value       = module.vpc.public_subnets
-}
-
-output "private_subnets" {
-  description = "Private subnet IDs"
-  value       = module.vpc.private_subnets
-}
-
-output "ecs_cluster_name" {
-  description = "ECS cluster name"
-  value       = module.ecs.cluster_name
-}
-
 output "alb_dns_name" {
-  description = "ALB DNS name"
-  value       = module.alb.dns_name
+  description = "DNS name of the load balancer"
+  value       = aws_lb.main.dns_name
 }
 
-output "rds_endpoint" {
-  description = "RDS endpoint"
-  value       = module.database.endpoint
+output "alb_zone_id" {
+  description = "Zone ID of the load balancer"
+  value       = aws_lb.main.zone_id
 }
 
-output "cloudfront_domain" {
-  description = "CloudFront domain name"
-  value       = module.storage.cloudfront_domain_name
+output "purrr_love_certificate_arn" {
+  description = "ARN of the purrr.love certificate"
+  value       = aws_acm_certificate_validation.purrr_love.certificate_arn
 }
 
-output "app_url" {
-  description = "Application URL"
-  value       = "https://${var.domain_name}"
+output "purrr_me_certificate_arn" {
+  description = "ARN of the purrr.me certificate"
+  value       = aws_acm_certificate_validation.purrr_me.certificate_arn
 }
 
-# Route53 Outputs
-output "hosted_zone_id" {
-  description = "Route53 hosted zone ID"
-  value       = module.route53.hosted_zone_id
-}
-
-output "name_servers" {
-  description = "Authoritative DNS servers for domain registrar configuration"
-  value       = module.route53.name_servers
-}
-
-output "domain_delegation" {
-  description = "Complete delegation information for registrar"
-  value       = module.route53.delegation_set
-}
-
-output "subdomain_urls" {
-  description = "URLs for all configured subdomains"
+output "test_urls" {
+  description = "URLs to test the deployment"
   value = {
-    main     = "https://${var.domain_name}"
-    www      = "https://www.${var.domain_name}"
-    api      = "https://api.${var.domain_name}"
-    app      = "https://app.${var.domain_name}"
-    admin    = "https://admin.${var.domain_name}"
-    webhooks = "https://webhooks.${var.domain_name}"
-    cdn      = "https://cdn.${var.domain_name}"
-    static   = "https://static.${var.domain_name}"
-    assets   = "https://assets.${var.domain_name}"
+    purrr_love_main = "https://purrr.love"
+    purrr_love_api  = "https://api.purrr.love"
+    purrr_love_app  = "https://app.purrr.love"
+    purrr_me_main   = "https://purrr.me"
+    purrr_me_api    = "https://api.purrr.me"
+    purrr_me_app    = "https://app.purrr.me"
   }
 }

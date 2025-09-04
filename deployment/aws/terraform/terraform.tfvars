@@ -91,14 +91,12 @@ alb_enable_access_logs        = true
 
 # Security
 application_port = 80
-database_port   = 5432
 admin_cidr_blocks = ["10.0.0.0/16"]  # Restrict admin access to VPC
 
 # Optional services
 enable_redis         = true
 enable_bastion       = false  # Disable for production unless needed
 enable_efs           = false
-enable_vpc_endpoints = true
 
 # Route53 and DNS
 create_route53_hosted_zone    = true

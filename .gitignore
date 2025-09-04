@@ -10,3 +10,9 @@ override.tf.json
 *_override.tf.json
 .terraformrc
 terraform.rc
+tfplan
+
+# Deployment artifacts
+.docker_image_uri
+*.log
+dns_backup/

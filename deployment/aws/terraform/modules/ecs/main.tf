@@ -202,6 +202,30 @@ resource "aws_ecs_task_definition" "app" {
         {
           name  = "LOG_LEVEL"
           value = var.environment == "production" ? "info" : "debug"
+        },
+        {
+          name  = "METAVERSE_AUTOMATION_ENABLED"
+          value = "true"
+        },
+        {
+          name  = "METAVERSE_AI_NPCS_ENABLED"
+          value = "true"
+        },
+        {
+          name  = "METAVERSE_WEATHER_SYSTEM_ENABLED"
+          value = "true"
+        },
+        {
+          name  = "METAVERSE_ANALYTICS_ENABLED"
+          value = "true"
+        },
+        {
+          name  = "METAVERSE_ENGAGEMENT_THRESHOLD"
+          value = "0.4"
+        },
+        {
+          name  = "METAVERSE_LOG_LEVEL"
+          value = var.environment == "production" ? "info" : "debug"
         }
       ]
       

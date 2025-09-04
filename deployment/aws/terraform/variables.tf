@@ -58,6 +58,12 @@ variable "app_image" {
   default     = "purrr-love/app:latest"
 }
 
+variable "container_image" {
+  description = "Container image for the application (ECR format)"
+  type        = string
+  default     = "nginx:alpine"  # fallback if not provided
+}
+
 variable "app_port" {
   description = "Port the application listens on"
   type        = number
