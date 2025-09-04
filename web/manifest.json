@@ -1,0 +1,165 @@
+{
+  "name": "Purrr.love - Advanced Cat Care Platform",
+  "short_name": "Purrr.love",
+  "description": "Revolutionary AI-powered cat personality analysis, needs tracking, and comprehensive care management platform",
+  "start_url": "/web/dashboard.php",
+  "display": "standalone",
+  "background_color": "#667eea",
+  "theme_color": "#764ba2",
+  "orientation": "portrait",
+  "scope": "/web/",
+  "categories": ["lifestyle", "productivity", "health", "pets"],
+  "lang": "en-US",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/web/assets/icons/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/web/assets/icons/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/web/assets/icons/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/web/assets/icons/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/web/assets/icons/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/web/assets/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/web/assets/icons/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/web/assets/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Real-Time Dashboard",
+      "short_name": "Dashboard",
+      "description": "View live cat monitoring and status",
+      "url": "/web/realtime-dashboard.php",
+      "icons": [
+        {
+          "src": "/web/assets/icons/dashboard-96x96.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Log Activity",
+      "short_name": "Activity",
+      "description": "Record cat activities and behaviors",
+      "url": "/web/log-activity.php",
+      "icons": [
+        {
+          "src": "/web/assets/icons/activity-96x96.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Photo Analysis",
+      "short_name": "Photos",
+      "description": "Analyze cat photos with AI",
+      "url": "/web/photo-analysis.php",
+      "icons": [
+        {
+          "src": "/web/assets/icons/camera-96x96.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Cat Needs",
+      "short_name": "Needs",
+      "description": "Manage cat care and personality",
+      "url": "/web/cat-needs.php",
+      "icons": [
+        {
+          "src": "/web/assets/icons/needs-96x96.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/web/assets/screenshots/dashboard-wide.png",
+      "sizes": "1280x800",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/web/assets/screenshots/dashboard-narrow.png",
+      "sizes": "375x812",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ],
+  "features": [
+    "cross-origin-isolated"
+  ],
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "share_target": {
+    "action": "/web/api/share-photo.php",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "photo",
+          "accept": ["image/*"]
+        }
+      ]
+    }
+  },
+  "file_handlers": [
+    {
+      "action": "/web/photo-analysis.php",
+      "accept": {
+        "image/jpeg": [".jpg", ".jpeg"],
+        "image/png": [".png"],
+        "image/webp": [".webp"]
+      }
+    }
+  ],
+  "protocol_handlers": [
+    {
+      "protocol": "web+purrrlove",
+      "url": "/web/handle-protocol.php?url=%s"
+    }
+  ]
+}

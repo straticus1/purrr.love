@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🐱 Standalone Personality Test - Purrr.love</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        * { font-family: 'Inter', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .card-hover { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.15); }
+        .floating { animation: floating 3s ease-in-out infinite; }
+        @keyframes floating { 0% { transform: translateY(0px); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0px); } }
+        .gradient-text { background: linear-gradient(135deg, #667eea, #764ba2, #f093fb); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+<!-- Header -->
+<div class="mb-8">
+    <div class="gradient-bg rounded-3xl p-8 text-white shadow-2xl">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-4xl font-bold mb-2">🐱 Standalone Personality System Test</h1>
+                <p class="text-xl text-purple-100">Testing enhanced cat personality system components</p>
+            </div>
+            <div class="hidden lg:block">
+                <div class="text-8xl floating">🧪</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class='mb-8'>
+        <div class='bg-white rounded-3xl p-8 shadow-xl card-hover'>
+            <h2 class='text-2xl font-bold text-gray-900 mb-6 flex items-center'>
+                <i class='fas fa-star text-yellow-500 mr-3'></i>
+                Test 1: Enhanced Personality Types
+            </h2><div class='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'><div class='bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6 border border-purple-100'>
+                <h3 class='text-lg font-semibold text-gray-900 mb-2'>The Gentle Giant</h3>
+                <p class='text-sm text-gray-600 mb-4'>Large, calm, and incredibly patient. Loves to be around people but prefers quiet environments.</p>
+                <div class='space-y-2'>
+                    <div class='text-xs text-gray-500'><strong>Energy Level:</strong> low_to_medium</div>
+                    <div class='text-xs text-gray-500'><strong>Social Preference:</strong> moderate</div>
+                    <div class='text-xs text-gray-500'><strong>Space Requirement:</strong> large</div>
+                </div>
+            </div><div class='bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6 border border-purple-100'>
+                <h3 class='text-lg font-semibold text-gray-900 mb-2'>The Energetic Explorer</h3>
+                <p class='text-sm text-gray-600 mb-4'>Curious, adventurous, and always on the move. Needs constant mental and physical stimulation.</p>
+                <div class='space-y-2'>
+                    <div class='text-xs text-gray-500'><strong>Energy Level:</strong> very_high</div>
+                    <div class='text-xs text-gray-500'><strong>Social Preference:</strong> high</div>
+                    <div class='text-xs text-gray-500'><strong>Space Requirement:</strong> large</div>
+                </div>
+            </div><div class='bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6 border border-purple-100'>
+                <h3 class='text-lg font-semibold text-gray-900 mb-2'>The Wise Observer</h3>
+                <p class='text-sm text-gray-600 mb-4'>Intelligent, independent, and selective about social interactions. Prefers to watch and analyze before engaging.</p>
+                <div class='space-y-2'>
+                    <div class='text-xs text-gray-500'><strong>Energy Level:</strong> medium</div>
+                    <div class='text-xs text-gray-500'><strong>Social Preference:</strong> selective</div>
+                    <div class='text-xs text-gray-500'><strong>Space Requirement:</strong> medium_to_large</div>
+                </div>
+            </div><div class='bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6 border border-purple-100'>
+                <h3 class='text-lg font-semibold text-gray-900 mb-2'>The Social Butterfly</h3>
+                <p class='text-sm text-gray-600 mb-4'>Extremely social, loves attention, and thrives on human interaction. Can become anxious when alone.</p>
+                <div class='space-y-2'>
+                    <div class='text-xs text-gray-500'><strong>Energy Level:</strong> high</div>
+                    <div class='text-xs text-gray-500'><strong>Social Preference:</strong> very_high</div>
+                    <div class='text-xs text-gray-500'><strong>Space Requirement:</strong> medium</div>
+                </div>
+            </div><div class='bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6 border border-purple-100'>
+                <h3 class='text-lg font-semibold text-gray-900 mb-2'>The Independent Thinker</h3>
+                <p class='text-sm text-gray-600 mb-4'>Self-sufficient, intelligent, and prefers to do things on their own terms. Values personal space and routine.</p>
+                <div class='space-y-2'>
+                    <div class='text-xs text-gray-500'><strong>Energy Level:</strong> medium</div>
+                    <div class='text-xs text-gray-500'><strong>Social Preference:</strong> low</div>
+                    <div class='text-xs text-gray-500'><strong>Space Requirement:</strong> large</div>
+                </div>
+            </div><div class='bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6 border border-purple-100'>
+                <h3 class='text-lg font-semibold text-gray-900 mb-2'>The Playful Prankster</h3>
+                <p class='text-sm text-gray-600 mb-4'>Mischievous, playful, and always looking for fun. Loves to entertain and be entertained.</p>
+                <div class='space-y-2'>
+                    <div class='text-xs text-gray-500'><strong>Energy Level:</strong> very_high</div>
+                    <div class='text-xs text-gray-500'><strong>Social Preference:</strong> high</div>
+                    <div class='text-xs text-gray-500'><strong>Space Requirement:</strong> medium_to_large</div>
+                </div>
+            </div><div class='bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6 border border-purple-100'>
+                <h3 class='text-lg font-semibold text-gray-900 mb-2'>The Anxious Angel</h3>
+                <p class='text-sm text-gray-600 mb-4'>Sensitive, nervous, and easily stressed. Needs a calm, predictable environment and gentle handling.</p>
+                <div class='space-y-2'>
+                    <div class='text-xs text-gray-500'><strong>Energy Level:</strong> low_to_medium</div>
+                    <div class='text-xs text-gray-500'><strong>Social Preference:</strong> selective</div>
+                    <div class='text-xs text-gray-500'><strong>Space Requirement:</strong> medium</div>
+                </div>
+            </div><div class='bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-6 border border-purple-100'>
+                <h3 class='text-lg font-semibold text-gray-900 mb-2'>The Hunter Warrior</h3>
+                <p class='text-sm text-gray-600 mb-4'>Natural predator with strong hunting instincts. Needs outlets for predatory behavior and physical challenges.</p>
+                <div class='space-y-2'>
+                    <div class='text-xs text-gray-500'><strong>Energy Level:</strong> high</div>
+                    <div class='text-xs text-gray-500'><strong>Social Preference:</strong> moderate</div>
+                    <div class='text-xs text-gray-500'><strong>Space Requirement:</strong> very_large</div>
+                </div>
+            </div></div><div class='mt-6 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded'>
+            <i class='fas fa-check-circle mr-2'></i>
+            ✅ Enhanced Personality Types loaded successfully! Found 8 personality types.
+        </div></div></div><div class='mb-8'>
+        <div class='bg-white rounded-3xl p-8 shadow-xl card-hover'>
+            <h2 class='text-2xl font-bold text-gray-900 mb-6 flex items-center'>
+                <i class='fas fa-heart text-red-500 mr-3'></i>
+                Test 2: Cat Needs System
+            </h2><div class='bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded'>
+            <i class='fas fa-exclamation-circle mr-2'></i>
+            ❌ CAT_NEEDS constant not defined!
+        </div></div></div><div class='mb-8'>
+        <div class='bg-white rounded-3xl p-8 shadow-xl card-hover'>
+            <h2 class='text-2xl font-bold text-gray-900 mb-6 flex items-center'>
+                <i class='fas fa-code text-purple-500 mr-3'></i>
+                Test 3: Function Availability
+            </h2><div class='grid grid-cols-1 md:grid-cols-2 gap-4'><div class='flex items-center justify-between p-4 bg-green-50 border border-green-100 rounded-lg'>
+            <div>
+                <span class='text-sm font-medium text-gray-900'>Personality Type Determination</span>
+                <div class='text-xs text-gray-600'>determineCatPersonalityType()</div>
+            </div>
+            <div class='flex items-center'>
+                <i class='fas fa-check-circle text-green-500 mr-2'></i>
+                <span class='text-xs text-green-600 font-semibold'>Available</span>
+            </div>
+        </div><div class='flex items-center justify-between p-4 bg-green-50 border border-green-100 rounded-lg'>
+            <div>
+                <span class='text-sm font-medium text-gray-900'>Care Recommendations</span>
+                <div class='text-xs text-gray-600'>getCatCareRecommendations()</div>
+            </div>
+            <div class='flex items-center'>
+                <i class='fas fa-check-circle text-green-500 mr-2'></i>
+                <span class='text-xs text-green-600 font-semibold'>Available</span>
+            </div>
+        </div><div class='flex items-center justify-between p-4 bg-green-50 border border-green-100 rounded-lg'>
+            <div>
+                <span class='text-sm font-medium text-gray-900'>Needs Assessment</span>
+                <div class='text-xs text-gray-600'>getCatNeedsAssessment()</div>
+            </div>
+            <div class='flex items-center'>
+                <i class='fas fa-check-circle text-green-500 mr-2'></i>
+                <span class='text-xs text-green-600 font-semibold'>Available</span>
+            </div>
+        </div><div class='flex items-center justify-between p-4 bg-green-50 border border-green-100 rounded-lg'>
+            <div>
+                <span class='text-sm font-medium text-gray-900'>Needs Fulfillment Tracking</span>
+                <div class='text-xs text-gray-600'>trackCatNeedsFulfillment()</div>
+            </div>
+            <div class='flex items-center'>
+                <i class='fas fa-check-circle text-green-500 mr-2'></i>
+                <span class='text-xs text-green-600 font-semibold'>Available</span>
+            </div>
+        </div><div class='flex items-center justify-between p-4 bg-green-50 border border-green-100 rounded-lg'>
+            <div>
+                <span class='text-sm font-medium text-gray-900'>Satisfaction Score Calculation</span>
+                <div class='text-xs text-gray-600'>getCatNeedsSatisfactionScore()</div>
+            </div>
+            <div class='flex items-center'>
+                <i class='fas fa-check-circle text-green-500 mr-2'></i>
+                <span class='text-xs text-green-600 font-semibold'>Available</span>
+            </div>
+        </div></div></div></div>
+</div>
+
+</body>
+</html>
