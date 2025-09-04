@@ -172,6 +172,28 @@ Purrr.love is a revolutionary feline gaming ecosystem that combines cryptocurren
 - **Cat Care Interface**: Fully accessible virtual cat feeding and care system
 - **Social Features**: Screen reader friendly messaging, friends, and community features
 
+## 📁 Project Structure
+
+```
+purrr.love/
+├── scripts/              # Deployment and management scripts
+│   ├── deploy.sh        # Main deployment automation
+│   ├── init-mysql-db.sh # Database initialization
+│   └── setup-db.sh      # Database schema setup
+├── docs/                 # Documentation files
+│   ├── INSTALL.md       # Installation guide
+│   ├── DOCUMENTATION.md # Complete documentation
+│   ├── CHANGELOG.md     # Version history
+│   └── *.md            # Other documentation
+├── database/            # Database schemas and migrations
+│   ├── core_schema.sql  # PostgreSQL schema
+│   ├── core_schema_mysql.sql # MySQL schema
+│   └── *.sql           # Other database files
+├── purrr-tools         # Convenient management wrapper
+├── README.md           # This file
+└── ...                 # Application code
+```
+
 ## 🎆 Technology Stack
 
 ### Backend
@@ -226,7 +248,7 @@ Multiple database setup options available for different deployment scenarios:
 #### ⚙️ **Container Setup**
 - `setup-task-def.json` - ECS task definition for database initialization
 - `task-def-corrected.json` - Corrected task definition with proper networking
-- `init-mysql-db.sh` - Shell script for MySQL initialization
+- `scripts/init-mysql-db.sh` - Shell script for MySQL initialization
 
 ### 🔐 **Database Security**
 - **Password Hashing**: PHP `password_hash()` with bcrypt
@@ -626,10 +648,16 @@ GET    /api/v2/admin/support-tickets
 # Clone and auto-install
 git clone https://github.com/straticus1/purrr.love.git
 cd purrr.love
-chmod +x deploy.sh
-./deploy.sh --rocky --server your-server.com  # For traditional server
+
+# Using the convenient wrapper tool
+./purrr-tools deploy rocky --server your-server.com   # For traditional server
 # OR
-./deploy.sh --aws --environment production     # For AWS deployment
+./purrr-tools deploy aws --environment production     # For AWS deployment
+
+# Or use scripts directly
+chmod +x scripts/deploy.sh
+./scripts/deploy.sh --rocky --server your-server.com  # For traditional server
+./scripts/deploy.sh --aws --environment production     # For AWS deployment
 ```
 
 ### 📋 Manual Installation

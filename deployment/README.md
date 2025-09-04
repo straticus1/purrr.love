@@ -51,16 +51,16 @@ git clone https://github.com/yourusername/purrr-love.git
 cd purrr-love
 
 # Choose your deployment method
-./deploy.sh --help
+./scripts/deploy.sh --help
 
 # Deploy to AWS
-./deploy.sh --aws --environment production
+./scripts/deploy.sh --aws --environment production
 
 # Deploy to Rocky Linux
-./deploy.sh --rocky --server your-server.com
+./scripts/deploy.sh --rocky --server your-server.com
 
 # Custom deployment
-./deploy.sh --custom --config custom-deployment.yaml
+./scripts/deploy.sh --custom --config custom-deployment.yaml
 ```
 
 ## 🔧 **Prerequisites**

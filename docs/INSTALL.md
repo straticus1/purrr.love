@@ -91,16 +91,16 @@ git clone https://github.com/straticus1/purrr.love.git
 cd purrr.love
 
 # Make the deployment script executable
-chmod +x deploy.sh
+chmod +x scripts/deploy.sh
 
 # For traditional server deployment (Rocky Linux)
-./deploy.sh --rocky --server your-server.com
+./scripts/deploy.sh --rocky --server your-server.com
 
 # OR for AWS cloud deployment
-./deploy.sh --aws --environment production
+./scripts/deploy.sh --aws --environment production
 
 # Check deployment status
-./deploy.sh --status
+./scripts/deploy.sh --status
 ```
 
 ### Docker-Based Installation
@@ -425,10 +425,10 @@ For deployment to AWS using our automation:
    cd purrr.love
 
    # Make the deployment script executable
-   chmod +x deploy.sh
+   chmod +x scripts/deploy.sh
 
    # Deploy to AWS (this creates all required resources)
-   ./deploy.sh --aws --environment production
+   ./scripts/deploy.sh --aws --environment production
    ```
 
 3. **Manual AWS Deployment Steps** (if you prefer more control):
@@ -492,10 +492,10 @@ For deployment to Rocky Linux servers:
    cd purrr.love
 
    # Make the deployment script executable
-   chmod +x deploy.sh
+   chmod +x scripts/deploy.sh
 
    # Deploy to Rocky Linux
-   ./deploy.sh --rocky --server your-server.com
+   ./scripts/deploy.sh --rocky --server your-server.com
    ```
 
 3. **Manual Rocky Linux Deployment Steps** (if you prefer more control):
@@ -1099,7 +1099,7 @@ find /path/to/purrr.love -type f -exec chmod 644 {} \;
 
 # Executable scripts
 chmod +x /path/to/purrr.love/cli/purrr
-chmod +x /path/to/purrr.love/deploy.sh
+chmod +x /path/to/purrr.love/scripts/deploy.sh
 
 # Writable directories
 chmod -R 777 /path/to/purrr.love/uploads

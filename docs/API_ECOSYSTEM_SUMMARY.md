@@ -145,7 +145,7 @@ purrr keys usage <id>                 # Show usage stats
 
 ### **AWS Containerized**
 ```bash
-./deploy.sh --aws --environment production
+./scripts/deploy.sh --aws --environment production
 ```
 - **Terraform** infrastructure as code
 - **ECS/Fargate** container orchestration
@@ -155,7 +155,7 @@ purrr keys usage <id>                 # Show usage stats
 
 ### **Rocky Linux Traditional**
 ```bash
-./deploy.sh --rocky --server your-server.com
+./scripts/deploy.sh --rocky --server your-server.com
 ```
 - **Ansible** automation
 - **LAMP stack** (Linux, Apache, MySQL, PHP)
@@ -224,7 +224,7 @@ purrr keys usage <id>                 # Show usage stats
 
 ### **Immediate Actions**
 1. **Test the CLI**: `./cli/purrr help`
-2. **Deploy to AWS**: `./deploy.sh --aws --environment dev`
+2. **Deploy to AWS**: `./scripts/deploy.sh --aws --environment dev`
 3. **Create API keys**: Use the web interface or CLI
 4. **Build integrations**: Use the comprehensive API
 

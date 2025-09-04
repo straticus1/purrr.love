@@ -69,8 +69,8 @@ The application is **95% COMPLETE** and fully operational except for database co
 2. **Run database initialization:**
    ```bash
    cd /var/www/html
-   chmod +x init-mysql-db.sh
-   ./init-mysql-db.sh
+   chmod +x scripts/init-mysql-db.sh
+   ./scripts/init-mysql-db.sh
    ```
 
 #### **Option B: Task Override (Alternative)**

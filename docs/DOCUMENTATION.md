@@ -3339,7 +3339,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
-          ./deploy.sh --aws --environment production
+          ./scripts/deploy.sh --aws --environment production
 ```
 
 ### Blue-Green Deployment
@@ -3348,7 +3348,7 @@ For zero-downtime deployments:
 
 ```bash
 # Deploy to staging environment
-./deploy.sh --aws --environment staging
+./scripts/deploy.sh --aws --environment staging
 
 # Run smoke tests
 ./scripts/smoke-tests.sh staging
