@@ -8,8 +8,7 @@
 define('SECURE_ACCESS', true);
 
 session_start();
-require_once '../includes/functions.php';
-require_once '../includes/authentication.php';
+require_once 'includes/db_config.php';
 
 // Check if user is logged in and is admin
 if (!isset($_SESSION['user_id'])) {
@@ -18,7 +17,7 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 try {
-    $user = getUserById($_SESSION['user_id']);
+    $user = get_web_user_by_id($_SESSION['user_id']);
     if (!$user || $user['role'] !== 'admin') {
         header('Location: dashboard.php');
         exit;
@@ -96,6 +95,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Get system statistics
 $systemStats = [];
 try {
+    $pdo = get_web_db();
+    
     // User statistics
     $stmt = $pdo->prepare("SELECT COUNT(*) as total_users FROM users");
     $stmt->execute();
@@ -133,6 +134,7 @@ try {
 // Get all users for management
 $allUsers = [];
 try {
+    $pdo = get_web_db();
     $stmt = $pdo->prepare("SELECT * FROM users ORDER BY created_at DESC");
     $stmt->execute();
     $allUsers = $stmt->fetchAll();
@@ -550,7 +552,7 @@ try {
                 <div>
                     <h4 class="font-medium text-gray-900 mb-2">Database Info</h4>
                     <div class="space-y-2 text-sm text-gray-600">
-                        <p>Type: PostgreSQL</p>
+                        <p>Type: MySQL</p>
                         <p>Status: Connected</p>
                         <p>Tables: 25+</p>
                     </div>

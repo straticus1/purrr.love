@@ -477,8 +477,8 @@ function recordFailedAuthAttempt($identifier, $username = null, $action = 'login
     try {
         $pdo = get_db();
         
-        // Use the database function to record failed login
-        $stmt = $pdo->prepare("SELECT record_failed_login(?, ?, ?)");
+        // Use the MySQL stored procedure to record failed login
+        $stmt = $pdo->prepare("CALL record_failed_login(?, ?, ?)");
         $stmt->execute([$identifier, $username, $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown']);
         
         // Log security event

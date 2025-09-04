@@ -363,12 +363,12 @@ if ($db) {
                     </ul>
                 </div>
                 <div>
-                    <h4 class="text-lg font-semibold mb-4">Resources</h4>
+                    <h4 class="text-lg font-semibold mb-4">Support</h4>
                     <ul class="space-y-2 text-gray-400">
-                        <li><a href="/DOCUMENTATION.md" class="hover:text-white transition-colors">Documentation</a></li>
+                        <li><a href="/web/help.php" class="hover:text-white transition-colors">Help Center</a></li>
+                        <li><a href="/web/support.php" class="hover:text-white transition-colors">Support Tickets</a></li>
                         <li><a href="/health.php" class="hover:text-white transition-colors">System Health</a></li>
                         <li><a href="/web/setup.php" class="hover:text-white transition-colors">Setup</a></li>
-                        <li><a href="/TESTING.md" class="hover:text-white transition-colors">Testing Guide</a></li>
                     </ul>
                 </div>
                 <div>

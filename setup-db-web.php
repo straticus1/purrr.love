@@ -108,6 +108,7 @@ try {
     
 } catch (Exception $e) {
     echo "❌ Setup failed: " . $e->getMessage() . "\n";
-    echo "Error details: " . print_r($e, true) . "\n";
+    echo "Check error logs for additional details.\n";
+    error_log("Database setup error: " . $e->getMessage() . " - " . $e->getTraceAsString());
 }
 ?>

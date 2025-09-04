@@ -4,12 +4,12 @@
  * Simplified database connection for web pages
  */
 
-// Database configuration
-define('DB_HOST', 'localhost');
-define('DB_NAME', 'purrr_love');
-define('DB_USER', 'purrr_user');
-define('DB_PASS', '');
-define('DB_PORT', '3306');
+// Database configuration - MySQL/MariaDB
+define('DB_HOST', $_ENV['DB_HOST'] ?? 'localhost');
+define('DB_NAME', $_ENV['DB_NAME'] ?? 'purrr_love');
+define('DB_USER', $_ENV['DB_USER'] ?? 'root');
+define('DB_PASS', $_ENV['DB_PASS'] ?? '');
+define('DB_PORT', $_ENV['DB_PORT'] ?? '3306');
 
 /**
  * Get database connection
@@ -56,6 +56,7 @@ function init_web_database() {
                 active BOOLEAN DEFAULT true,
                 level INT DEFAULT 1,
                 experience INT DEFAULT 0,
+                coins INT DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci

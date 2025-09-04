@@ -8,8 +8,7 @@
 define('SECURE_ACCESS', true);
 
 session_start();
-require_once '../includes/functions.php';
-require_once '../includes/authentication.php';
+require_once 'includes/db_config.php';
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
@@ -18,7 +17,7 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 try {
-    $user = getUserById($_SESSION['user_id']);
+    $user = get_web_user_by_id($_SESSION['user_id']);
     if (!$user) {
         session_destroy();
         header('Location: index.php');
@@ -33,15 +32,22 @@ try {
 // Get user statistics
 $userStats = [];
 try {
+    $pdo = get_web_db();
+    
     // Get cat count
     $stmt = $pdo->prepare("SELECT COUNT(*) as cat_count FROM cats WHERE owner_id = ?");
     $stmt->execute([$_SESSION['user_id']]);
     $userStats['cat_count'] = $stmt->fetch()['cat_count'] ?? 0;
     
-    // Get total coins
-    $stmt = $pdo->prepare("SELECT coins FROM users WHERE id = ?");
-    $stmt->execute([$_SESSION['user_id']]);
-    $userStats['coins'] = $stmt->fetch()['coins'] ?? 0;
+    // Get total coins (add coins column if it doesn't exist)
+    try {
+        $stmt = $pdo->prepare("SELECT coins FROM users WHERE id = ?");
+        $stmt->execute([$_SESSION['user_id']]);
+        $userStats['coins'] = $stmt->fetch()['coins'] ?? 0;
+    } catch (Exception $e) {
+        // Coins column might not exist yet
+        $userStats['coins'] = 0;
+    }
     
     // Get recent activities
     $stmt = $pdo->prepare("
