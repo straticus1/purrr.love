@@ -72,7 +72,23 @@ class BehavioralTrackingSystem {
             'vocalize' => 'excited',
             'aggressive' => 'irritated',
             'submissive' => 'anxious',
-            'anxious' => 'anxious'
+            'anxious' => 'anxious',
+            'purr' => 'content',
+            'knead' => 'relaxed',
+            'stretch' => 'comfortable',
+            'hide' => 'fearful',
+            'mark' => 'territorial',
+            'chase' => 'excited',
+            'pounce' => 'playful',
+            'climb' => 'confident',
+            'scratch' => 'satisfied',
+            'hiss' => 'defensive',
+            'growl' => 'threatened',
+            'meow' => 'communicative',
+            'yowl' => 'distressed',
+            'chirp' => 'excited',
+            'trill' => 'friendly',
+            'chatter' => 'frustrated'
         ];
         
         $emotionType = $emotionMapping[$behaviorType] ?? 'calm';
@@ -113,9 +129,31 @@ class BehavioralTrackingSystem {
             // Trigger personality reanalysis
             try {
                 $this->aiPersonalityEngine->predictAdvancedPersonality($catId, true);
+                
+                // Also update enhanced personality type if available
+                if (function_exists('determineCatPersonalityType')) {
+                    $newPersonalityType = determineCatPersonalityType($catId);
+                    $this->updateCatPersonalityType($catId, $newPersonalityType);
+                }
             } catch (Exception $e) {
                 error_log("Error updating personality from behavior: " . $e->getMessage());
             }
+        }
+    }
+    
+    /**
+     * Update cat's personality type in database
+     */
+    private function updateCatPersonalityType($catId, $personalityType) {
+        try {
+            $stmt = $this->pdo->prepare("
+                UPDATE cats 
+                SET personality_type = ?, updated_at = NOW() 
+                WHERE id = ?
+            ");
+            $stmt->execute([$personalityType, $catId]);
+        } catch (Exception $e) {
+            error_log("Error updating cat personality type: " . $e->getMessage());
         }
     }
     
@@ -257,6 +295,22 @@ class BehavioralTrackingSystem {
             'groom' => [10, 11, 12, 13, 14, 15, 16, 17], // Grooming hours
             'hunt' => [5, 6, 7, 8, 18, 19, 20, 21], // Hunting hours
             'vocalize' => [6, 7, 8, 18, 19, 20, 21], // Vocal hours
+            'purr' => [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20], // Content hours
+            'knead' => [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20], // Relaxed hours
+            'stretch' => [6, 7, 8, 9, 18, 19, 20, 21], // Wake/sleep transitions
+            'hide' => [0, 1, 2, 3, 4, 5, 22, 23], // Night hours
+            'mark' => [5, 6, 7, 8, 18, 19, 20, 21], // Territory marking hours
+            'chase' => [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19], // Active play hours
+            'pounce' => [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19], // Play hours
+            'climb' => [8, 9, 10, 11, 16, 17, 18, 19], // Active hours
+            'scratch' => [6, 7, 8, 9, 18, 19, 20, 21], // Territory marking hours
+            'hiss' => [0, 1, 2, 3, 4, 5, 22, 23], // Defensive hours
+            'growl' => [0, 1, 2, 3, 4, 5, 22, 23], // Threat hours
+            'meow' => [6, 7, 8, 9, 18, 19, 20, 21], // Communication hours
+            'yowl' => [0, 1, 2, 3, 4, 5, 22, 23], // Distress hours
+            'chirp' => [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19], // Excited hours
+            'trill' => [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19], // Friendly hours
+            'chatter' => [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19], // Frustrated hours
         ];
         
         $preferredHours = $timePreferences[$behavior] ?? [];
@@ -400,6 +454,19 @@ class BehavioralTrackingSystem {
             $recommendations[] = "Minimal social interaction. Consider companion or increased human interaction.";
         }
         
+        // Check for new enhanced behaviors
+        if (isset($behaviors['hide']) && $behaviors['hide']['percentage'] > 25) {
+            $recommendations[] = "Frequent hiding behavior. Ensure safe spaces and reduce environmental stressors.";
+        }
+        
+        if (isset($behaviors['yowl']) && $behaviors['yowl']['percentage'] > 10) {
+            $recommendations[] = "Excessive yowling detected. Check for health issues or environmental stress.";
+        }
+        
+        if (isset($behaviors['chatter']) && $behaviors['chatter']['percentage'] > 15) {
+            $recommendations[] = "Frequent chattering may indicate frustration. Provide more stimulation opportunities.";
+        }
+        
         // Positive reinforcement recommendations
         if (isset($behaviors['play']) && $behaviors['play']['percentage'] > 30) {
             $recommendations[] = "Excellent play activity! Continue providing engaging toys and activities.";
@@ -409,7 +476,89 @@ class BehavioralTrackingSystem {
             $recommendations[] = "Good grooming habits observed. Maintain current care routine.";
         }
         
+        if (isset($behaviors['purr']) && $behaviors['purr']['percentage'] > 25) {
+            $recommendations[] = "High purring frequency indicates contentment. Great job maintaining a happy environment!";
+        }
+        
+        if (isset($behaviors['trill']) && $behaviors['trill']['percentage'] > 15) {
+            $recommendations[] = "Frequent trilling shows friendliness and social comfort. Excellent socialization!";
+        }
+        
         return $recommendations;
+    }
+    
+    /**
+     * Get personality-based behavioral recommendations
+     */
+    public function getPersonalityBasedRecommendations($catId) {
+        try {
+            // Get cat's personality type
+            $stmt = $this->pdo->prepare("SELECT personality_type FROM cats WHERE id = ?");
+            $stmt->execute([$catId]);
+            $cat = $stmt->fetch();
+            
+            if (!$cat || !$cat['personality_type']) {
+                return [];
+            }
+            
+            $personalityType = $cat['personality_type'];
+            
+            // Get enhanced personality recommendations if available
+            if (function_exists('getCatCareRecommendations')) {
+                $careData = getCatCareRecommendations($catId);
+                return $careData['immediate_priorities'] ?? [];
+            }
+            
+            // Fallback to basic personality-based recommendations
+            $basicRecommendations = [
+                'playful' => [
+                    "Provide plenty of interactive toys and play opportunities",
+                    "Schedule regular play sessions throughout the day",
+                    "Rotate toys to maintain interest and prevent boredom"
+                ],
+                'calm' => [
+                    "Maintain a quiet, peaceful environment",
+                    "Provide comfortable resting spots",
+                    "Avoid sudden changes or loud noises"
+                ],
+                'curious' => [
+                    "Offer new toys and environmental enrichment regularly",
+                    "Provide safe exploration opportunities",
+                    "Create puzzle feeders and interactive challenges"
+                ],
+                'social' => [
+                    "Increase human interaction and attention",
+                    "Consider a companion cat if appropriate",
+                    "Provide social play opportunities"
+                ],
+                'independent' => [
+                    "Respect their need for space and alone time",
+                    "Provide multiple hiding spots and elevated perches",
+                    "Allow them to initiate interactions"
+                ],
+                'territorial' => [
+                    "Provide multiple resources (food, water, litter boxes)",
+                    "Create vertical territory with cat trees",
+                    "Maintain consistent routines and boundaries"
+                ],
+                'anxious' => [
+                    "Create safe, quiet spaces for retreat",
+                    "Use pheromone diffusers to reduce stress",
+                    "Maintain predictable routines"
+                ],
+                'energetic' => [
+                    "Provide plenty of physical exercise opportunities",
+                    "Use puzzle toys and food dispensers",
+                    "Consider outdoor access or catio if safe"
+                ]
+            ];
+            
+            return $basicRecommendations[$personalityType] ?? [];
+            
+        } catch (Exception $e) {
+            error_log("Error getting personality-based recommendations: " . $e->getMessage());
+            return [];
+        }
     }
     
     /**
@@ -428,7 +577,23 @@ class BehavioralTrackingSystem {
             'vocalize' => 'Making sounds and vocalizations',
             'aggressive' => 'Displaying aggressive behaviors',
             'submissive' => 'Showing submissive or fearful behaviors',
-            'anxious' => 'Displaying anxiety or stress indicators'
+            'anxious' => 'Displaying anxiety or stress indicators',
+            'purr' => 'Purring contentedly and showing satisfaction',
+            'knead' => 'Kneading with paws, showing comfort and relaxation',
+            'stretch' => 'Stretching body, showing comfort and flexibility',
+            'hide' => 'Hiding or seeking shelter, showing fear or stress',
+            'mark' => 'Marking territory with scent or scratching',
+            'chase' => 'Chasing objects or other animals in play',
+            'pounce' => 'Pouncing on objects or prey in play',
+            'climb' => 'Climbing on furniture or cat trees',
+            'scratch' => 'Scratching surfaces for territory marking',
+            'hiss' => 'Hissing as a defensive warning',
+            'growl' => 'Growling as a threat display',
+            'meow' => 'Meowing for communication or attention',
+            'yowl' => 'Yowling loudly, often indicating distress',
+            'chirp' => 'Making chirping sounds, often when excited',
+            'trill' => 'Making trilling sounds, showing friendliness',
+            'chatter' => 'Chattering teeth, often when frustrated or excited'
         ];
         
         return $descriptions[$behavior] ?? 'Unknown behavior pattern';
@@ -472,5 +637,10 @@ function predictNextBehavior($catId) {
 function analyzeBehavioralPatterns($catId, $days = 30) {
     global $globalBehavioralTrackingSystem;
     return $globalBehavioralTrackingSystem->analyzeBehavioralPatterns($catId, $days);
+}
+
+function getPersonalityBasedRecommendations($catId) {
+    global $globalBehavioralTrackingSystem;
+    return $globalBehavioralTrackingSystem->getPersonalityBasedRecommendations($catId);
 }
 ?>
