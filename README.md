@@ -24,9 +24,9 @@ Purrr.love is a revolutionary feline gaming ecosystem that combines cryptocurren
 - **💚 Health Check**: [https://purrr.love/health.php](https://purrr.love/health.php) - **✅ OPERATIONAL**
 - **🎮 Interactive Web Interface**: Full PHP application with login/registration - **✅ VERIFIED**
 - **🛡️ SSL Security**: A+ rating with automatic HTTPS redirects - **✅ ACTIVE**
-- **📚 API Documentation**: [Complete API Guide](API_ECOSYSTEM_SUMMARY.md)
-- **🔧 Technical Docs**: [Full Documentation](DOCUMENTATION.md)
-- **⚡ Installation Guide**: [Setup Instructions](INSTALL.md)
+- **📚 API Documentation**: [Complete API Guide](docs/API_ECOSYSTEM_SUMMARY.md)
+- **🔧 Technical Docs**: [Full Documentation](docs/DOCUMENTATION.md)
+- **⚡ Installation Guide**: [Setup Instructions](docs/INSTALL.md)
 - **📝 Version History**: [Changelog](CHANGELOG.md)
 - **🐱 CLI Tool**: `./cli/purrr --help` for command-line access
 
@@ -880,7 +880,7 @@ Special activities throughout the year:
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) and check our [Issues](https://github.com/straticus1/purrr.love/issues) page.
+We welcome contributions! Please see our [Contributing Guidelines](docs/CONTRIBUTING.md) and check our [Issues](https://github.com/straticus1/purrr.love/issues) page.
 
 ### 🐛 **Bug Reporting**
 Found a bug? Please create an issue with:
