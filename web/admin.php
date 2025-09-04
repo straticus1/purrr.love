@@ -193,6 +193,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 if ($userId && $newRole) {
                     try {
+                        $pdo = get_web_db();
                         $stmt = $pdo->prepare("UPDATE users SET role = ?, updated_at = NOW() WHERE id = ?");
                         if ($stmt->execute([$newRole, $userId])) {
                             $message = "User role updated successfully!";
@@ -210,8 +211,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 if ($userId && $userId != $user['id']) {
                     try {
+                        $pdo = get_web_db();
                         // Delete user's cats first
-                        $stmt = $pdo->prepare("DELETE FROM cats WHERE owner_id = ?");
+                        $stmt = $pdo->prepare("DELETE FROM cats WHERE user_id = ?");
                         $stmt->execute([$userId]);
                         
                         // Delete user
@@ -267,7 +269,7 @@ try {
     $systemStats['recent_users'] = $stmt->fetchAll();
     
     // Recent cats
-    $stmt = $pdo->prepare("SELECT c.*, u.name as owner_name FROM cats c JOIN users u ON c.owner_id = u.id ORDER BY c.created_at DESC LIMIT 10");
+    $stmt = $pdo->prepare("SELECT c.*, u.username as owner_name FROM cats c JOIN users u ON c.user_id = u.id ORDER BY c.created_at DESC LIMIT 10");
     $stmt->execute();
     $systemStats['recent_cats'] = $stmt->fetchAll();
     
@@ -353,7 +355,7 @@ try {
                     <div class="ml-3 relative">
                         <div class="flex items-center space-x-4">
                             <span class="text-gray-700 text-sm">
-                                Admin: <?= htmlspecialchars($user['name'] ?? $user['email']) ?>
+                                Admin: <?= htmlspecialchars($user['username'] ?? $user['email']) ?>
                             </span>
                             <a href="profile.php" class="text-gray-700 hover:text-purple-600 px-3 py-2 rounded-md text-sm font-medium">
                                 <i class="fas fa-user mr-2"></i>Profile
@@ -479,7 +481,7 @@ try {
                     <?php foreach ($systemStats['recent_users'] as $recentUser): ?>
                     <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                         <div>
-                            <p class="font-medium text-gray-900"><?= htmlspecialchars($recentUser['name'] ?? $recentUser['email']) ?></p>
+                            <p class="font-medium text-gray-900"><?= htmlspecialchars($recentUser['username'] ?? $recentUser['email']) ?></p>
                             <p class="text-sm text-gray-600"><?= htmlspecialchars($recentUser['email']) ?></p>
                         </div>
                         <div class="text-right">
@@ -584,7 +586,7 @@ try {
                         <tr>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div>
-                                    <div class="text-sm font-medium text-gray-900"><?= htmlspecialchars($userItem['name'] ?? 'N/A') ?></div>
+                                    <div class="text-sm font-medium text-gray-900"><?= htmlspecialchars($userItem['username'] ?? 'N/A') ?></div>
                                     <div class="text-sm text-gray-500"><?= htmlspecialchars($userItem['email']) ?></div>
                                 </div>
                             </td>

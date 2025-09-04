@@ -49,14 +49,15 @@ function init_web_database() {
         $pdo->exec("
             CREATE TABLE IF NOT EXISTS users (
                 id INT AUTO_INCREMENT PRIMARY KEY,
-                name VARCHAR(255) NOT NULL,
+                username VARCHAR(50) UNIQUE NOT NULL,
                 email VARCHAR(255) UNIQUE NOT NULL,
                 password_hash VARCHAR(255) NOT NULL,
-                role VARCHAR(50) DEFAULT 'user',
-                active BOOLEAN DEFAULT true,
+                role ENUM('user', 'admin', 'moderator') DEFAULT 'user',
                 level INT DEFAULT 1,
-                experience INT DEFAULT 0,
-                coins INT DEFAULT 0,
+                coins INT DEFAULT 100,
+                experience_points INT DEFAULT 0,
+                avatar_url VARCHAR(500),
+                is_active BOOLEAN DEFAULT TRUE,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
@@ -66,23 +67,24 @@ function init_web_database() {
         $pdo->exec("
             CREATE TABLE IF NOT EXISTS cats (
                 id INT AUTO_INCREMENT PRIMARY KEY,
-                name VARCHAR(255) NOT NULL,
-                breed VARCHAR(255),
-                color VARCHAR(100),
-                age INT,
-                health INT DEFAULT 100,
-                happiness INT DEFAULT 100,
-                energy INT DEFAULT 100,
-                hunger INT DEFAULT 0,
-                cleanliness INT DEFAULT 100,
-                owner_id INT,
-                weight DECIMAL(5,2),
-                temperature DECIMAL(4,2),
-                heart_rate INT,
-                last_health_check TIMESTAMP NULL,
+                user_id INT NOT NULL,
+                name VARCHAR(100) NOT NULL,
+                breed VARCHAR(100) DEFAULT 'Mixed',
+                age INT DEFAULT 1,
+                color VARCHAR(50) DEFAULT 'Orange',
+                personality_openness DECIMAL(3,2) DEFAULT 0.50,
+                personality_conscientiousness DECIMAL(3,2) DEFAULT 0.50,
+                personality_extraversion DECIMAL(3,2) DEFAULT 0.50,
+                personality_agreeableness DECIMAL(3,2) DEFAULT 0.50,
+                personality_neuroticism DECIMAL(3,2) DEFAULT 0.50,
+                health_status ENUM('excellent', 'good', 'fair', 'poor') DEFAULT 'good',
+                temperature DECIMAL(4,2) DEFAULT 101.50,
+                heart_rate INT DEFAULT 120,
+                weight DECIMAL(5,2) DEFAULT 10.00,
+                is_active BOOLEAN DEFAULT TRUE,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
         ");
         
@@ -121,9 +123,9 @@ function authenticate_web_user($email, $password) {
         $pdo = get_web_db();
         
         $stmt = $pdo->prepare("
-            SELECT id, name, email, password_hash, role, active, level, experience
+            SELECT id, username as name, email, password_hash, role, is_active as active, level, experience_points as experience
             FROM users 
-            WHERE email = ? AND active = true
+            WHERE email = ? AND is_active = true
         ");
         $stmt->execute([$email]);
         $user = $stmt->fetch();
@@ -148,9 +150,9 @@ function get_web_user_by_id($userId) {
         $pdo = get_web_db();
         
         $stmt = $pdo->prepare("
-            SELECT id, name, email, role, active, level, experience, created_at
+            SELECT id, username as name, username, email, role, is_active as active, level, experience_points as experience, created_at
             FROM users 
-            WHERE id = ? AND active = true
+            WHERE id = ? AND is_active = true
         ");
         $stmt->execute([$userId]);
         return $stmt->fetch();
@@ -178,11 +180,11 @@ function create_web_user($name, $email, $password) {
             throw new Exception('Email already exists');
         }
         
-        // Create user
+        // Create user with proper column names
         $passwordHash = password_hash($password, PASSWORD_DEFAULT);
         $stmt = $pdo->prepare("
-            INSERT INTO users (name, email, password_hash, role, active, level, experience, created_at)
-            VALUES (?, ?, ?, 'user', true, 1, 0, NOW())
+            INSERT INTO users (username, email, password_hash, role, is_active, level, experience_points, coins, created_at)
+            VALUES (?, ?, ?, 'user', true, 1, 0, 100, NOW())
         ");
         $stmt->execute([$name, $email, $passwordHash]);
         
@@ -202,9 +204,9 @@ function get_web_user_cats($userId) {
         $pdo = get_web_db();
         
         $stmt = $pdo->prepare("
-            SELECT id, name, breed, color, age, health, happiness, energy, hunger, cleanliness, created_at
+            SELECT id, name, breed, color, age, health_status as health, temperature, heart_rate, weight, created_at
             FROM cats 
-            WHERE owner_id = ?
+            WHERE user_id = ?
             ORDER BY created_at DESC
         ");
         $stmt->execute([$userId]);

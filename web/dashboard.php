@@ -35,7 +35,7 @@ try {
     $pdo = get_web_db();
     
     // Get cat count
-    $stmt = $pdo->prepare("SELECT COUNT(*) as cat_count FROM cats WHERE owner_id = ?");
+    $stmt = $pdo->prepare("SELECT COUNT(*) as cat_count FROM cats WHERE user_id = ?");
     $stmt->execute([$_SESSION['user_id']]);
     $userStats['cat_count'] = $stmt->fetch()['cat_count'] ?? 0;
     
@@ -61,7 +61,7 @@ try {
     $userStats['recent_activities'] = $stmt->fetchAll();
     
     // Get user level and experience
-    $stmt = $pdo->prepare("SELECT level, experience FROM users WHERE id = ?");
+    $stmt = $pdo->prepare("SELECT level, experience_points as experience FROM users WHERE id = ?");
     $stmt->execute([$_SESSION['user_id']]);
     $userLevel = $stmt->fetch();
     $userStats['level'] = $userLevel['level'] ?? 1;
