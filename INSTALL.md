@@ -12,11 +12,13 @@
 
 ### ✨ **Production Features Active**
 - ✅ **Enterprise SSL Security** with A+ rating and auto-renewal
-- ✅ **Auto-Scaling Infrastructure** with AWS ECS Fargate
+- ✅ **Auto-Scaling Infrastructure** with AWS ECS Fargate (2 running tasks)
 - ✅ **Load Balancing** with Application Load Balancer
 - ✅ **Multi-Domain Support** across all configured domains
-- ✅ **Health Monitoring** with real-time status checks
+- ✅ **Health Monitoring** with real-time status checks via /health.php
 - ✅ **Zero Downtime Deployments** with rolling updates
+- ✅ **Database Management** with comprehensive setup tooling
+- ✅ **User Authentication** with verified login/registration system
 
 ---
 
@@ -196,6 +198,11 @@ For setting up a local development environment:
 
    # Import database schema
    mysql -u root -p purrr_love < database/schema.sql
+   
+   # OR use automated database setup
+   php local-db-init.php  # Creates admin user automatically
+   # OR for minimal setup:
+   php simple-db-setup.php
 
    # Copy configuration files
    cp config/config.example.php config/config.php

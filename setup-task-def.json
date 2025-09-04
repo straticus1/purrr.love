@@ -1,0 +1,34 @@
+{
+  "family": "purrr-db-setup",
+  "networkMode": "awsvpc",
+  "executionRoleArn": "arn:aws:iam::515966511618:role/purrr-ecs-execution-role",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "containerDefinitions": [
+    {
+      "name": "db-setup",
+      "image": "515966511618.dkr.ecr.us-east-1.amazonaws.com/purrr-love:v2.1.3",
+      "essential": true,
+      "environment": [
+        {
+          "name": "MYSQL_ADMIN_PASS",
+          "value": "purrr123"
+        }
+      ],
+      "command": [
+        "/bin/bash",
+        "-c",
+        "mysql -h127.0.0.1 -uroot -ppurrr123 -e 'CREATE DATABASE IF NOT EXISTS purrrlove; USE purrrlove; CREATE TABLE IF NOT EXISTS users (id INT AUTO_INCREMENT PRIMARY KEY, username VARCHAR(50) UNIQUE NOT NULL, email VARCHAR(100) UNIQUE NOT NULL, password_hash VARCHAR(255) NOT NULL, role ENUM(\"user\", \"admin\", \"moderator\") DEFAULT \"user\", created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, INDEX idx_username (username), INDEX idx_email (email)) ENGINE=InnoDB; CREATE TABLE IF NOT EXISTS cats (id INT AUTO_INCREMENT PRIMARY KEY, user_id INT NOT NULL, name VARCHAR(100) NOT NULL, breed VARCHAR(50), color VARCHAR(50), age INT, personality TEXT, happiness INT DEFAULT 50, energy INT DEFAULT 50, hunger INT DEFAULT 50, health INT DEFAULT 100, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE, INDEX idx_user_id (user_id)) ENGINE=InnoDB; CREATE TABLE IF NOT EXISTS activities (id INT AUTO_INCREMENT PRIMARY KEY, cat_id INT NOT NULL, activity_type ENUM(\"feed\", \"play\", \"groom\", \"sleep\", \"adventure\") NOT NULL, description TEXT, happiness_change INT DEFAULT 0, energy_change INT DEFAULT 0, hunger_change INT DEFAULT 0, health_change INT DEFAULT 0, timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP, FOREIGN KEY (cat_id) REFERENCES cats(id) ON DELETE CASCADE, INDEX idx_cat_id (cat_id)) ENGINE=InnoDB; INSERT IGNORE INTO users (username, email, password_hash, role) VALUES (\"admin\", \"admin@purrr.love\", \"$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi\", \"admin\"); INSERT IGNORE INTO cats (user_id, name, breed, color, age, personality) VALUES (1, \"Whiskers\", \"Persian\", \"Orange\", 3, \"Playful and curious digital companion\"); INSERT IGNORE INTO activities (cat_id, activity_type, description, happiness_change) VALUES (1, \"play\", \"Playing with a feather toy\", 10);'"
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/purrr-app",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "setup"
+        }
+      }
+    }
+  ]
+}

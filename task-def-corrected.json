@@ -1,0 +1,43 @@
+{
+  "family": "purrr-app",
+  "networkMode": "awsvpc",
+  "executionRoleArn": "arn:aws:iam::515966511618:role/purrr-ecs-execution-role",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "containerDefinitions": [
+    {
+      "name": "app",
+      "image": "515966511618.dkr.ecr.us-east-1.amazonaws.com/purrr-love:final-setup",
+      "portMappings": [
+        {
+          "containerPort": 80,
+          "protocol": "tcp"
+        }
+      ],
+      "essential": true,
+      "environment": [
+        {
+          "name": "MYSQL_ADMIN_PASS",
+          "value": "purrr123"
+        },
+        {
+          "name": "APACHE_RUN_USER",
+          "value": "www-data"
+        },
+        {
+          "name": "APACHE_RUN_GROUP",
+          "value": "www-data"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/purrr-app",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}
