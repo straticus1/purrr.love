@@ -1,27 +1,32 @@
 # Purrr.love Production Docker Image with Metaverse Automation
 FROM mattrayner/lamp:latest-1804
 
-# Install cron for metaverse automation
+# Install cron and PostgreSQL support for metaverse automation
 RUN DEBIAN_FRONTEND=noninteractive apt-get update && apt-get install -y \
     cron \
     curl \
+    php-pgsql \
+    postgresql-client \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy application files first to /app directory
-COPY . /app/
+# Clear the default web directory
+RUN rm -rf /var/www/html/*
+
+# Copy application files directly to web root
+COPY . /var/www/html/
 
 # Set proper permissions
-RUN chown -R www-data:www-data /app \
-    && chmod -R 755 /app
+RUN chown -R www-data:www-data /var/www/html \
+    && chmod -R 755 /var/www/html
 
 # Create uploads and logs directories
-RUN mkdir -p /app/uploads /app/logs \
-    && chown -R www-data:www-data /app/uploads /app/logs \
-    && chmod -R 777 /app/uploads \
-    && chmod -R 755 /app/logs
+RUN mkdir -p /var/www/html/uploads /var/www/html/logs \
+    && chown -R www-data:www-data /var/www/html/uploads /var/www/html/logs \
+    && chmod -R 777 /var/www/html/uploads \
+    && chmod -R 755 /var/www/html/logs
 
 # Make CLI scripts executable
-RUN chmod +x /app/cli/metaverse_automation.php
+RUN chmod +x /var/www/html/cli/metaverse_automation.php
 
 # Enable Apache modules
 RUN a2enmod rewrite headers
@@ -45,14 +50,7 @@ wait' > /process-manager.sh \
 # Create a custom run script that sets up everything
 RUN echo '#!/bin/bash\n\
 echo "Starting Purrr.love application with Metaverse Automation..."\n\
-# Copy application files\n\
-echo "Copying Purrr.love application files..."\n\
-rm -rf /var/www/html/*\n\
-cp -r /app/. /var/www/html/\n\
-chown -R www-data:www-data /var/www/html\n\
-chmod -R 755 /var/www/html\n\
-# Ensure CLI is executable\n\
-chmod +x /var/www/html/cli/metaverse_automation.php\n\
+echo "Application files already in place"\n\
 # Setup cron jobs for metaverse automation\n\
 echo "Setting up metaverse automation cron jobs..."\n\
 echo "# Purrr.love Metaverse Automation" > /var/spool/cron/crontabs/www-data\n\

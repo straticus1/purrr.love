@@ -73,14 +73,28 @@ if (mysqli_query($conn, $sql)) {
     echo "Error creating statistics table: " . mysqli_error($conn) . "\n";
 }
 
-// Insert admin user
-$sql = "INSERT IGNORE INTO users (username, email, password_hash, name, role, active) 
-        VALUES ('admin', 'admin@purrr.love', '\$2y\$10\$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'System Administrator', 'admin', true)";
+// Insert admin user with proper password
+$admin_password_hash = password_hash('admin123456789!', PASSWORD_DEFAULT);
+$sql = "INSERT INTO users (username, email, password_hash, name, role, active) 
+        VALUES ('admin', 'admin@purrr.love', '$admin_password_hash', 'System Administrator', 'admin', true)
+        ON DUPLICATE KEY UPDATE password_hash = VALUES(password_hash), role = VALUES(role)";
 
 if (mysqli_query($conn, $sql)) {
-    echo "Admin user created successfully\n";
+    echo "Admin user created/updated successfully\n";
 } else {
     echo "Error creating admin user: " . mysqli_error($conn) . "\n";
+}
+
+// Create test user
+$test_password_hash = password_hash('testpass123', PASSWORD_DEFAULT);
+$sql = "INSERT INTO users (username, email, password_hash, name, role, active) 
+        VALUES ('testuser', 'testuser@example.com', '$test_password_hash', 'Test User', 'user', true)
+        ON DUPLICATE KEY UPDATE password_hash = VALUES(password_hash)";
+
+if (mysqli_query($conn, $sql)) {
+    echo "Test user created/updated successfully\n";
+} else {
+    echo "Error creating test user: " . mysqli_error($conn) . "\n";
 }
 
 // Insert statistics
@@ -111,5 +125,13 @@ while ($row = mysqli_fetch_assoc($result)) {
 
 mysqli_close($conn);
 echo "\nDATABASE SETUP COMPLETE!\n";
-echo "Admin login: username=admin, password=password\n";
+echo "\n🔐 LOGIN CREDENTIALS:\n";
+echo "====================\n";
+echo "🔴 ADMIN LOGIN:\n";
+echo "   Email: admin@purrr.love\n";
+echo "   Password: admin123456789!\n\n";
+echo "🔵 TEST USER LOGIN:\n";
+echo "   Email: testuser@example.com\n";
+echo "   Password: testpass123\n\n";
+echo "✅ Both accounts are ready to use!\n";
 ?>

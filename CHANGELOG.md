@@ -1,9 +1,49 @@
 # Changelog
 
-All notable changes to Purrr.love will be documented in this file.
+All notable changes to the Purrr.love project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+## [2.0.0] - 2025-09-04
+
+### ✨ Major Features Added
+- **Complete MariaDB Migration**: Migrated from PostgreSQL to MariaDB for better MySQL compatibility
+- **Advanced Authentication System**: Implemented comprehensive user authentication with session management
+- **Full Database Schema**: Created complete schema with users, cats, API keys, OAuth2 tokens, and sessions tables
+- **Docker Production Deployment**: Containerized application with full AWS ECS deployment
+- **Load Balanced Infrastructure**: Implemented AWS Application Load Balancer with health checks
+
+### 🔧 Infrastructure Changes
+- **AWS RDS MariaDB**: Deployed production MariaDB instance with encryption and backup retention
+- **AWS ECS Fargate**: Containerized deployment with auto-scaling capabilities
+- **Security Groups**: Configured proper network security for database and application layers
+- **Environment Configuration**: Production-grade environment variable management
+
+### 🔐 Authentication & Security
+- **Password Hashing**: Implemented secure password hashing with PHP password_hash()
+- **Session Management**: Complete session handling with user state management
+- **API Key Support**: Infrastructure for API key authentication (tables created)
+- **OAuth2 Ready**: Database tables and structure for OAuth2 implementation
+- **Role-Based Access**: Admin and user role differentiation
+
+### 🔍 Working Login Credentials
+
+#### 🔴 **Administrator Account**
+- **Email**: `admin@purrr.love`
+- **Password**: `admin123456789!`
+- **Role**: Administrator (full system access)
+- **Status**: ✅ Ready for testing
+
+#### 🔵 **Regular User Account**  
+- **Email**: `testuser@example.com`
+- **Password**: `testpass123`
+- **Role**: Standard user
+- **Status**: ✅ Ready for testing
+
+### 🚀 Production Infrastructure
+- **Database**: MariaDB 11.4.5 on AWS RDS
+- **Application**: Containerized on AWS ECS Fargate
+- **Load Balancer**: AWS ALB with health checks
+- **Domain**: https://purrr.love with SSL/TLS
+- **Monitoring**: CloudWatch logging and metrics
 
 ## [2.1.8] - 2025-09-04 🌌 **METAVERSE PRODUCTION DEPLOYMENT SUCCESS**
 
