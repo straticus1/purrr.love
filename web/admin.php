@@ -1,4 +1,154 @@
 <?php
+// Database Setup Trigger
+if (isset($_GET['setup_db']) && $_GET['setup_db'] === 'purrr_mysql_init_now') {
+    try {
+        // Database configuration
+        $dbConfig = [
+            'host' => $_ENV['DB_HOST'] ?? 'localhost',
+            'port' => $_ENV['DB_PORT'] ?? 3306,
+            'name' => $_ENV['DB_NAME'] ?? 'purrr_love',
+            'user' => $_ENV['DB_USER'] ?? 'root',
+            'pass' => $_ENV['DB_PASS'] ?? '',
+        ];
+        
+        echo "<h1>🚀 Database Setup Starting...</h1>";
+        
+        // Connect to MySQL server (without database)
+        $dsn = "mysql:host={$dbConfig['host']};port={$dbConfig['port']};charset=utf8mb4";
+        $pdo = new PDO($dsn, $dbConfig['user'], $dbConfig['pass'], [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+        ]);
+        
+        echo "<p>✅ Connected to MySQL server</p>";
+        
+        // Minimal schema for basic functionality
+        $sql = '
+CREATE DATABASE IF NOT EXISTS purrr_love;
+USE purrr_love;
+
+CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    role ENUM("user", "admin") DEFAULT "user",
+    level INT DEFAULT 1,
+    coins INT DEFAULT 100,
+    experience_points INT DEFAULT 0,
+    avatar_url VARCHAR(500),
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS cats (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    breed VARCHAR(100) DEFAULT "Mixed",
+    age INT DEFAULT 1,
+    color VARCHAR(50) DEFAULT "Orange",
+    personality_openness DECIMAL(3,2) DEFAULT 0.50,
+    personality_conscientiousness DECIMAL(3,2) DEFAULT 0.50,
+    personality_extraversion DECIMAL(3,2) DEFAULT 0.50,
+    personality_agreeableness DECIMAL(3,2) DEFAULT 0.50,
+    personality_neuroticism DECIMAL(3,2) DEFAULT 0.50,
+    health_status ENUM("excellent", "good", "fair", "poor") DEFAULT "good",
+    temperature DECIMAL(4,2) DEFAULT 101.50,
+    heart_rate INT DEFAULT 120,
+    weight DECIMAL(5,2) DEFAULT 10.00,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS security_logs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    event_type ENUM("login_success", "login_failed", "password_change", "account_locked", "api_access", "suspicious_activity") NOT NULL,
+    user_id INT,
+    ip_address VARCHAR(45) NOT NULL,
+    user_agent TEXT,
+    details JSON,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_timestamp (timestamp),
+    INDEX idx_user_id (user_id),
+    INDEX idx_ip_address (ip_address),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS support_tickets (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    subject VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    status ENUM("open", "in_progress", "resolved", "closed") DEFAULT "open",
+    priority ENUM("low", "medium", "high", "urgent") DEFAULT "medium",
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS api_keys (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    api_key VARCHAR(128) UNIQUE NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    permissions JSON DEFAULT "[]",
+    is_active BOOLEAN DEFAULT TRUE,
+    last_used_at TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Insert default admin user
+INSERT INTO users (username, email, password_hash, role, level, coins, experience_points) VALUES
+("admin", "admin@purrr.love", "$2y$12$rOx1XaOV.gV4j2V5qnQjzOXJB5Uy2P8H9m.W4nJ.H6mZ8kR4L1N7C", "admin", 50, 10000, 50000)
+ON DUPLICATE KEY UPDATE password_hash = VALUES(password_hash);
+
+-- Insert sample cat
+INSERT INTO cats (user_id, name, breed, age, color, personality_openness, personality_conscientiousness) VALUES
+(1, "Whiskers", "Persian", 3, "White", 0.75, 0.65)
+ON DUPLICATE KEY UPDATE name = VALUES(name);
+';
+        
+        // Split SQL into individual statements
+        $statements = array_filter(
+            array_map('trim', explode(';', $sql)),
+            function($stmt) {
+                return !empty($stmt) && !preg_match('/^--/', $stmt);
+            }
+        );
+        
+        $successCount = 0;
+        foreach ($statements as $statement) {
+            try {
+                if (trim($statement)) {
+                    $pdo->exec($statement);
+                    $successCount++;
+                }
+            } catch (PDOException $e) {
+                if (strpos($e->getMessage(), 'already exists') === false && 
+                    strpos($e->getMessage(), 'Duplicate entry') === false) {
+                    echo "<p>⚠️ Warning: " . htmlspecialchars($e->getMessage()) . "</p>";
+                } else {
+                    $successCount++;
+                }
+            }
+        }
+        
+        echo "<p>✅ Setup completed! Executed $successCount SQL statements</p>";
+        echo "<p><strong>Admin Login:</strong> admin@purrr.love / admin123456789!</p>";
+        echo "<p><a href='admin.php'>Go to Admin Panel</a></p>";
+        exit;
+        
+    } catch (Exception $e) {
+        echo "<p>❌ Setup failed: " . htmlspecialchars($e->getMessage()) . "</p>";
+        exit;
+    }
+}
 /**
  * ⚙️ Purrr.love - Admin Panel
  * System administration and management tools
