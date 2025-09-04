@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![PHP Version](https://img.shields.io/badge/PHP-%3E%3D8.0-blue)](https://php.net)
-[![Database](https://img.shields.io/badge/Database-MySQL%208.0%2B%20%7C%20PostgreSQL%2013%2B-green)]()
+[![Database](https://img.shields.io/badge/Database-MariaDB%2011.4%2B%20%7C%20MySQL%208.0%2B-blue)](https://mariadb.org/)
 [![API](https://img.shields.io/badge/API-REST%20%7C%20OAuth2-orange)]()
 [![Security](https://img.shields.io/badge/Security-CSRF%20Protected%20%7C%20SQL%20Injection%20Safe-red)]()
 
@@ -14,21 +14,54 @@ Purrr.love is a revolutionary feline gaming ecosystem that combines cryptocurren
 
 ### 🎉 **LIVE IN PRODUCTION** ✅
 
-**Purrr.love is now LIVE on AWS ECS with enterprise-grade infrastructure!**
+**Purrr.love is now LIVE on AWS ECS with enterprise-grade infrastructure and working authentication!**
 
 - **🌐 Primary Site**: [https://purrr.love](https://purrr.love) - **✅ LIVE**
+- **🔐 Login System**: [https://purrr.love/working-login.php](https://purrr.love/working-login.php) - **✅ FUNCTIONAL**
 - **🐱 Alternate Site**: [https://purrr.me](https://purrr.me) - **✅ LIVE**
 - **🔗 API Endpoint**: [https://api.purrr.love](https://api.purrr.love) - **✅ LIVE**
 - **📱 Web App**: [https://app.purrr.me/web/](https://app.purrr.me/web/) - **✅ LIVE & FUNCTIONAL**
 - **⚙️ Admin Panel**: [https://admin.purrr.love](https://admin.purrr.love) - **✅ LIVE**
 - **💚 Health Check**: [https://purrr.love/health.php](https://purrr.love/health.php) - **✅ OPERATIONAL**
-- **🎮 Interactive Web Interface**: Full PHP application with login/registration - **✅ VERIFIED**
+- **🎮 Interactive Web Interface**: Full PHP application with working authentication - **✅ VERIFIED**
 - **🛡️ SSL Security**: A+ rating with automatic HTTPS redirects - **✅ ACTIVE**
 - **📚 API Documentation**: [Complete API Guide](docs/API_ECOSYSTEM_SUMMARY.md)
 - **🔧 Technical Docs**: [Full Documentation](docs/DOCUMENTATION.md)
 - **⚡ Installation Guide**: [Setup Instructions](docs/INSTALL.md)
 - **📝 Version History**: [Changelog](CHANGELOG.md)
 - **🐱 CLI Tool**: `./cli/purrr --help` for command-line access
+
+### Testing the Live System
+
+The application is deployed and ready for testing with these verified credentials:
+
+#### 🔴 Administrator Account
+```
+Email: admin@purrr.love
+Password: admin123456789!
+Access: Full system administration
+```
+
+#### 🔵 Regular User Account  
+```
+Email: testuser@example.com
+Password: testpass123
+Access: Standard user features
+```
+
+### API Testing
+
+```bash
+# Test Admin Login
+curl -X POST "https://purrr.love/working-login.php" \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@purrr.love","password":"admin123456789!"}'
+
+# Test User Login
+curl -X POST "https://purrr.love/working-login.php" \
+  -H "Content-Type: application/json" \
+  -d '{"email":"testuser@example.com","password":"testpass123"}'
+```
 
 ## 🌟 Enhanced Feline Features
 
@@ -228,8 +261,9 @@ purrr.love/
   - **AWS Certificate Manager**: ✅ SSL/TLS certificates with auto-renewal (LIVE)
   - **Route53**: ✅ DNS management for all domains (LIVE)
   - **Amazon VPC**: ✅ Secure networking with private/public subnets (LIVE)
-  - **Container Database**: ✅ MySQL running in container with persistence (LIVE)
-  - **Database Initialization**: ✅ Automated setup scripts available
+  - **MariaDB RDS**: ✅ Managed database instance with automated backups (LIVE)
+  - **Authentication System**: ✅ Working login with password hashing (LIVE)
+  - **Database Schema**: ✅ Complete schema with users, cats, and session tables
   - **Amazon S3 + CloudFront**: 🚧 CDN (prepared for static assets)
 - **Infrastructure as Code**: ✅ Terraform modules deployed to production
 - **Containerization**: ✅ Docker with LAMP stack running in ECS Fargate
@@ -238,9 +272,12 @@ purrr.love/
 ## 🛢️ Database Setup & Management
 
 ### 📊 **Database Infrastructure**
-- **Production Database**: MySQL running in ECS containers with persistent storage
-- **Database Connection**: Verified working with PHP PDO
-- **User Authentication**: Password hashing and session management functional
+- **Production Database**: MariaDB 11.4.5 running on AWS RDS with Multi-AZ
+- **Database Migration**: Successfully migrated from PostgreSQL to MariaDB
+- **Database Connection**: Verified working with PHP PDO and secure connections
+- **User Authentication**: bcrypt password hashing and session management functional
+- **Schema Deployment**: Complete schema with users, cats, sessions, and OAuth2 tables
+- **Test Data**: Admin and test users with verified password hashes
 - **Form Processing**: Login/registration forms processing correctly
 
 ### 🚀 **Database Initialization Scripts**
