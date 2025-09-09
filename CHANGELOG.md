@@ -1,5 +1,29 @@
 # Changelog
 
+## [2.2.0] - 2025-09-09
+
+### Added
+Phase 2.1: Core Evolution Systems
+- Advanced genetic inheritance system with complex trait inheritance
+- Multi-factor evolution system with fitness scoring
+- Mutation system with adaptable rates
+- Neural network infrastructure for AI behaviors
+- Enhanced learning memory system
+- Trait inheritance patterns with multiple inheritance types
+- Evolution event tracking and processing
+
+### Changed
+- Enhanced database schema for genetic and evolution systems
+- Improved trait inheritance calculations
+- Added comprehensive genetic diversity tracking
+- Updated core cat system to support evolution
+
+### Technical
+- Added new database tables for genetic profiles, evolution data
+- Implemented advanced mutation rate calculations
+- Added fitness score system
+- Enhanced logging and monitoring for genetic systems
+
 All notable changes to the Purrr.love project will be documented in this file.
 
 ## [2.0.0] - 2025-09-04

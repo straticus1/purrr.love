@@ -1,0 +1,73 @@
+{
+    "family": "purrr-app",
+    "networkMode": "awsvpc",
+    "requiresCompatibilities": ["FARGATE"],
+    "cpu": "256",
+    "memory": "512",
+    "executionRoleArn": "arn:aws:iam::515966511618:role/purrr-ecs-execution-role",
+    "containerDefinitions": [
+        {
+            "name": "app",
+            "image": "515966511618.dkr.ecr.us-east-1.amazonaws.com/purrr-love:latest",
+            "portMappings": [
+                {
+                    "containerPort": 80,
+                    "protocol": "tcp"
+                }
+            ],
+            "essential": true,
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/ecs/purrr-app",
+                    "awslogs-region": "us-east-1",
+                    "awslogs-stream-prefix": "ecs"
+                }
+            },
+            "environment": [
+                {
+                    "name": "APP_ENV",
+                    "value": "production"
+                },
+                {
+                    "name": "DB_HOST",
+                    "value": "purrr-mariadb-production.c3iuy64is41m.us-east-1.rds.amazonaws.com"
+                },
+                {
+                    "name": "DB_PORT",
+                    "value": "3306"
+                },
+                {
+                    "name": "DB_NAME",
+                    "value": "purrr_love"
+                },
+                {
+                    "name": "DB_USER",
+                    "value": "purrruser"
+                },
+                {
+                    "name": "DB_PASS",
+                    "value": "PurrrLove2025"
+                },
+                {
+                    "name": "DB_TYPE",
+                    "value": "mysql"
+                },
+                {
+                    "name": "DB_CHARSET",
+                    "value": "utf8mb4"
+                }
+            ],
+            "healthCheck": {
+                "command": [
+                    "CMD-SHELL",
+                    "curl -f http://localhost/health.php || exit 1"
+                ],
+                "interval": 30,
+                "timeout": 5,
+                "retries": 3,
+                "startPeriod": 60
+            }
+        }
+    ]
+}

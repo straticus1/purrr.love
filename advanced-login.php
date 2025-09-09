@@ -21,11 +21,11 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 try {
     // Get database credentials from environment
-    $db_host = $_ENV['DB_HOST'] ?? 'purrr-mariadb-production.c3iuy64is41m.us-east-1.rds.amazonaws.com';
-    $db_name = $_ENV['DB_NAME'] ?? 'purrr_love';
-    $db_user = $_ENV['DB_USER'] ?? 'purrruser';
-    $db_pass = $_ENV['DB_PASS'] ?? 'PurrrLove2025';
-    $db_port = $_ENV['DB_PORT'] ?? '3306';
+    $db_host = getenv('DB_HOST') ?: ($_ENV['DB_HOST'] ?? 'purrr-mariadb-ecs.c3iuy64is41m.us-east-1.rds.amazonaws.com');
+    $db_name = getenv('DB_NAME') ?: ($_ENV['DB_NAME'] ?? 'purrr_love');
+    $db_user = getenv('DB_USER') ?: ($_ENV['DB_USER'] ?? 'purrruser');
+    $db_pass = getenv('DB_PASS') ?: ($_ENV['DB_PASS'] ?? 'PurrrLove2025');
+    $db_port = getenv('DB_PORT') ?: ($_ENV['DB_PORT'] ?? '3306');
     
     // Connect to MariaDB
     $pdo = new PDO("mysql:host=$db_host;port=$db_port;dbname=$db_name;charset=utf8mb4", $db_user, $db_pass, [
@@ -34,11 +34,19 @@ try {
         PDO::ATTR_EMULATE_PREPARES => false
     ]);
     
-    $input = json_decode(file_get_contents('php://input'), true);
+    $raw_input = file_get_contents('php://input');
+    $input = json_decode($raw_input, true);
     
     if (!$input) {
         http_response_code(400);
-        echo json_encode(['error' => 'Invalid JSON input']);
+        echo json_encode([
+            'error' => 'Invalid JSON input',
+            'debug' => [
+                'raw_input' => $raw_input,
+                'json_error' => json_last_error_msg(),
+                'content_type' => $_SERVER['CONTENT_TYPE'] ?? 'not set'
+            ]
+        ]);
         exit;
     }
     
