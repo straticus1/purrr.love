@@ -1,3 +1,6 @@
+<?php
+require_once __DIR__ . '/includes/header.php';
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -55,7 +58,7 @@
                     </div>
                     <div class="ml-3">
                         <p class="text-sm text-blue-700">
-                            Database connection: ✅ Connected                        </p>
+                            Database connection: ❌ Failed                        </p>
                     </div>
                 </div>
             </div>
@@ -71,7 +74,7 @@
                         </h3>
                         <div class="mt-2 text-sm text-red-700">
                             <ul class="list-disc pl-5 space-y-1">
-                                                                <li>Registration failed: Failed to create user: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'is_active' in 'field list'</li>
+                                                                <li>System error: Database connection failed: SQLSTATE[HY000] [1049] Unknown database 'purrr_love'</li>
                                                             </ul>
                         </div>
                     </div>
@@ -85,13 +88,13 @@
                         <label for="name" class="sr-only">Full Name</label>
                         <input id="name" name="name" type="text" required 
                                class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm" 
-                               placeholder="Full Name" value="Test User">
+                               placeholder="Full Name" value="Column Creator">
                     </div>
                     <div>
                         <label for="email" class="sr-only">Email address</label>
                         <input id="email" name="email" type="email" autocomplete="email" required 
                                class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm" 
-                               placeholder="Email address" value="testuser@example.com">
+                               placeholder="Email address" value="columntest@temp.com">
                     </div>
                     <div>
                         <label for="password" class="sr-only">Password</label>
@@ -157,3 +160,7 @@
     </footer>
 </body>
 </html>
+
+<?php
+require_once __DIR__ . '/includes/footer.php';
+?>

@@ -1,3 +1,6 @@
+<?php
+require_once __DIR__ . '/includes/header.php';
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -178,7 +181,7 @@
                     <h2 class="text-3xl font-bold text-gray-900 mb-6">Welcome Back!</h2>
                     
                                         <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                        Login failed: Authentication failed: Database connection failed: SQLSTATE[HY000] [1049] Unknown database 'purrr_love'                    </div>
+                        Login failed: Authentication failed: SQLSTATE[42S22]: Column not found: 1054 Unknown column 'is_active' in 'field list'                    </div>
                                         
                     <form method="POST" action="">
                         <div class="mb-4">
@@ -352,3 +355,7 @@
     </script>
 </body>
 </html>
+
+<?php
+require_once __DIR__ . '/includes/footer.php';
+?>

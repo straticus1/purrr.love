@@ -1,3 +1,6 @@
+<?php
+require_once __DIR__ . '/includes/header.php';
+?>
 Database connection failed: SQLSTATE[HY000] [2002] No such file or directory
 Failed to initialize global $pdo: Database connection failed
 SECURITY: {"timestamp":"2025-09-04T15:28:03+00:00","event":"application_initialized","level":"INFO","ip_address":"0.0.0.0","user_agent":"Unknown","user_id":null,"data":{"version":"1.0.0"}}
@@ -19,3 +22,7 @@ Stack trace:
 #2 /Users/ryan/development/purrr.love/test-enhanced-personality-needs.php(11): require_once('/Users/ryan/dev...')
 #3 {main}
   thrown in /Users/ryan/development/purrr.love/includes/functions.php on line 46
+
+<?php
+require_once __DIR__ . '/includes/footer.php';
+?>

@@ -1,3 +1,6 @@
+<?php
+require_once __DIR__ . '/includes/header.php';
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -171,3 +174,7 @@
 
 </body>
 </html>
+
+<?php
+require_once __DIR__ . '/includes/footer.php';
+?>

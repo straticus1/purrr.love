@@ -1,110 +1,5 @@
 <?php
-// Purrr.love - Main Application Entry Point
-// Version: 2.1.3 - Production Ready
-
-// Start session and error handling
-session_start();
-error_reporting(E_ALL);
-ini_set('display_errors', 0); // Disable for production
-
-// Security headers
-header('X-Content-Type-Options: nosniff');
-header('X-Frame-Options: DENY');
-header('X-XSS-Protection: 1; mode=block');
-header('Referrer-Policy: strict-origin-when-cross-origin');
-
-// Include configuration and functions
-$config_path = __DIR__ . '/config/config.php';
-$functions_path = __DIR__ . '/includes/functions.php';
-
-// Check if config exists, if not redirect to setup
-if (!file_exists($config_path)) {
-    header('Location: /web/setup.php');
-    exit;
-}
-
-require_once $config_path;
-
-// Include functions if available
-if (file_exists($functions_path)) {
-    require_once $functions_path;
-}
-
-// Database connection (if configured)
-$db = null;
-$user_id = null;
-$user_data = null;
-
-try {
-    if (defined('DB_HOST') && defined('DB_NAME')) {
-        $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4";
-        $db = new PDO($dsn, DB_USER, DB_PASS, [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            PDO::ATTR_EMULATE_PREPARES => false,
-        ]);
-        
-        // Check if user is logged in
-        if (isset($_SESSION['user_id'])) {
-            $user_id = $_SESSION['user_id'];
-            $stmt = $db->prepare("SELECT * FROM users WHERE id = ?");
-            $stmt->execute([$user_id]);
-            $user_data = $stmt->fetch();
-        }
-    }
-} catch (PDOException $e) {
-    // Log error but don't show to user in production
-    error_log("Database connection failed: " . $e->getMessage());
-    $db = null;
-}
-
-// Get basic stats for display
-$stats = [
-    'cats' => 0,
-    'users' => 0,
-    'games_played' => 0,
-    'crypto_earned' => 0
-];
-
-if ($db) {
-    try {
-        // Get total cats
-        $stmt = $db->query("SELECT COUNT(*) as count FROM cats WHERE 1");
-        $result = $stmt->fetch();
-        $stats['cats'] = $result ? $result['count'] : 0;
-        
-        // Get total users
-        $stmt = $db->query("SELECT COUNT(*) as count FROM users WHERE 1");
-        $result = $stmt->fetch();
-        $stats['users'] = $result ? $result['count'] : 0;
-        
-        // Get games played (if table exists)
-        try {
-            $stmt = $db->query("SELECT COUNT(*) as count FROM game_sessions WHERE 1");
-            $result = $stmt->fetch();
-            $stats['games_played'] = $result ? $result['count'] : 0;
-        } catch (Exception $e) {
-            $stats['games_played'] = 1000; // Default value
-        }
-        
-    } catch (Exception $e) {
-        // Use default values if queries fail
-        $stats = [
-            'cats' => 500,
-            'users' => 250,
-            'games_played' => 1000,
-            'crypto_earned' => 50000
-        ];
-    }
-} else {
-    // Default demo stats when database is not available
-    $stats = [
-        'cats' => 50000,
-        'users' => 25000,
-        'games_played' => 100000,
-        'crypto_earned' => 500000
-    ];
-}
+require_once __DIR__ . '/includes/header.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -113,38 +8,49 @@ if ($db) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🐱 Purrr.love - The Ultimate Cat Gaming Ecosystem</title>
     <meta name="description" content="Join the most advanced cat gaming platform with AI, blockchain, VR, and real-time multiplayer features. Adopt cats, play games, and earn crypto rewards!">
-    
-    <!-- SEO and Social Media Meta Tags -->
-    <meta property="og:title" content="Purrr.love - The Ultimate Cat Gaming Ecosystem">
-    <meta property="og:description" content="AI-powered cat personalities, blockchain ownership, VR metaverse, and crypto rewards!">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://purrr.love">
-    
-    <!-- Stylesheets -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
         
-        * { font-family: 'Inter', sans-serif; }
+        * {
+            font-family: 'Inter', sans-serif;
+        }
         
-        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .hero-gradient { background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%); }
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .hero-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+        }
         
         .card-hover {
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
+        
         .card-hover:hover {
             transform: translateY(-8px) scale(1.02);
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
         }
         
-        .floating { animation: floating 3s ease-in-out infinite; }
+        .floating {
+            animation: floating 3s ease-in-out infinite;
+        }
+        
         @keyframes floating {
             0% { transform: translateY(0px); }
             50% { transform: translateY(-10px); }
             100% { transform: translateY(0px); }
+        }
+        
+        .pulse-glow {
+            animation: pulse-glow 2s ease-in-out infinite alternate;
+        }
+        
+        @keyframes pulse-glow {
+            from { box-shadow: 0 0 20px rgba(139, 92, 246, 0.5); }
+            to { box-shadow: 0 0 30px rgba(139, 92, 246, 0.8); }
         }
         
         .gradient-text {
@@ -160,7 +66,17 @@ if ($db) {
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
         
-        .animate-blob { animation: blob 7s infinite; }
+        .feature-icon {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .animate-blob {
+            animation: blob 7s infinite;
+        }
+        
         @keyframes blob {
             0% { transform: translate(0px, 0px) scale(1); }
             33% { transform: translate(30px, -50px) scale(1.1); }
@@ -168,19 +84,80 @@ if ($db) {
             100% { transform: translate(0px, 0px) scale(1); }
         }
         
-        .slide-up { animation: slide-up 0.8s ease-out; }
+        .slide-up {
+            animation: slide-up 0.8s ease-out;
+        }
+        
         @keyframes slide-up {
             0% { transform: translateY(30px); opacity: 0; }
             100% { transform: translateY(0); opacity: 1; }
+        }
+        
+        .bounce-in {
+            animation: bounce-in 0.6s ease-out;
+        }
+        
+        @keyframes bounce-in {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.05); }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .floating-cat {
+            animation: floating-cat 4s ease-in-out infinite;
+        }
+        
+        @keyframes floating-cat {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            25% { transform: translateY(-15px) rotate(2deg); }
+            50% { transform: translateY(-20px) rotate(0deg); }
+            75% { transform: translateY(-15px) rotate(-2deg); }
+        }
+        
+        .stats-counter {
+            animation: count-up 2s ease-out;
+        }
+        
+        @keyframes count-up {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .nav-link {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s ease;
+        }
+        
+        .nav-link:hover::after {
+            width: 100%;
         }
         
         .cta-button {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             transition: all 0.3s ease;
         }
+        
         .cta-button:hover {
             transform: translateY(-2px);
             box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+        
+        .feature-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
     </style>
 </head>
@@ -204,18 +181,12 @@ if ($db) {
                     </div>
                 </div>
                 <div class="hidden md:flex items-center space-x-8">
-                    <a href="#features" class="text-gray-700 hover:text-purple-600 px-3 py-2 text-sm font-medium">Features</a>
-                    <a href="#games" class="text-gray-700 hover:text-purple-600 px-3 py-2 text-sm font-medium">Games</a>
-                    <a href="#ai" class="text-gray-700 hover:text-purple-600 px-3 py-2 text-sm font-medium">AI</a>
-                    <a href="#blockchain" class="text-gray-700 hover:text-purple-600 px-3 py-2 text-sm font-medium">Blockchain</a>
-                    <a href="#vr" class="text-gray-700 hover:text-purple-600 px-3 py-2 text-sm font-medium">VR</a>
-                    
-                    <?php if ($user_data): ?>
-                        <a href="/web/dashboard.php" class="text-gray-700 hover:text-purple-600 px-3 py-2 text-sm font-medium">Dashboard</a>
-                        <span class="text-sm text-gray-600">Welcome, <?php echo htmlspecialchars($user_data['username'] ?? 'User'); ?>!</span>
-                    <?php else: ?>
-                        <a href="/web/register.php" class="cta-button text-white px-6 py-2 rounded-full font-medium">Get Started</a>
-                    <?php endif; ?>
+                    <a href="#features" class="nav-link text-gray-700 hover:text-purple-600 px-3 py-2 text-sm font-medium">Features</a>
+                    <a href="#games" class="nav-link text-gray-700 hover:text-purple-600 px-3 py-2 text-sm font-medium">Games</a>
+                    <a href="#ai" class="nav-link text-gray-700 hover:text-purple-600 px-3 py-2 text-sm font-medium">AI</a>
+                    <a href="#blockchain" class="nav-link text-gray-700 hover:text-purple-600 px-3 py-2 text-sm font-medium">Blockchain</a>
+                    <a href="#vr" class="nav-link text-gray-700 hover:text-purple-600 px-3 py-2 text-sm font-medium">VR</a>
+                    <a href="web/register.php" class="cta-button text-white px-6 py-2 rounded-full font-medium">Get Started</a>
                 </div>
                 <div class="md:hidden">
                     <button class="text-gray-700 hover:text-purple-600">
@@ -240,25 +211,43 @@ if ($db) {
                     Your cats are waiting for you!
                 </p>
                 <div class="flex flex-col sm:flex-row gap-4 justify-center items-center slide-up" style="animation-delay: 0.4s">
-                    <?php if ($user_data): ?>
-                        <a href="/web/dashboard.php" class="cta-button text-white px-8 py-4 rounded-full text-lg font-semibold transform hover:scale-105 transition-all duration-300">
-                            <i class="fas fa-tachometer-alt mr-2"></i>
-                            Go to Dashboard
-                        </a>
-                        <a href="/web/cats.php" class="bg-white text-purple-600 px-8 py-4 rounded-full text-lg font-semibold border-2 border-purple-200 hover:border-purple-400 hover:bg-purple-50 transition-all duration-300">
-                            <i class="fas fa-cat mr-2"></i>
-                            My Cats
-                        </a>
-                    <?php else: ?>
-                        <a href="/web/register.php" class="cta-button text-white px-8 py-4 rounded-full text-lg font-semibold transform hover:scale-105 transition-all duration-300">
-                            <i class="fas fa-rocket mr-2"></i>
-                            Start Your Adventure
-                        </a>
-                        <a href="#demo" class="bg-white text-purple-600 px-8 py-4 rounded-full text-lg font-semibold border-2 border-purple-200 hover:border-purple-400 hover:bg-purple-50 transition-all duration-300">
-                            <i class="fas fa-play mr-2"></i>
-                            Watch Demo
-                        </a>
-                    <?php endif; ?>
+                    <a href="web/register.php" class="cta-button text-white px-8 py-4 rounded-full text-lg font-semibold transform hover:scale-105 transition-all duration-300">
+                        <i class="fas fa-rocket mr-2"></i>
+                        Start Your Adventure
+                    </a>
+                    <a href="#demo" class="bg-white text-purple-600 px-8 py-4 rounded-full text-lg font-semibold border-2 border-purple-200 hover:border-purple-400 hover:bg-purple-50 transition-all duration-300">
+                        <i class="fas fa-play mr-2"></i>
+                        Watch Demo
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Hero Visual -->
+            <div class="mt-20 relative slide-up" style="animation-delay: 0.6s">
+                <div class="relative z-10">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                        <div class="text-center">
+                            <div class="w-32 h-32 bg-gradient-to-br from-pink-400 to-purple-500 rounded-full mx-auto mb-4 flex items-center justify-center floating-cat">
+                                <i class="fas fa-cat text-white text-5xl"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-900 mb-2">Adopt & Care</h3>
+                            <p class="text-gray-600">Find your perfect feline companion</p>
+                        </div>
+                        <div class="text-center">
+                            <div class="w-32 h-32 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full mx-auto mb-4 flex items-center justify-center floating-cat" style="animation-delay: 1s">
+                                <i class="fas fa-gamepad text-white text-5xl"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-900 mb-2">Play & Earn</h3>
+                            <p class="text-gray-600">Games with crypto rewards</p>
+                        </div>
+                        <div class="text-center">
+                            <div class="w-32 h-32 bg-gradient-to-br from-green-400 to-teal-500 rounded-full mx-auto mb-4 flex items-center justify-center floating-cat" style="animation-delay: 2s">
+                                <i class="fas fa-vr-cardboard text-white text-5xl"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-900 mb-2">VR Metaverse</h3>
+                            <p class="text-gray-600">Immerse in 3D cat worlds</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -268,76 +257,382 @@ if ($db) {
     <section class="relative z-10 py-20 bg-white/50 backdrop-blur-sm">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
-                <div class="text-center">
-                    <div class="text-4xl font-bold text-purple-600 mb-2"><?php echo number_format($stats['cats']); ?>+</div>
+                <div class="text-center bounce-in" style="animation-delay: 0.1s">
+                    <div class="text-4xl font-bold text-purple-600 mb-2 stats-counter">50K+</div>
                     <p class="text-gray-600">Happy Cats</p>
                 </div>
-                <div class="text-center">
-                    <div class="text-4xl font-bold text-blue-600 mb-2"><?php echo number_format($stats['games_played']); ?>+</div>
+                <div class="text-center bounce-in" style="animation-delay: 0.2s">
+                    <div class="text-4xl font-bold text-blue-600 mb-2 stats-counter">100K+</div>
                     <p class="text-gray-600">Games Played</p>
                 </div>
-                <div class="text-center">
-                    <div class="text-4xl font-bold text-green-600 mb-2"><?php echo number_format($stats['users']); ?>+</div>
+                <div class="text-center bounce-in" style="animation-delay: 0.3s">
+                    <div class="text-4xl font-bold text-green-600 mb-2 stats-counter">25K+</div>
                     <p class="text-gray-600">Active Users</p>
                 </div>
-                <div class="text-center">
-                    <div class="text-4xl font-bold text-pink-600 mb-2">$<?php echo number_format($stats['crypto_earned']); ?>+</div>
+                <div class="text-center bounce-in" style="animation-delay: 0.4s">
+                    <div class="text-4xl font-bold text-pink-600 mb-2 stats-counter">$500K+</div>
                     <p class="text-gray-600">Crypto Rewards</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Quick Actions for Logged In Users -->
-    <?php if ($user_data): ?>
-    <section class="relative z-10 py-12 bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600">
+    <!-- Features Section -->
+    <section id="features" class="relative z-10 py-20">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-8">
-                <h2 class="text-3xl font-bold text-white mb-4">Welcome back, <?php echo htmlspecialchars($user_data['username']); ?>! 🎉</h2>
-                <p class="text-purple-100">Ready to continue your cat adventure?</p>
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+                    Revolutionary Features That Make Purrr.love
+                    <span class="gradient-text">Purr-fect</span>
+                </h2>
+                <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                    From AI-powered cat personalities to blockchain ownership and VR metaverse experiences, 
+                    we've built the most comprehensive cat gaming platform ever created.
+                </p>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <a href="/web/cats.php" class="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-center text-white hover:bg-white/20 transition-all duration-300">
-                    <i class="fas fa-cat text-3xl mb-3"></i>
-                    <h3 class="text-lg font-semibold">My Cats</h3>
-                </a>
-                <a href="/web/games.php" class="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-center text-white hover:bg-white/20 transition-all duration-300">
-                    <i class="fas fa-gamepad text-3xl mb-3"></i>
-                    <h3 class="text-lg font-semibold">Play Games</h3>
-                </a>
-                <a href="/web/store.php" class="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-center text-white hover:bg-white/20 transition-all duration-300">
-                    <i class="fas fa-shopping-cart text-3xl mb-3"></i>
-                    <h3 class="text-lg font-semibold">Store</h3>
-                </a>
-                <a href="/web/profile.php" class="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-center text-white hover:bg-white/20 transition-all duration-300">
-                    <i class="fas fa-user text-3xl mb-3"></i>
-                    <h3 class="text-lg font-semibold">Profile</h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- AI Personality -->
+                <div class="feature-card rounded-3xl p-8 card-hover slide-up" style="animation-delay: 0.1s">
+                    <div class="w-16 h-16 bg-gradient-to-br from-purple-400 to-pink-500 rounded-2xl flex items-center justify-center mb-6">
+                        <i class="fas fa-brain text-white text-2xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-900 mb-4">AI Cat Personalities</h3>
+                    <p class="text-gray-600 mb-6">
+                        Advanced machine learning creates unique, evolving cat personalities that learn and adapt to your interactions.
+                    </p>
+                    <ul class="space-y-2 text-sm text-gray-600">
+                        <li><i class="fas fa-check text-green-500 mr-2"></i>5-factor personality model</li>
+                        <li><i class="fas fa-check text-green-500 mr-2"></i>Behavioral pattern recognition</li>
+                        <li><i class="fas fa-check text-green-500 mr-2"></i>Environmental adaptation</li>
+                    </ul>
+                </div>
+
+                <!-- Blockchain Ownership -->
+                <div class="feature-card rounded-3xl p-8 card-hover slide-up" style="animation-delay: 0.2s">
+                    <div class="w-16 h-16 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-2xl flex items-center justify-center mb-6">
+                        <i class="fas fa-link text-white text-2xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-900 mb-4">Blockchain Ownership</h3>
+                    <p class="text-gray-600 mb-6">
+                        Own your cats as NFTs on multiple blockchains with real value and trading capabilities.
+                    </p>
+                    <ul class="space-y-2 text-sm text-gray-600">
+                        <li><i class="fas fa-check text-green-500 mr-2"></i>Multi-network support</li>
+                        <li><i class="fas fa-check text-green-500 mr-2"></i>NFT marketplace</li>
+                        <li><i class="fas fa-check text-green-500 mr-2"></i>Royalty system</li>
+                    </ul>
+                </div>
+
+                <!-- VR Metaverse -->
+                <div class="feature-card rounded-3xl p-8 card-hover slide-up" style="animation-delay: 0.3s">
+                    <div class="w-16 h-16 bg-gradient-to-br from-green-400 to-teal-500 rounded-2xl flex items-center justify-center mb-6">
+                        <i class="fas fa-vr-cardboard text-white text-2xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-900 mb-4">VR Metaverse</h3>
+                    <p class="text-gray-600 mb-6">
+                        Step into immersive 3D cat worlds with social VR features and interactive environments.
+                    </p>
+                    <ul class="space-y-2 text-sm text-gray-600">
+                        <li><i class="fas fa-check text-green-500 mr-2"></i>Cross-platform VR</li>
+                        <li><i class="fas fa-check text-green-500 mr-2"></i>Social interactions</li>
+                        <li><i class="fas fa-check text-green-500 mr-2"></i>Custom worlds</li>
+                    </ul>
+                </div>
+
+                <!-- Real-time Multiplayer -->
+                <div class="feature-card rounded-3xl p-8 card-hover slide-up" style="animation-delay: 0.4s">
+                    <div class="w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl flex items-center justify-center mb-6">
+                        <i class="fas fa-users text-white text-2xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-900 mb-4">Real-time Multiplayer</h3>
+                    <p class="text-gray-600 mb-6">
+                        Play with friends in real-time multiplayer games with ultra-low latency and smooth performance.
+                    </p>
+                    <ul class="space-y-2 text-sm text-gray-600">
+                        <li><i class="fas fa-check text-green-500 mr-2"></i>Live multiplayer</li>
+                        <li><i class="fas fa-check text-green-500 mr-2"></i>Voice chat</li>
+                        <li><i class="fas fa-check text-green-500 mr-2"></i>Team competitions</li>
+                    </ul>
+                </div>
+
+                <!-- Crypto Rewards -->
+                <div class="feature-card rounded-3xl p-8 card-hover slide-up" style="animation-delay: 0.5s">
+                    <div class="w-16 h-16 bg-gradient-to-br from-pink-400 to-red-500 rounded-2xl flex items-center justify-center mb-6">
+                        <i class="fas fa-coins text-white text-2xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-900 mb-4">Crypto Rewards</h3>
+                    <p class="text-gray-600 mb-6">
+                        Earn cryptocurrency through gameplay, achievements, and community participation.
+                    </p>
+                    <ul class="space-y-2 text-sm text-gray-600">
+                        <li><i class="fas fa-check text-green-500 mr-2"></i>Multiple cryptocurrencies</li>
+                        <li><i class="fas fa-check text-green-500 mr-2"></i>Play-to-earn model</li>
+                        <li><i class="fas fa-check text-green-500 mr-2"></i>Secure wallet</li>
+                    </ul>
+                </div>
+
+                <!-- Advanced Genetics -->
+                <div class="feature-card rounded-3xl p-8 card-hover slide-up" style="animation-delay: 0.6s">
+                    <div class="w-16 h-16 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-2xl flex items-center justify-center mb-6">
+                        <i class="fas fa-dna text-white text-2xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-900 mb-4">Advanced Genetics</h3>
+                    <p class="text-gray-600 mb-6">
+                        Complex breeding system with genetic inheritance and rare trait combinations.
+                    </p>
+                    <ul class="space-y-2 text-sm text-gray-600">
+                        <li><i class="fas fa-check text-green-500 mr-2"></i>Genetic mutations</li>
+                        <li><i class="fas fa-check text-green-500 mr-2"></i>Breed-specific traits</li>
+                        <li><i class="fas fa-check text-green-500 mr-2"></i>Hybrid breeding</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Games Section -->
+    <section id="games" class="relative z-10 py-20 bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-5xl font-bold text-white mb-6">
+                    Epic Cat Games That Pay Real Rewards! 🎮💰
+                </h2>
+                <p class="text-xl text-purple-100 max-w-3xl mx-auto">
+                    From casual mini-games to competitive tournaments, every game is designed to entertain 
+                    your cats while earning you cryptocurrency rewards.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="bg-white/10 backdrop-blur-sm rounded-3xl p-8 card-hover">
+                    <div class="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-mouse text-white text-3xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-4 text-center">Mouse Hunt</h3>
+                    <p class="text-purple-100 text-center mb-6">
+                        Classic cat hunting game with increasing difficulty and crypto rewards for high scores.
+                    </p>
+                    <div class="text-center">
+                        <span class="bg-white/20 text-white px-4 py-2 rounded-full text-sm">Rewards: 10-100 coins</span>
+                    </div>
+                </div>
+
+                <div class="bg-white/10 backdrop-blur-sm rounded-3xl p-8 card-hover">
+                    <div class="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-gamepad text-white text-3xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-4 text-center">Paw Match</h3>
+                    <p class="text-purple-100 text-center mb-6">
+                        Fast-paced matching game with cat-themed cards and time-based challenges.
+                    </p>
+                    <div class="text-center">
+                        <span class="bg-white/20 text-white px-4 py-2 rounded-full text-sm">Rewards: 5-50 coins</span>
+                    </div>
+                </div>
+
+                <div class="bg-white/10 backdrop-blur-sm rounded-3xl p-8 card-hover">
+                    <div class="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-trophy text-white text-3xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-white mb-4 text-center">Cat Olympics</h3>
+                    <p class="text-purple-100 text-center mb-6">
+                        Competitive events with leaderboards, tournaments, and massive prize pools.
+                    </p>
+                    <div class="text-center">
+                        <span class="bg-white/20 text-white px-4 py-2 rounded-full text-sm">Rewards: 100-1000 coins</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-12">
+                <a href="web/games.php" class="bg-white text-purple-600 px-8 py-4 rounded-full text-lg font-semibold hover:bg-purple-50 transition-all duration-300">
+                    <i class="fas fa-play mr-2"></i>
+                    Play All Games
                 </a>
             </div>
         </div>
     </section>
-    <?php endif; ?>
 
-    <!-- Application Status Section -->
-    <section class="relative z-10 py-16 bg-gray-50">
-        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 class="text-3xl font-bold text-gray-900 mb-8">🚀 Production Status</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="bg-white rounded-lg p-6 shadow-lg">
-                    <div class="text-green-500 text-2xl mb-3">✅</div>
-                    <h3 class="text-lg font-semibold text-gray-900">Infrastructure</h3>
-                    <p class="text-gray-600">AWS ECS + SSL Ready</p>
+    <!-- AI Section -->
+    <section id="ai" class="relative z-10 py-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                <div>
+                    <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+                        AI That Understands Your Cats Like Never Before 🧠🐱
+                    </h2>
+                    <p class="text-xl text-gray-600 mb-8">
+                        Our advanced machine learning algorithms analyze cat behavior patterns, 
+                        predict health issues, and create personalized care recommendations.
+                    </p>
+                    <div class="space-y-4">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full flex items-center justify-center mr-4">
+                                <i class="fas fa-brain text-white text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-lg font-semibold text-gray-900">Personality Analysis</h4>
+                                <p class="text-gray-600">5-factor model with 95% accuracy</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full flex items-center justify-center mr-4">
+                                <i class="fas fa-chart-line text-white text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-lg font-semibold text-gray-900">Health Prediction</h4>
+                                <p class="text-gray-600">Early warning system for health issues</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 bg-gradient-to-br from-green-400 to-teal-500 rounded-full flex items-center justify-center mr-4">
+                                <i class="fas fa-lightbulb text-white text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-lg font-semibold text-gray-900">Smart Recommendations</h4>
+                                <p class="text-gray-600">Personalized care and training tips</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="bg-white rounded-lg p-6 shadow-lg">
-                    <div class="text-blue-500 text-2xl mb-3">🔧</div>
-                    <h3 class="text-lg font-semibold text-gray-900">Application</h3>
-                    <p class="text-gray-600">v2.1.3 Enhanced</p>
+                <div class="relative">
+                    <div class="bg-gradient-to-br from-purple-400 to-pink-500 rounded-3xl p-8 text-white text-center">
+                        <div class="text-6xl mb-4 floating-cat">🤖</div>
+                        <h3 class="text-2xl font-bold mb-4">AI Cat Assistant</h3>
+                        <p class="mb-6">Get instant insights about your cat's behavior, health, and personality</p>
+                        <button class="bg-white/20 hover:bg-white/30 px-6 py-3 rounded-full font-medium transition-all duration-300">
+                            Try AI Analysis
+                        </button>
+                    </div>
                 </div>
-                <div class="bg-white rounded-lg p-6 shadow-lg">
-                    <div class="text-purple-500 text-2xl mb-3">🐱</div>
-                    <h3 class="text-lg font-semibold text-gray-900">Ready to Play</h3>
-                    <p class="text-gray-600">Your cats await!</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Blockchain Section -->
+    <section id="blockchain" class="relative z-10 py-20 bg-gray-900 text-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-4xl md:text-5xl font-bold mb-6">
+                    Own Your Cats on the <span class="gradient-text">Blockchain</span> ⛓️
+                </h2>
+                <p class="text-xl text-gray-300 max-w-3xl mx-auto">
+                    Transform your virtual cats into valuable digital assets with true ownership, 
+                    trading capabilities, and earning potential.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+                <div class="text-center">
+                    <div class="w-20 h-20 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-ethereum text-white text-3xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Ethereum</h3>
+                    <p class="text-gray-300">Premium NFTs with full DeFi integration</p>
                 </div>
+                <div class="text-center">
+                    <div class="w-20 h-20 bg-gradient-to-br from-purple-400 to-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-link text-white text-3xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Polygon</h3>
+                    <p class="text-gray-300">Fast, low-cost transactions for daily use</p>
+                </div>
+                <div class="text-center">
+                    <div class="w-20 h-20 bg-gradient-to-br from-green-400 to-teal-500 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-coins text-white text-3xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Solana</h3>
+                    <p class="text-gray-300">Ultra-fast NFT minting and transfers</p>
+                </div>
+            </div>
+
+            <div class="text-center">
+                <a href="web/blockchain-nft.php" class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-4 rounded-full text-lg font-semibold hover:from-purple-600 hover:to-pink-600 transition-all duration-300">
+                    <i class="fas fa-rocket mr-2"></i>
+                    Explore NFT Marketplace
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- VR Section -->
+    <section id="vr" class="relative z-10 py-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+                <div class="relative">
+                    <div class="bg-gradient-to-br from-indigo-400 to-purple-500 rounded-3xl p-8 text-white text-center">
+                        <div class="text-6xl mb-4 floating-cat">🥽</div>
+                        <h3 class="text-2xl font-bold mb-4">VR Cat Experience</h3>
+                        <p class="mb-6">Immerse yourself in 3D cat worlds with full VR support</p>
+                        <div class="space-y-2 text-sm">
+                            <div><i class="fas fa-check mr-2"></i>Oculus Quest Support</div>
+                            <div><i class="fas fa-check mr-2"></i>SteamVR Compatible</div>
+                            <div><i class="fas fa-check mr-2"></i>Haptic Feedback</div>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+                        Step Into the <span class="gradient-text">Cat Metaverse</span> 🌐
+                    </h2>
+                    <p class="text-xl text-gray-600 mb-8">
+                        Experience your cats in immersive 3D environments with social VR features, 
+                        custom worlds, and interactive gameplay.
+                    </p>
+                    <div class="space-y-4">
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 bg-gradient-to-br from-indigo-400 to-purple-500 rounded-full flex items-center justify-center mr-4">
+                                <i class="fas fa-users text-white text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-lg font-semibold text-gray-900">Social VR</h4>
+                                <p class="text-gray-600">Connect with other cat lovers in virtual spaces</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full flex items-center justify-center mr-4">
+                                <i class="fas fa-hammer text-white text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-lg font-semibold text-gray-900">World Builder</h4>
+                                <p class="text-gray-600">Create custom environments for your cats</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-12 h-12 bg-gradient-to-br from-green-400 to-teal-500 rounded-full flex items-center justify-center mr-4">
+                                <i class="fas fa-gamepad text-white text-xl"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-lg font-semibold text-gray-900">VR Games</h4>
+                                <p class="text-gray-600">Interactive games designed for VR immersion</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="relative z-10 py-20 bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600">
+        <div class="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
+            <h2 class="text-4xl md:text-5xl font-bold text-white mb-6">
+                Ready to Join the <span class="text-yellow-300">Purrr-fect</span> Revolution? 🚀
+            </h2>
+            <p class="text-xl text-purple-100 mb-8">
+                Join thousands of cat lovers who are already earning crypto, exploring VR worlds, 
+                and building the future of pet gaming.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="web/register.php" class="bg-white text-purple-600 px-8 py-4 rounded-full text-lg font-semibold hover:bg-purple-50 transition-all duration-300 transform hover:scale-105">
+                    <i class="fas fa-rocket mr-2"></i>
+                    Get Started Free
+                </a>
+                <a href="web/index.php" class="bg-white/20 text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-white/30 transition-all duration-300 border border-white/30">
+                    <i class="fas fa-sign-in-alt mr-2"></i>
+                    Sign In
+                </a>
             </div>
         </div>
     </section>
@@ -351,33 +646,38 @@ if ($db) {
                     <p class="text-gray-400 mb-4">
                         The ultimate cat gaming ecosystem with AI, blockchain, and VR technology.
                     </p>
-                    <p class="text-sm text-gray-500">Version 2.1.3 - Production Ready</p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors"><i class="fab fa-twitter text-xl"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors"><i class="fab fa-discord text-xl"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors"><i class="fab fa-telegram text-xl"></i></a>
+                        <a href="#" class="text-gray-400 hover:text-white transition-colors"><i class="fab fa-github text-xl"></i></a>
+                    </div>
                 </div>
                 <div>
                     <h4 class="text-lg font-semibold mb-4">Platform</h4>
                     <ul class="space-y-2 text-gray-400">
-                        <li><a href="/web/games.php" class="hover:text-white transition-colors">Games</a></li>
-                        <li><a href="/web/cats.php" class="hover:text-white transition-colors">My Cats</a></li>
-                        <li><a href="/web/store.php" class="hover:text-white transition-colors">Store</a></li>
-                        <li><a href="/web/profile.php" class="hover:text-white transition-colors">Profile</a></li>
+                        <li><a href="web/games.php" class="hover:text-white transition-colors">Games</a></li>
+                        <li><a href="web/ml-personality.php" class="hover:text-white transition-colors">AI Personality</a></li>
+                        <li><a href="web/blockchain-nft.php" class="hover:text-white transition-colors">Blockchain</a></li>
+                        <li><a href="web/metaverse-vr.php" class="hover:text-white transition-colors">VR Metaverse</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Resources</h4>
+                    <ul class="space-y-2 text-gray-400">
+                        <li><a href="web/documentation.php" class="hover:text-white transition-colors">Documentation</a></li>
+                        <li><a href="api/" class="hover:text-white transition-colors">API Reference</a></li>
+                        <li><a href="sdk/" class="hover:text-white transition-colors">SDK Downloads</a></li>
+                        <li><a href="web/community.php" class="hover:text-white transition-colors">Community</a></li>
                     </ul>
                 </div>
                 <div>
                     <h4 class="text-lg font-semibold mb-4">Support</h4>
                     <ul class="space-y-2 text-gray-400">
-                        <li><a href="/web/help.php" class="hover:text-white transition-colors">Help Center</a></li>
-                        <li><a href="/web/support.php" class="hover:text-white transition-colors">Support Tickets</a></li>
-                        <li><a href="/health.php" class="hover:text-white transition-colors">System Health</a></li>
-                        <li><a href="/web/setup.php" class="hover:text-white transition-colors">Setup</a></li>
-                    </ul>
-                </div>
-                <div>
-                    <h4 class="text-lg font-semibold mb-4">Status</h4>
-                    <ul class="space-y-2 text-gray-400">
-                        <li>🟢 Infrastructure: Online</li>
-                        <li>🟢 SSL: A+ Rating</li>
-                        <li>🟢 Health: <?php echo $db ? 'Connected' : 'Standalone'; ?></li>
-                        <li>🟢 Version: v2.1.3</li>
+                        <li><a href="web/help.php" class="hover:text-white transition-colors">Help Center</a></li>
+                        <li><a href="web/support.php" class="hover:text-white transition-colors">Contact Us</a></li>
+                        <li><a href="web/support.php" class="hover:text-white transition-colors">Bug Reports</a></li>
+                        <li><a href="web/support.php" class="hover:text-white transition-colors">Feature Requests</a></li>
                     </ul>
                 </div>
             </div>
@@ -388,11 +688,9 @@ if ($db) {
     </footer>
 
     <script>
-        // Enhanced JavaScript for production
+        // Interactive JavaScript for enhanced UX
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('🐱 Purrr.love v2.1.3 - Production Ready!');
-            
-            // Smooth scrolling for anchor links
+            // Smooth scrolling for navigation links
             document.querySelectorAll('a[href^="#"]').forEach(anchor => {
                 anchor.addEventListener('click', function (e) {
                     e.preventDefault();
@@ -405,42 +703,67 @@ if ($db) {
                     }
                 });
             });
-            
-            // Add loading states to buttons
-            document.querySelectorAll('.cta-button').forEach(button => {
-                button.addEventListener('click', function() {
-                    if (!this.classList.contains('loading')) {
-                        this.classList.add('loading');
-                        const originalText = this.innerHTML;
-                        this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Loading...';
-                        
-                        // Remove loading state after navigation
-                        setTimeout(() => {
-                            this.innerHTML = originalText;
-                            this.classList.remove('loading');
-                        }, 2000);
+
+            // Animate elements on scroll
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('animate-fade-in');
                     }
                 });
+            }, observerOptions);
+
+            // Observe all animated elements
+            document.querySelectorAll('.slide-up, .bounce-in, .card-hover').forEach(el => {
+                observer.observe(el);
             });
-            
-            // Animation for stats counters
-            const stats = document.querySelectorAll('.text-4xl.font-bold');
-            stats.forEach(stat => {
-                const finalValue = parseInt(stat.textContent.replace(/[^\d]/g, ''));
-                let currentValue = 0;
-                const increment = finalValue / 100;
+
+            // Add floating animation to background elements
+            const blobs = document.querySelectorAll('.animate-blob');
+            blobs.forEach((blob, index) => {
+                blob.style.animationDelay = `${index * 2}s`;
+            });
+
+            // Counter animation for stats
+            const counters = document.querySelectorAll('.stats-counter');
+            counters.forEach(counter => {
+                const target = parseInt(counter.textContent.replace(/[^\d]/g, ''));
+                let current = 0;
+                const increment = target / 50;
                 
-                const timer = setInterval(() => {
-                    currentValue += increment;
-                    if (currentValue >= finalValue) {
-                        stat.textContent = new Intl.NumberFormat().format(finalValue) + '+';
-                        clearInterval(timer);
+                const updateCounter = () => {
+                    if (current < target) {
+                        current += increment;
+                        counter.textContent = Math.floor(current).toLocaleString() + '+';
+                        requestAnimationFrame(updateCounter);
                     } else {
-                        stat.textContent = new Intl.NumberFormat().format(Math.floor(currentValue)) + '+';
+                        counter.textContent = target.toLocaleString() + '+';
                     }
-                }, 20);
+                };
+                
+                updateCounter();
+            });
+
+            // Add hover effects to CTA buttons
+            document.querySelectorAll('.cta-button').forEach(button => {
+                button.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-2px) scale(1.02)';
+                });
+                
+                button.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0) scale(1)';
+                });
             });
         });
     </script>
 </body>
 </html>
+
+<?php
+require_once __DIR__ . '/includes/footer.php';
+?>

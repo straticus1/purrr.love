@@ -1,3 +1,6 @@
+<?php
+require_once __DIR__ . '/includes/header.php';
+?>
 <!DOCTYPE html>
 <html>
 <head>
@@ -78,3 +81,6 @@
     ✅ Performance within acceptable range</p>
     <p><strong>Status: READY FOR DEPLOYMENT! 🚀</strong></p>
 </div></body></html>
+<?php
+require_once __DIR__ . '/includes/footer.php';
+?>
