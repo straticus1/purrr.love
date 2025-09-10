@@ -1,5 +1,30 @@
 # Changelog
 
+## [2.3.0] - 2025-09-09
+
+### 🎆 Added
+- Converted all HTML files to PHP format
+- Created reusable header and footer includes
+- Split homepage into modular sections for better maintainability
+- Added conversion script for future HTML files
+- Enhanced navigation with mobile menu support
+- Preserved React app HTML files
+- Added responsive design enhancements
+
+### 🔧 Changed
+- Updated all file references to use .php extension
+- Improved organization of homepage sections
+- Enhanced code modularity and reusability
+- Added proper session handling in header
+- Added authentication checks in navigation
+
+### 🏗️ Technical
+- Added `/includes/header.php` and `/includes/footer.php`
+- Created `/web/sections/home/` with modular sections
+- Added `/scripts/convert_to_php.php` for HTML conversion
+- Updated file structure for better organization
+- Enhanced navigation with mobile support
+
 ## [2.2.0] - 2025-09-09
 
 ### Added
