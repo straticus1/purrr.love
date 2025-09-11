@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { QueryProvider } from '@/providers/QueryProvider';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import { Web3Provider } from '@/providers/Web3Provider';
 import { 
   Home, 
   Users, 
@@ -20,16 +21,20 @@ import {
   User
 } from 'lucide-react';
 import CatManagement from '@/pages/CatManagement';
+import { NFTMarketplace } from '@/pages/NFTMarketplace';
+import { Subscription } from '@/pages/Subscription';
+import { VirtualStore } from '@/pages/VirtualStore';
 
 // Navigation items
 const navigationItems = [
   { name: 'Dashboard', icon: Home, path: '/', color: 'from-blue-500 to-blue-600' },
   { name: 'Cats', icon: Users, path: '/cats', color: 'from-purple-500 to-purple-600' },
-  { name: 'Health', icon: Heart, path: '/health', color: 'from-green-500 to-green-600' },
+  { name: 'Store', icon: Store, path: '/store', color: 'from-emerald-500 to-emerald-600' },
+  { name: 'NFT Market', icon: Store, path: '/marketplace', color: 'from-green-500 to-green-600' },
+  { name: 'Health', icon: Heart, path: '/health', color: 'from-red-500 to-red-600' },
   { name: 'Games', icon: Gamepad2, path: '/games', color: 'from-yellow-500 to-yellow-600' },
-  { name: 'Store', icon: Store, path: '/store', color: 'from-pink-500 to-pink-600' },
+  { name: 'Subscription', icon: Settings, path: '/subscription', color: 'from-pink-500 to-pink-600' },
   { name: 'AI Analysis', icon: Brain, path: '/ai', color: 'from-indigo-500 to-indigo-600' },
-  { name: 'Settings', icon: Settings, path: '/settings', color: 'from-gray-500 to-gray-600' },
 ];
 
 // Mock user data
@@ -52,13 +57,15 @@ const App: React.FC = () => {
       }}
     >
       <QueryProvider>
-        <ThemeProvider>
-          <Router>
-            <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-              <AppLayout />
-            </div>
-          </Router>
-        </ThemeProvider>
+        <Web3Provider>
+          <ThemeProvider>
+            <Router>
+              <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+                <AppLayout />
+              </div>
+            </Router>
+          </ThemeProvider>
+        </Web3Provider>
       </QueryProvider>
     </ErrorBoundary>
   );
@@ -249,11 +256,12 @@ const AppLayout: React.FC = () => {
               <Routes>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/cats" element={<CatManagement />} />
+                <Route path="/store" element={<VirtualStore />} />
+                <Route path="/marketplace" element={<NFTMarketplace />} />
+                <Route path="/subscription" element={<Subscription />} />
                 <Route path="/health" element={<HealthPage />} />
                 <Route path="/games" element={<GamesPage />} />
-                <Route path="/store" element={<StorePage />} />
                 <Route path="/ai" element={<AIPage />} />
-                <Route path="/settings" element={<SettingsPage />} />
               </Routes>
             </motion.div>
           </AnimatePresence>

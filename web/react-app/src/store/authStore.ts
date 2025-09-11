@@ -12,6 +12,7 @@ export interface User {
   level: number;
   experience: number;
   coins: number;
+  premiumCoins?: number;
   subscriptionTier: 'free' | 'premium' | 'pro';
   subscriptionExpires?: string;
   preferences: {
@@ -49,6 +50,8 @@ interface AuthState {
   addExperience: (points: number) => void;
   addCoins: (amount: number) => void;
   spendCoins: (amount: number) => boolean;
+  addPremiumCoins: (amount: number) => void;
+  spendPremiumCoins: (amount: number) => boolean;
   clearError: () => void;
   reset: () => void;
 }
@@ -354,6 +357,32 @@ export const useAuthStore = create<AuthState>()(
             user: {
               ...user,
               coins: user.coins - amount,
+            }
+          });
+
+          return true;
+        },
+
+        addPremiumCoins: (amount: number) => {
+          const { user } = get();
+          if (!user) return;
+
+          set({
+            user: {
+              ...user,
+              premiumCoins: (user.premiumCoins || 0) + amount,
+            }
+          });
+        },
+
+        spendPremiumCoins: (amount: number) => {
+          const { user } = get();
+          if (!user || (user.premiumCoins || 0) < amount) return false;
+
+          set({
+            user: {
+              ...user,
+              premiumCoins: (user.premiumCoins || 0) - amount,
             }
           });
 
