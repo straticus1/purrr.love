@@ -381,7 +381,7 @@ echo "</div>\n";
 echo "<div class='test-section info'>\n";
 echo "<h2>ℹ️ System Information</h2>\n";
 echo "<p><strong>PHP Version:</strong> " . PHP_VERSION . "</p>\n";
-echo "<p><strong>Server:</strong> " . ($_SERVER['SERVER_SOFTWARE'] ?? 'Unknown') . "</p>\n";
+echo "<p><strong>Server:</strong> " . htmlspecialchars($_SERVER['SERVER_SOFTWARE'] ?? 'Unknown', ENT_QUOTES, 'UTF-8') . "</p>\n";
 echo "<p><strong>Database:</strong> MySQL</p>\n";
 echo "<p><strong>Test Date:</strong> " . date('Y-m-d H:i:s') . "</p>\n";
 

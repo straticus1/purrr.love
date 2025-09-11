@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Heart, Gamepad, Edit, Trash2, Activity, Zap, Droplets, Star } from 'lucide-react';
 import { Cat } from '@/types/cat';
@@ -20,6 +20,32 @@ const CatCard: React.FC<CatCardProps> = ({
 }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [showActions, setShowActions] = useState(false);
+  
+  // Memoized event handlers to prevent unnecessary re-renders
+  const handleEdit = useCallback(() => {
+    onEdit(cat);
+  }, [cat, onEdit]);
+  
+  const handleDelete = useCallback(() => {
+    onDelete(cat.id);
+  }, [cat.id, onDelete]);
+  
+  const handleCare = useCallback(() => {
+    onCare(cat.id);
+  }, [cat.id, onCare]);
+  
+  const handlePlay = useCallback(() => {
+    onPlay(cat.id);
+  }, [cat.id, onPlay]);
+  
+  const handleHoverStart = useCallback(() => {
+    setIsHovered(true);
+  }, []);
+  
+  const handleHoverEnd = useCallback(() => {
+    setIsHovered(false);
+    setShowActions(false);
+  }, []);
 
   const getHealthColor = (health: number) => {
     if (health >= 80) return 'text-green-500';
@@ -47,8 +73,8 @@ const CatCard: React.FC<CatCardProps> = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      onHoverStart={() => setIsHovered(true)}
-      onHoverEnd={() => setIsHovered(false)}
+      onHoverStart={handleHoverStart}
+      onHoverEnd={handleHoverEnd}
     >
       <motion.div
         className="bg-white rounded-3xl p-6 shadow-xl border border-gray-100 cursor-pointer overflow-hidden"

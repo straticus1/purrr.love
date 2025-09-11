@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import { 
   Home, 
   Users, 
@@ -42,17 +43,32 @@ const user = {
 
 const App: React.FC = () => {
   return (
-    <Router>
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
-        <AppLayout />
-      </div>
-    </Router>
+    <ErrorBoundary
+      onError={(error, errorInfo) => {
+        console.error('Global error caught:', error, errorInfo);
+        // Send to error reporting service in production
+      }}
+    >
+      <Router>
+        <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
+          <AppLayout />
+        </div>
+      </Router>
+    </ErrorBoundary>
   );
 };
 
 const AppLayout: React.FC = () => {
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
   const location = useLocation();
+  
+  // Cleanup on unmount
+  React.useEffect(() => {
+    return () => {
+      // Cleanup any event listeners or subscriptions
+      setSidebarOpen(false);
+    };
+  }, []);
 
   return (
     <div className="flex h-screen">

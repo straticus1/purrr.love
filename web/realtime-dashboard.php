@@ -454,7 +454,7 @@ $connectionId = 'conn_' . $_SESSION['user_id'] . '_' . uniqid();
 class CatDashboardRealtime {
     constructor() {
         this.connectionId = '<?php echo $connectionId; ?>';
-        this.userId = <?php echo $_SESSION['user_id']; ?>;
+        this.userId = <?php echo intval($_SESSION['user_id']); ?>;
         this.isRealtimeActive = true;
         this.updateCount = 0;
         this.lastUpdate = null;

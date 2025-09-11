@@ -4,6 +4,12 @@
  * Full-featured authentication with database integration
  */
 
+require_once 'includes/config.php';
+require_once 'includes/security_utils.php';
+
+// Set security headers
+SecurityUtils::setSecurityHeaders();
+
 header('Content-Type: application/json');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
@@ -20,42 +26,67 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 try {
-    // Get database credentials from environment
-    $db_host = getenv('DB_HOST') ?: ($_ENV['DB_HOST'] ?? 'purrr-mariadb-ecs.c3iuy64is41m.us-east-1.rds.amazonaws.com');
-    $db_name = getenv('DB_NAME') ?: ($_ENV['DB_NAME'] ?? 'purrr_love');
-    $db_user = getenv('DB_USER') ?: ($_ENV['DB_USER'] ?? 'purrruser');
-    $db_pass = getenv('DB_PASS') ?: ($_ENV['DB_PASS'] ?? 'PurrrLove2025');
-    $db_port = getenv('DB_PORT') ?: ($_ENV['DB_PORT'] ?? '3306');
+    // Initialize security utilities
+    $security = SecurityUtils::getInstance();
     
-    // Connect to MariaDB
-    $pdo = new PDO("mysql:host=$db_host;port=$db_port;dbname=$db_name;charset=utf8mb4", $db_user, $db_pass, [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        PDO::ATTR_EMULATE_PREPARES => false
-    ]);
+    // Rate limiting for login attempts
+    $clientId = $_SERVER['REMOTE_ADDR'] . '_login';
+    $security->checkRateLimit($clientId, 10, 300); // 10 attempts per 5 minutes
+    
+    // Get secure database connection
+    $pdo = getSecureDatabase();
     
     $raw_input = file_get_contents('php://input');
     $input = json_decode($raw_input, true);
     
     if (!$input) {
+        $security->logSecurityEvent('login_invalid_json', [
+            'ip' => $_SERVER['REMOTE_ADDR'],
+            'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'unknown'
+        ], 'WARNING');
+        
         http_response_code(400);
-        echo json_encode([
-            'error' => 'Invalid JSON input',
-            'debug' => [
+        $response = ['error' => 'Invalid JSON input'];
+        
+        // Only include debug info in development
+        if (isDevelopment()) {
+            $response['debug'] = [
                 'raw_input' => $raw_input,
                 'json_error' => json_last_error_msg(),
                 'content_type' => $_SERVER['CONTENT_TYPE'] ?? 'not set'
-            ]
-        ]);
+            ];
+        }
+        
+        echo json_encode($response);
         exit;
     }
     
-    $email = trim($input['email'] ?? '');
+    // Sanitize and validate input
+    $email = SecurityUtils::sanitizeInput($input['email'] ?? '', 'email');
     $password = $input['password'] ?? '';
     
-    if (empty($email) || empty($password)) {
+    // Input validation
+    $emailErrors = SecurityUtils::validateInput($email, [
+        'required' => ['message' => 'Email is required'],
+        'email' => ['message' => 'Must be a valid email address']
+    ]);
+    
+    $passwordErrors = SecurityUtils::validateInput($password, [
+        'required' => ['message' => 'Password is required'],
+        'min_length' => ['value' => 1, 'message' => 'Password is required']
+    ]);
+    
+    if (!empty($emailErrors) || !empty($passwordErrors)) {
+        $security->logSecurityEvent('login_validation_failed', [
+            'email' => $email,
+            'errors' => array_merge($emailErrors, $passwordErrors)
+        ], 'WARNING');
+        
         http_response_code(400);
-        echo json_encode(['error' => 'Email and password are required']);
+        echo json_encode([
+            'error' => 'Validation failed',
+            'validation_errors' => array_merge($emailErrors, $passwordErrors)
+        ]);
         exit;
     }
     
@@ -69,13 +100,30 @@ try {
     $user = $stmt->fetch();
     
     if (!$user) {
+        $security->logSecurityEvent('login_failed', [
+            'email' => $email,
+            'reason' => 'user_not_found'
+        ], 'WARNING');
+        
+        // Add small delay to prevent timing attacks
+        usleep(250000); // 250ms
+        
         http_response_code(401);
         echo json_encode(['error' => 'Invalid credentials']);
         exit;
     }
     
-    // Verify password
-    if (!password_verify($password, $user['password_hash'])) {
+    // Verify password with security logging
+    if (!SecurityUtils::verifyPassword($password, $user['password_hash'])) {
+        $security->logSecurityEvent('login_failed', [
+            'email' => $email,
+            'user_id' => $user['id'] ?? null,
+            'reason' => 'invalid_password'
+        ], 'WARNING');
+        
+        // Add small delay to prevent timing attacks
+        usleep(250000); // 250ms
+        
         http_response_code(401);
         echo json_encode(['error' => 'Invalid credentials']);
         exit;

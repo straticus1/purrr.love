@@ -11,6 +11,7 @@ if (!defined('SECURE_ACCESS')) {
 }
 
 // Include required systems
+require_once '../../includes/security_utils.php';
 require_once '../../includes/blockchain_ownership.php';
 require_once '../../includes/ml_cat_personality.php';
 require_once '../../includes/metaverse_system.php';
@@ -22,10 +23,15 @@ require_once '../../includes/webhook_system.php';
 class AdvancedFeaturesAPI {
     private $pdo;
     private $requestId;
+    private $security;
     
     public function __construct() {
         $this->pdo = get_db();
+        $this->security = SecurityUtils::getInstance();
         $this->requestId = generateRequestId();
+        
+        // Rate limiting check
+        $this->security->checkRateLimit($_SERVER['REMOTE_ADDR'], 1000, 3600);
     }
     
     /**
@@ -1198,15 +1204,44 @@ class AdvancedFeaturesAPI {
         ];
     }
     
-    // Placeholder methods for database operations
+    // Secure database operations
     private function storeBehaviorObservation($catId, $userId, $behaviorType, $intensityLevel, $duration, $environmentalContext) {
-        // Implementation would go here
-        return ['id' => uniqid(), 'status' => 'recorded'];
+        $sql = "INSERT INTO behavior_observations (cat_id, user_id, behavior_type, intensity_level, duration_seconds, environmental_context, created_at) 
+                VALUES (:cat_id, :user_id, :behavior_type, :intensity, :duration, :context, NOW())";
+        
+        $params = [
+            ':cat_id' => (int)$catId,
+            ':user_id' => (int)$userId,
+            ':behavior_type' => $behaviorType,
+            ':intensity' => (int)$intensityLevel,
+            ':duration' => (int)$duration,
+            ':context' => json_encode($environmentalContext)
+        ];
+        
+        $insertId = $this->security->executeQuery($sql, $params);
+        
+        return ['id' => $insertId, 'status' => 'recorded'];
     }
     
     private function storeGeneticData($catId, $userId, $geneticMarkers, $heritageScore, $coatPattern) {
-        // Implementation would go here
-        return ['id' => uniqid(), 'status' => 'updated'];
+        $sql = "UPDATE cats SET genetic_markers = :markers, heritage_score = :heritage, coat_pattern = :pattern, 
+                updated_at = NOW() WHERE id = :cat_id AND user_id = :user_id";
+        
+        $params = [
+            ':cat_id' => (int)$catId,
+            ':user_id' => (int)$userId,
+            ':markers' => json_encode($geneticMarkers),
+            ':heritage' => (int)$heritageScore,
+            ':pattern' => $coatPattern
+        ];
+        
+        $rowsUpdated = $this->security->executeQuery($sql, $params);
+        
+        if ($rowsUpdated > 0) {
+            return ['id' => $catId, 'status' => 'updated'];
+        } else {
+            throw new Exception('Cat not found or access denied', 404);
+        }
     }
     
     private function getTrainingStatus() {
@@ -1215,8 +1250,10 @@ class AdvancedFeaturesAPI {
     }
     
     private function getUserWebhooks($userId) {
-        // Implementation would go here
-        return [];
+        $sql = "SELECT * FROM webhooks WHERE user_id = :user_id AND is_active = 1 ORDER BY created_at DESC";
+        $params = [':user_id' => (int)$userId];
+        
+        return $this->security->executeQuery($sql, $params);
     }
     
     private function testWebhookDelivery($webhookId, $userId) {

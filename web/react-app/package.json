@@ -4,14 +4,16 @@
   "description": "Modern React.js frontend for Purrr.love - The Ultimate Cat Gaming Ecosystem",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "start": "vite preview",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "next": "^14.0.0",
+    "@vitejs/plugin-react": "^4.0.3",
+    "vite": "^4.4.5",
+    "react-router-dom": "^6.15.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "@types/node": "^20.0.0",
@@ -33,7 +35,7 @@
     "zod": "^3.22.0",
     "zustand": "^4.4.0",
     "axios": "^1.6.0",
-    "react-query": "^3.39.0",
+    "@tanstack/react-query": "^4.35.0",
     "react-hot-toast": "^2.4.0",
     "date-fns": "^2.30.0",
     "react-intersection-observer": "^9.5.0",
@@ -41,8 +43,7 @@
     "three": "^0.157.0",
     "@react-three/fiber": "^8.15.0",
     "@react-three/drei": "^9.88.0",
-    "react-use-gesture": "^9.1.0",
-    "use-gesture": "^10.2.0"
+    "@use-gesture/react": "^10.2.27"
   },
   "devDependencies": {
     "eslint": "^8.0.0",
