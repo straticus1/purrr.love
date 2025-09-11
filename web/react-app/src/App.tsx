@@ -2,6 +2,8 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import { QueryProvider } from '@/providers/QueryProvider';
+import { ThemeProvider } from '@/contexts/ThemeContext';
 import { 
   Home, 
   Users, 
@@ -49,11 +51,15 @@ const App: React.FC = () => {
         // Send to error reporting service in production
       }}
     >
-      <Router>
-        <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
-          <AppLayout />
-        </div>
-      </Router>
+      <QueryProvider>
+        <ThemeProvider>
+          <Router>
+            <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+              <AppLayout />
+            </div>
+          </Router>
+        </ThemeProvider>
+      </QueryProvider>
     </ErrorBoundary>
   );
 };

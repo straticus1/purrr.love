@@ -16,3 +16,6 @@ tfplan
 .docker_image_uri
 *.log
 dns_backup/
+
+# Claude Code guidance file (local development only)
+CLAUDE.md

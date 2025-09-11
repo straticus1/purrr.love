@@ -4,12 +4,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Common Development Commands
 
-### React Frontend (Next.js)
+### React Frontend (Vite + React)
 ```bash
 cd web/react-app
-npm run dev         # Development server
-npm run build       # Production build
-npm run start       # Start production server
+npm run dev         # Development server (Vite)
+npm run build       # Production build (TypeScript + Vite)
+npm run start       # Preview production build
 npm run lint        # ESLint
 npm run type-check  # TypeScript type checking
 ```
@@ -42,21 +42,55 @@ chmod +x ./purrr     # Make executable
 ./purrr setup        # Initial setup
 ```
 
+### Testing & Scripts
+```bash
+# All tests are located in tests/ directory
+php tests/test-mariadb.php          # Database connection test
+php tests/test-ai-name-generator.php # AI name generator test
+
+# Administrative scripts in scripts/ directory
+php scripts/create-database.php     # Database setup
+php scripts/complete-db-fix.php     # Database repair
+php admin/advanced-login.php        # Admin authentication
+```
+
+## Project Structure
+
+The project is organized into clear functional directories:
+
+```
+purrr.love/
+├── admin/           # Admin panel and authentication
+├── api/             # API endpoints (v1, v2, webhooks)
+├── cli/             # Command-line interface tools
+├── config/          # Configuration files
+├── docs/            # All documentation (centralized)
+├── includes/        # PHP utilities and security (Phase 1)
+├── node-sdk/        # Node.js SDK
+├── scripts/         # Setup, deployment, and utility scripts
+├── tests/           # All test files (centralized)
+└── web/             # Web applications (PHP + React)
+    └── react-app/   # Modern React frontend (Phase 2)
+```
+
+See `docs/PROJECT_STRUCTURE.md` for detailed organization information.
+
 ## Architecture Overview
 
 ### Multi-Component Structure
 This is a comprehensive cat gaming ecosystem with multiple interconnected components:
 
 - **PHP Backend**: Main application server with REST API endpoints, OAuth2 authentication, and database operations
-- **React Frontend**: Next.js application with TypeScript, Tailwind CSS, and modern UI components
+- **React Frontend**: Modern Vite + React 18 application with TypeScript, Tailwind CSS, and comprehensive UI component library
 - **Node.js SDK**: TypeScript SDK for external integrations with comprehensive API wrapper
 - **CLI Tool**: Bash-based command-line interface for developers and power users
 - **Database**: MariaDB/MySQL with complete schema for users, cats, genetics, and game data
 
 ### Key Technologies
-- **Backend**: PHP 8.0+, MariaDB/MySQL, OAuth2, Coinbase Commerce
-- **Frontend**: Next.js 14, React 18, TypeScript, Tailwind CSS, Framer Motion
+- **Backend**: PHP 8.0+, MariaDB/MySQL, OAuth2, Stripe payments, enterprise security
+- **Frontend**: Vite, React 18, TypeScript, Tailwind CSS, Framer Motion, Zustand, @tanstack/react-query
 - **SDK**: TypeScript, Jest testing, axios for HTTP, WebSockets
+- **Payments**: Stripe integration with subscription management
 - **Infrastructure**: AWS ECS, Docker containers, SSL/TLS
 
 ### Core Features
@@ -82,25 +116,37 @@ The application uses MariaDB/MySQL with tables for:
 - Comprehensive SDK for Node.js applications
 - WebSocket support for real-time features
 
-### Security Implementation
-- Enterprise-grade security with CSRF protection
-- SQL injection prevention via prepared statements
+### Security Implementation (Phase 1 Complete)
+- Enterprise-grade security with CSRF protection via `includes/security_utils.php`
+- SQL injection prevention via prepared statements (SecurityUtils class)
 - Rate limiting and audit logging
 - HTTPS/SSL required for production
 - Multi-factor authentication support
+- Comprehensive input sanitization and validation
+
+### Modern Frontend Architecture (Phase 2 Complete)
+- **Design System**: Comprehensive design tokens in `web/react-app/src/styles/`
+- **Component Library**: Modern UI components in `web/react-app/src/components/ui/`
+- **State Management**: Zustand stores in `web/react-app/src/store/`
+- **API Integration**: React Query hooks in `web/react-app/src/hooks/`
+- **Payment System**: Stripe integration in `web/react-app/src/components/subscription/`
+- **Theme Support**: Dark/light mode with system preference detection
+- **Error Handling**: Comprehensive error boundaries and user feedback
 
 ## Development Notes
 
 ### Environment Setup
-The application requires multiple configuration files:
-- `config/config.php` - Main application settings
-- `config/database.php` - Database connection settings
-- `config/oauth2.php` - OAuth2 provider configurations
+The application requires configuration files in `includes/`:
+- `includes/config.php` - Secure configuration management (Phase 1)
+- Environment variables via `.env` files
+- Database connection via Config class singleton pattern
 
 ### Testing
-- Frontend: No specific test setup currently configured
-- SDK: Jest with TypeScript, includes coverage reporting
-- Backend: Manual testing via CLI and web interfaces
+- **All Tests**: Centralized in `tests/` directory
+- **Frontend**: React Testing Library integration ready
+- **SDK**: Jest with TypeScript, includes coverage reporting  
+- **Backend**: PHP unit tests and integration tests in `tests/`
+- **Database**: Connection and functionality tests available
 
 ### Deployment
 The application is production-ready and deployed on AWS ECS with:

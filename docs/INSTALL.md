@@ -1,1411 +1,431 @@
 # 🚀 Purrr.love Installation Guide
 
-## 🎆 **METAVERSE PRODUCTION READY - NOW LIVE!** ✅ *v2.1.8*
+## 📋 Table of Contents
 
-**Purrr.love metaverse is successfully deployed and operational on AWS ECS with 24/7 AI automation!**
-
-### 🌐 **Access the Live Metaverse Application**
-- **Primary Site**: [https://purrr.love](https://purrr.love) - ✅ **LIVE WITH METAVERSE**
-- **Alternate Site**: [https://purrr.me](https://purrr.me) - ✅ **LIVE WITH METAVERSE**
-- **Application**: [https://app.purrr.love](https://app.purrr.love) - ✅ **METAVERSE INTERFACE**
-- **API Docs**: [https://api.purrr.love](https://api.purrr.love) - ✅ **METAVERSE API LIVE**
-- **Health Status**: [https://purrr.love/health.php](https://purrr.love/health.php) - ✅ **OPERATIONAL**
-
-### 🤖 **Advanced Metaverse Features Active**
-- ✅ **AI-Driven Activity Systems**: Autonomous NPCs spawning every 10 minutes
-- ✅ **Dynamic World Events**: 25+ unique events per world type with cascade triggers
-- ✅ **Advanced Gamification**: 50+ achievements, daily quests, real-time leaderboards
-- ✅ **Intelligent Analytics**: 5-metric engagement monitoring with predictive analytics
-- ✅ **24/7 Automation**: Complete cron job scheduling for all metaverse systems
-- ✅ **Weather System**: Dynamic weather updates every 30 minutes
-- ✅ **Population Balancing**: AI-powered world distribution every 15 minutes
-
-### ✨ **Production Infrastructure Active**
-- ✅ **Enterprise SSL Security** with A+ rating and auto-renewal
-- ✅ **Auto-Scaling Infrastructure** with AWS ECS Fargate (2+ running tasks)
-- ✅ **Load Balancing** with Application Load Balancer
-- ✅ **Multi-Domain Support** across all configured domains
-- ✅ **Health Monitoring** with real-time status checks via /health.php
-- ✅ **Zero Downtime Deployments** with rolling updates
-- ✅ **Secrets Management** with AWS Secrets Manager integration
-- ✅ **Database Management** with comprehensive setup tooling
-- ✅ **User Authentication** with verified login/registration system
-- ✅ **CloudWatch Logging** with comprehensive monitoring and alerting
+1. [Live Production System](#live-production-system)
+2. [Quick Testing](#quick-testing)
+3. [System Requirements](#system-requirements)
+4. [AWS Production Deployment](#aws-production-deployment)
+5. [Local Development Setup](#local-development-setup)
+6. [Database Configuration](#database-configuration)
+7. [Troubleshooting](#troubleshooting)
 
 ---
 
-This document provides comprehensive installation instructions for the Purrr.love platform across different environments and deployment scenarios.
+## 🌐 Live Production System
 
-## 📋 Table of Contents
+**Purrr.love is already deployed and ready to use!**
 
-- [Prerequisites](#prerequisites)
-- [Quick Installation](#quick-installation)
-- [Detailed Installation Instructions](#detailed-installation-instructions)
-  - [Local Development Environment](#local-development-environment)
-  - [Shared Hosting Deployment](#shared-hosting-deployment)
-  - [VPS/Dedicated Server Deployment](#vpsdedicated-server-deployment)
-  - [AWS Cloud Deployment](#aws-cloud-deployment)
-  - [Rocky Linux Deployment](#rocky-linux-deployment)
-- [Database Setup](#database-setup)
-- [Configuration](#configuration)
-  - [Core Configuration](#core-configuration)
-  - [Cryptocurrency Integration](#cryptocurrency-integration)
-  - [OAuth2 Setup](#oauth2-setup)
-  - [AI Services Integration](#ai-services-integration)
-- [Security Setup](#security-setup)
-- [Advanced Features Setup](#advanced-features-setup)
-  - [Blockchain and NFT Setup](#blockchain-and-nft-setup)
-  - [Machine Learning Personality Models](#machine-learning-personality-models)
-  - [Redis and Queueing](#redis-and-queueing)
-  - [Webhook Integration](#webhook-integration)
-  - [Lost Pet Finder System](#lost-pet-finder-system)
-- [Troubleshooting](#troubleshooting)
+### 🔗 Access Points
+- **Primary Site**: [https://purrr.love](https://purrr.love)
+- **Working Login**: [https://purrr.love/working-login.php](https://purrr.love/working-login.php)
+- **Health Check**: [https://purrr.love/health.php](https://purrr.love/health.php)
 
-## 📋 Prerequisites
+### 🔐 Test Credentials
+Test the live system with these verified accounts:
 
-Before installing Purrr.love, ensure your system meets these requirements:
-
-- **PHP Requirements**:
-  - PHP 8.0+ (recommended) or PHP 7.4+
-  - PHP Extensions:
-    - PDO & PDO_MySQL/PDO_PgSQL
-    - cURL
-    - JSON
-    - mbstring
-    - OpenSSL
-    - fileinfo
-    - GD or Imagick (for image processing)
-
-- **Database Requirements**:
-  - MySQL 8.0+ or MariaDB 10.4+
-  - PostgreSQL 13+ (recommended for production)
-  - SQLite 3+ (for development/testing only)
-
-- **Web Server Requirements**:
-  - Apache 2.4+ with mod_rewrite
-  - Nginx 1.18+ with proper rewrite rules
-
-- **Other Requirements**:
-  - Composer (dependency management)
-  - Git (for installation and updates)
-  - SSL Certificate (required for OAuth2 and crypto payments)
-  - Minimum 2GB RAM and 10GB storage
-
-## 🚀 Quick Installation
-
-### One-Command Installation (Recommended)
-
-For a fully automated setup on a new server:
-
-```bash
-# Clone the repository
-git clone https://github.com/straticus1/purrr.love.git
-cd purrr.love
-
-# Make the deployment script executable
-chmod +x scripts/deploy.sh
-
-# For traditional server deployment (Rocky Linux)
-./scripts/deploy.sh --rocky --server your-server.com
-
-# OR for AWS cloud deployment
-./scripts/deploy.sh --aws --environment production
-
-# Check deployment status
-./scripts/deploy.sh --status
+#### Administrator Account
+```
+Email: admin@purrr.love
+Password: admin123456789!
+Role: admin
 ```
 
-### Docker-Based Installation
-
-For containerized deployment with Docker:
-
-```bash
-# Clone the repository
-git clone https://github.com/straticus1/purrr.love.git
-cd purrr.love/deployment/aws/docker
-
-# Copy environment configuration
-cp .env.example .env
-# Edit .env with your settings
-
-# Start the containers
-docker-compose -f docker-compose.production.yml up -d
-
-# Check container status
-docker-compose ps
-
-# View logs
-docker-compose logs -f
+#### Regular User Account
+```
+Email: testuser@example.com
+Password: testpass123
+Role: user
 ```
 
-### Manual Installation
+---
 
-For a step-by-step manual installation:
+## ⚡ Quick Testing
+
+### Web Interface Testing
+1. Visit [https://purrr.love/working-login.php](https://purrr.love/working-login.php)
+2. Use either test account to login
+3. Explore the cat management features
+
+### API Testing
+```bash
+# Test admin login
+curl -X POST "https://purrr.love/working-login.php" \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@purrr.love","password":"admin123456789!"}'
+
+# Test regular user login
+curl -X POST "https://purrr.love/working-login.php" \
+  -H "Content-Type: application/json" \
+  -d '{"email":"testuser@example.com","password":"testpass123"}'
+```
+
+Expected response:
+```json
+{
+    "success": true,
+    "message": "Login successful",
+    "user": {
+        "id": 1,
+        "username": "admin",
+        "email": "admin@purrr.love",
+        "role": "admin"
+    },
+    "redirect": "dashboard.php"
+}
+```
+
+---
+
+## 🛠️ System Requirements
+
+### Production (AWS)
+- **Compute**: AWS ECS Fargate (2+ vCPU, 4GB+ RAM)
+- **Database**: AWS RDS MariaDB 11.4.5 (db.t3.medium minimum)
+- **Storage**: AWS EBS 20GB+ with automated backups
+- **Network**: AWS VPC with public/private subnets
+- **SSL**: AWS Certificate Manager with Route53
+
+### Local Development
+- **PHP**: 7.4+ (8.0+ recommended)
+- **Database**: MariaDB 10.4+ or MySQL 8.0+
+- **Web Server**: Apache 2.4+ or Nginx 1.18+
+- **Composer**: For PHP dependency management
+- **RAM**: Minimum 2GB, recommended 4GB+
+- **Storage**: 10GB+ free space
+
+---
+
+## ☁️ AWS Production Deployment
+
+### Current Production Infrastructure
+
+The live system uses the following AWS services:
+
+#### 🐳 Container Infrastructure
+- **ECS Cluster**: `purrr-cluster` 
+- **Service**: `purrr-app` with 2 running tasks
+- **Task Definition**: Latest revision with MariaDB support
+- **Container Registry**: AWS ECR with versioned images
+
+#### 🌐 Networking & Security
+- **Load Balancer**: Application Load Balancer with SSL termination
+- **DNS**: Route53 with A records for purrr.love and purrr.me
+- **SSL**: Certificates from AWS Certificate Manager (auto-renewal)
+- **VPC**: Custom VPC with public/private subnets
+
+#### 🗄️ Database Infrastructure
+- **Database**: MariaDB 11.4.5 on AWS RDS
+- **Instance**: db.t3.medium with Multi-AZ deployment
+- **Storage**: 20GB SSD with automated daily backups
+- **Security**: Database security group restricting access to ECS tasks
+
+### Deployment Process
+
+The application is deployed using containerized infrastructure:
 
 ```bash
-# 1. Clone repository
+# Current deployment status
+aws ecs describe-services --cluster purrr-cluster --services purrr-app
+```
+
+#### Container Build & Deploy
+```bash
+# Build and push new container
+docker build -t purrr-love:latest .
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin {ECR_URI}
+docker tag purrr-love:latest {ECR_URI}/purrr-love:latest
+docker push {ECR_URI}/purrr-love:latest
+
+# Update ECS service
+aws ecs update-service --cluster purrr-cluster --service purrr-app --force-new-deployment
+```
+
+---
+
+## 💻 Local Development Setup
+
+### 1. Clone Repository
+```bash
 git clone https://github.com/straticus1/purrr.love.git
 cd purrr.love
+```
 
-# 2. Install PHP dependencies
-composer install --no-dev --optimize-autoloader
+### 2. Install Dependencies
+```bash
+# Install PHP dependencies with Composer
+composer install
 
-# 3. Set up database
-# Create database first
-mysql -u root -p -e "CREATE DATABASE purrr_love CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-# Import schema
-mysql -u root -p purrr_love < database/schema.sql
-# Or for PostgreSQL:
-# createdb purrr_love && psql -U postgres -d purrr_love -f database/api_schema.sql
+# Set directory permissions
+chmod 755 uploads/
+chmod 755 logs/
+chown -R www-data:www-data uploads/ logs/
+```
 
-# 4. Configure environment
+### 3. Database Setup
+
+#### Using MariaDB (Recommended)
+```bash
+# Install MariaDB
+sudo apt update
+sudo apt install mariadb-server mariadb-client
+
+# Secure installation
+sudo mysql_secure_installation
+
+# Create database and user
+sudo mysql -u root -p
+```
+
+```sql
+CREATE DATABASE purrr_love CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'purrr_user'@'localhost' IDENTIFIED BY 'secure_password_here';
+GRANT ALL PRIVILEGES ON purrr_love.* TO 'purrr_user'@'localhost';
+FLUSH PRIVILEGES;
+EXIT;
+```
+
+#### Run Database Setup
+```bash
+# Initialize database schema with test data
+php db-init.php
+```
+
+### 4. Configuration Files
+```bash
+# Copy example configuration files
 cp config/config.example.php config/config.php
 cp config/database.example.php config/database.php
-cp config/oauth2.example.php config/oauth2.php
-# Edit config files with your settings
 
-# 5. Set proper permissions
-mkdir -p uploads cache logs
-chmod 755 uploads/ cache/ logs/
-chown -R www-data:www-data uploads/ cache/ logs/
-
-# 6. Initialize application
-# Generate API keys and setup admin user
-php -f init/setup.php
-
-# 7. Set up web server (Apache/Nginx)
-# See web server configuration examples below
-
-# 8. Test installation
-php -f scripts/test-installation.php
-
-# 9. Run CLI setup (optional)
-./cli/purrr setup
+# Edit configuration files with your settings
+nano config/database.php
 ```
 
-## 📝 Detailed Installation Instructions
-
-### Local Development Environment
-
-For setting up a local development environment:
-
-1. **Prerequisites**:
-   - PHP 8.0+ (from php.net or via package manager)
-   - Composer (from getcomposer.org)
-   - Local database (MySQL, PostgreSQL, or SQLite)
-   - Web server (Apache, Nginx) or PHP built-in server
-
-2. **Installation Steps**:
-
-   ```bash
-   # Clone repository
-   git clone https://github.com/straticus1/purrr.love.git
-   cd purrr.love
-
-   # Install dependencies (with dev dependencies for testing)
-   composer install
-
-   # Create development database
-   mysql -u root -p -e "CREATE DATABASE purrr_love CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-
-   # Import database schema
-   mysql -u root -p purrr_love < database/schema.sql
-   
-   # OR use automated database setup
-   php local-db-init.php  # Creates admin user automatically
-   # OR for minimal setup:
-   php simple-db-setup.php
-
-   # Copy configuration files
-   cp config/config.example.php config/config.php
-   cp config/database.example.php config/database.php
-   cp config/oauth2.example.php config/oauth2.php
-
-   # Edit database configuration
-   # Set DB_HOST, DB_NAME, DB_USER, DB_PASS in config/database.php
-
-   # Enable development mode
-   # Set DEVELOPER_MODE to true in config/config.php
-
-   # Start PHP development server
-   php -S localhost:8000
-   ```
-
-3. **Access the application**:
-   - Open http://localhost:8000 in your browser
-   - Login with default credentials (admin/admin) - make sure to change this!
-
-4. **Development Tools**:
-   ```bash
-   # Run tests
-   ./vendor/bin/phpunit
-
-   # Check code style
-   ./vendor/bin/phpcs
-
-   # Fix code style
-   ./vendor/bin/phpcbf
-   ```
-
-### Shared Hosting Deployment
-
-For deployment to standard shared hosting environments:
-
-1. **Prerequisites**:
-   - Shared hosting account with PHP 8.0+ support
-   - MySQL database
-   - SSH access (recommended but not required)
-   - FTP/SFTP access
-
-2. **Installation Steps**:
-
-   a. **Local Preparation**:
-   ```bash
-   # Clone repository
-   git clone https://github.com/straticus1/purrr.love.git
-   cd purrr.love
-
-   # Install dependencies
-   composer install --no-dev --optimize-autoloader
-
-   # Prepare configuration
-   cp config/config.example.php config/config.php
-   cp config/database.example.php config/database.php
-   cp config/oauth2.example.php config/oauth2.php
-   # Edit configuration files with your hosting details
-   ```
-
-   b. **Database Setup**:
-   - Create a database through your hosting control panel
-   - Import database/schema.sql using phpMyAdmin or similar tool
-
-   c. **File Upload**:
-   - Upload all files to your hosting account via FTP/SFTP
-   - Ensure files are uploaded to the correct directory (public_html or www)
-
-   d. **Permissions**:
-   - Set appropriate permissions on the uploads and cache directories:
-   ```bash
-   chmod 755 uploads/
-   chmod 755 cache/
-   ```
-
-   e. **Web Server Configuration**:
-   - If you have access to .htaccess (Apache), ensure it's properly configured
-   - Example .htaccess for clean URLs:
-   ```apache
-   <IfModule mod_rewrite.c>
-       RewriteEngine On
-       RewriteBase /
-       RewriteRule ^index\.php$ - [L]
-       RewriteCond %{REQUEST_FILENAME} !-f
-       RewriteCond %{REQUEST_FILENAME} !-d
-       RewriteRule . /index.php [L]
-   </IfModule>
-   ```
-
-3. **Final Steps**:
-   - Navigate to your domain in a browser
-   - Complete the setup process if prompted
-   - Change default credentials immediately
-
-### VPS/Dedicated Server Deployment
-
-For deployment to a VPS or dedicated server:
-
-1. **Prerequisites**:
-   - VPS or dedicated server with root access
-   - Ubuntu 20.04+ or similar Linux distribution
-   - LAMP or LEMP stack installed
-
-2. **Installation Steps**:
-
-   a. **Server Setup**:
-   ```bash
-   # Update system
-   sudo apt update && sudo apt upgrade -y
-
-   # Install required packages
-   sudo apt install -y php8.0 php8.0-cli php8.0-mysql php8.0-pgsql php8.0-curl php8.0-json php8.0-mbstring php8.0-xml php8.0-zip php8.0-gd php8.0-intl mariadb-server nginx certbot python3-certbot-nginx git composer
-
-   # Start and enable services
-   sudo systemctl start nginx mysql
-   sudo systemctl enable nginx mysql
-   ```
-
-   b. **Database Setup**:
-   ```bash
-   # Secure MySQL installation
-   sudo mysql_secure_installation
-
-   # Create database and user
-   sudo mysql -e "CREATE DATABASE purrr_love CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-   sudo mysql -e "CREATE USER 'purrr_user'@'localhost' IDENTIFIED BY 'secure_password';"
-   sudo mysql -e "GRANT ALL PRIVILEGES ON purrr_love.* TO 'purrr_user'@'localhost';"
-   sudo mysql -e "FLUSH PRIVILEGES;"
-   ```
-
-   c. **Application Installation**:
-   ```bash
-   # Clone repository
-   cd /var/www
-   sudo git clone https://github.com/straticus1/purrr.love.git
-   cd purrr.love
-
-   # Install dependencies
-   sudo composer install --no-dev --optimize-autoloader
-
-   # Import database schema
-   sudo mysql purrr_love < database/schema.sql
-
-   # Copy configuration files
-   sudo cp config/config.example.php config/config.php
-   sudo cp config/database.example.php config/database.php
-   sudo cp config/oauth2.example.php config/oauth2.php
-
-   # Edit configuration files
-   sudo nano config/database.php
-   # Set DB_HOST, DB_NAME, DB_USER, DB_PASS
-
-   # Set permissions
-   sudo chown -R www-data:www-data /var/www/purrr.love
-   sudo chmod -R 755 /var/www/purrr.love
-   sudo chmod -R 777 /var/www/purrr.love/uploads
-   sudo chmod -R 777 /var/www/purrr.love/cache
-   ```
-
-   d. **Web Server Configuration**:
-   ```bash
-   # Create Nginx configuration
-   sudo nano /etc/nginx/sites-available/purrr.love
-
-   # Paste the following configuration
-   server {
-       listen 80;
-       server_name your-domain.com;
-       root /var/www/purrr.love;
-
-       index index.php;
-
-       location / {
-           try_files $uri $uri/ /index.php?$args;
-       }
-
-       location ~ \.php$ {
-           include snippets/fastcgi-php.conf;
-           fastcgi_pass unix:/var/run/php/php8.0-fpm.sock;
-       }
-
-       location ~ /\.ht {
-           deny all;
-       }
-   }
-
-   # Enable the site
-   sudo ln -s /etc/nginx/sites-available/purrr.love /etc/nginx/sites-enabled/
-
-   # Test configuration
-   sudo nginx -t
-
-   # Reload Nginx
-   sudo systemctl reload nginx
-
-   # Set up SSL
-   sudo certbot --nginx -d your-domain.com
-   ```
-
-3. **Final Steps**:
-   - Navigate to your domain in a browser
-   - Complete the setup process if prompted
-   - Change default credentials immediately
-
-### AWS Cloud Deployment
-
-For deployment to AWS using our automation:
-
-1. **Prerequisites**:
-   - AWS account with appropriate permissions
-   - AWS CLI installed and configured
-   - Terraform installed
-   - Docker installed
-
-2. **Automated Deployment**:
-
-   ```bash
-   # Clone repository
-   git clone https://github.com/straticus1/purrr.love.git
-   cd purrr.love
-
-   # Make the deployment script executable
-   chmod +x scripts/deploy.sh
-
-   # Deploy to AWS (this creates all required resources)
-   ./scripts/deploy.sh --aws --environment production
-   ```
-
-3. **Manual AWS Deployment Steps** (if you prefer more control):
-
-   a. **Initialize Terraform**:
-   ```bash
-   cd deployment/aws/terraform
-   terraform init
-   ```
-
-   b. **Plan the deployment**:
-   ```bash
-   terraform plan -var="environment=production"
-   ```
-
-   c. **Apply the configuration**:
-   ```bash
-   terraform apply -var="environment=production" -auto-approve
-   ```
-
-   d. **Build and push Docker image**:
-   ```bash
-   cd ../docker
-   aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $(terraform output -raw ecr_repository_url)
-   docker build -t purrr-love:latest .
-   docker tag purrr-love:latest $(terraform output -raw ecr_repository_url):latest
-   docker push $(terraform output -raw ecr_repository_url):latest
-   ```
-
-   e. **Update ECS service**:
-   ```bash
-   aws ecs update-service --cluster purrr-love-cluster --service purrr-love-service --force-new-deployment
-   ```
-
-4. **AWS Resources Created**:
-   - VPC with public and private subnets
-   - RDS PostgreSQL instance
-   - ECS cluster with Fargate
-   - Application Load Balancer
-   - S3 bucket for assets
-   - CloudFront distribution
-   - ECR repository for Docker images
-   - IAM roles and security groups
-   - CloudWatch logs
-   - Route 53 DNS records (optional)
-
-### Rocky Linux Deployment
-
-For deployment to Rocky Linux servers:
-
-1. **Prerequisites**:
-   - Rocky Linux 8+ server
-   - SSH access with sudo privileges
-   - Basic knowledge of Linux administration
-
-2. **Automated Deployment**:
-
-   ```bash
-   # Clone repository
-   git clone https://github.com/straticus1/purrr.love.git
-   cd purrr.love
-
-   # Make the deployment script executable
-   chmod +x scripts/deploy.sh
-
-   # Deploy to Rocky Linux
-   ./scripts/deploy.sh --rocky --server your-server.com
-   ```
-
-3. **Manual Rocky Linux Deployment Steps** (if you prefer more control):
-
-   a. **Server Setup**:
-   ```bash
-   # Connect to your server
-   ssh root@your-server.com
-
-   # Update system
-   dnf update -y
-
-   # Install required packages
-   dnf install -y epel-release
-   dnf install -y httpd mariadb mariadb-server php php-cli php-fpm php-json php-mysqlnd php-pdo php-mbstring php-xml php-curl php-zip php-gd php-intl mod_ssl certbot python3-certbot-apache git
-   
-   # Start and enable services
-   systemctl start httpd mariadb
-   systemctl enable httpd mariadb
-   ```
-
-   b. **Database Setup**:
-   ```bash
-   # Secure MySQL installation
-   mysql_secure_installation
-
-   # Create database and user
-   mysql -e "CREATE DATABASE purrr_love CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-   mysql -e "CREATE USER 'purrr_user'@'localhost' IDENTIFIED BY 'secure_password';"
-   mysql -e "GRANT ALL PRIVILEGES ON purrr_love.* TO 'purrr_user'@'localhost';"
-   mysql -e "FLUSH PRIVILEGES;"
-   ```
-
-   c. **Application Installation**:
-   ```bash
-   # Clone repository
-   cd /var/www/html
-   git clone https://github.com/straticus1/purrr.love.git
-   cd purrr.love
-
-   # Install Composer
-   curl -sS https://getcomposer.org/installer | php
-   mv composer.phar /usr/local/bin/composer
-   
-   # Install dependencies
-   composer install --no-dev --optimize-autoloader
-
-   # Import database schema
-   mysql purrr_love < database/schema.sql
-
-   # Copy configuration files
-   cp config/config.example.php config/config.php
-   cp config/database.example.php config/database.php
-   cp config/oauth2.example.php config/oauth2.php
-
-   # Edit configuration files
-   nano config/database.php
-   # Set DB_HOST, DB_NAME, DB_USER, DB_PASS
-
-   # Set permissions
-   chown -R apache:apache /var/www/html/purrr.love
-   chmod -R 755 /var/www/html/purrr.love
-   chmod -R 777 /var/www/html/purrr.love/uploads
-   chmod -R 777 /var/www/html/purrr.love/cache
-   ```
-
-   d. **Web Server Configuration**:
-   ```bash
-   # Create Apache configuration
-   nano /etc/httpd/conf.d/purrr.love.conf
-
-   # Paste the following configuration
-   <VirtualHost *:80>
-       ServerName your-domain.com
-       DocumentRoot /var/www/html/purrr.love
-
-       <Directory /var/www/html/purrr.love>
-           Options -Indexes +FollowSymLinks
-           AllowOverride All
-           Require all granted
-       </Directory>
-
-       ErrorLog /var/log/httpd/purrr.love-error.log
-       CustomLog /var/log/httpd/purrr.love-access.log combined
-   </VirtualHost>
-
-   # Test configuration
-   apachectl configtest
-
-   # Restart Apache
-   systemctl restart httpd
-
-   # Set up SSL
-   certbot --apache -d your-domain.com
-   ```
-
-4. **Final Steps**:
-   - Navigate to your domain in a browser
-   - Complete the setup process if prompted
-   - Change default credentials immediately
-   - Configure SELinux if needed:
-   ```bash
-   semanage fcontext -a -t httpd_sys_rw_content_t "/var/www/html/purrr.love/uploads(/.*)?"
-   semanage fcontext -a -t httpd_sys_rw_content_t "/var/www/html/purrr.love/cache(/.*)?"
-   restorecon -Rv /var/www/html/purrr.love/
-   ```
-
-## 🗄️ Database Setup
-
-### MySQL Setup
-
-```bash
-# Create the database
-mysql -u root -p -e "CREATE DATABASE purrr_love CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-
-# Create a dedicated user
-mysql -u root -p -e "CREATE USER 'purrr_user'@'localhost' IDENTIFIED BY 'secure_password';"
-mysql -u root -p -e "GRANT ALL PRIVILEGES ON purrr_love.* TO 'purrr_user'@'localhost';"
-mysql -u root -p -e "FLUSH PRIVILEGES;"
-
-# Import the main schema
-mysql -u purrr_user -p purrr_love < database/schema.sql
-
-# Import Night Watch system schema
-mysql -u purrr_user -p purrr_love < database/night_watch_schema.sql
-```
-
-### PostgreSQL Setup
-
-```bash
-# Create the database
-sudo -u postgres createdb purrr_love
-
-# Create a dedicated user
-sudo -u postgres createuser --interactive --pwprompt purrr_user
-
-# Grant privileges
-sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE purrr_love TO purrr_user;"
-
-# Import the main schema
-psql -U purrr_user -d purrr_love -f database/api_schema.sql
-
-# Import Night Watch system schema  
-psql -U purrr_user -d purrr_love -f database/night_watch_schema.sql
-```
-
-### SQLite Setup (Development Only)
-
-```bash
-# Create the database file
-touch database/purrr_love.sqlite
-
-# Set proper permissions
-chmod 666 database/purrr_love.sqlite
-
-# Import the schema
-cat database/schema_sqlite.sql | sqlite3 database/purrr_love.sqlite
-```
-
-## ⚙️ Configuration
-
-### Core Configuration
-
-Edit `config/config.php`:
-
+#### Database Configuration
 ```php
-// Site configuration
-define('SITE_URL', 'https://your-domain.com');
-define('SITE_NAME', 'Purrr.love');
-define('ADMIN_EMAIL', 'admin@your-domain.com');
-
-// Environment settings
-define('ENVIRONMENT', 'production'); // 'development', 'staging', 'production'
-define('DEBUG_MODE', false);
-define('DEVELOPER_MODE', false);
-define('ERROR_REPORTING', false);
-
-// Security settings
-define('SESSION_LIFETIME', 86400); // 24 hours
-define('CSRF_TOKEN_EXPIRE', 3600); // 1 hour
-define('PASSWORD_RESET_EXPIRE', 86400); // 24 hours
-define('MAX_LOGIN_ATTEMPTS', 5);
-define('LOGIN_LOCKOUT_TIME', 1800); // 30 minutes
-define('API_VERSION', '1.0.0');
-
-// Path settings
-define('UPLOADS_DIR', __DIR__ . '/../uploads/');
-define('CACHE_DIR', __DIR__ . '/../cache/');
-define('LOGS_DIR', __DIR__ . '/../logs/');
-
-# Feature flags
-define('ENABLE_CRYPTO', true);
-define('ENABLE_OAUTH2', true);
-define('ENABLE_AI_GENERATION', true);
-define('ENABLE_BREEDING', true);
-define('ENABLE_VR', true);
-define('ENABLE_MULTIPLAYER', true);
-define('ENABLE_NIGHT_WATCH', true);
-
-// Night Watch Configuration
-define('NIGHT_WATCH_START_HOUR', 21); // 9 PM
-define('NIGHT_WATCH_END_HOUR', 6);    // 6 AM
-define('NIGHT_WATCH_AUTO_REFRESH', 30); // seconds
-define('NIGHT_WATCH_MAX_DEPLOYED_CATS', 10);
-```
-
-### Database Configuration
-
-Edit `config/database.php`:
-
-```php
-// MySQL/MariaDB configuration
-define('DB_TYPE', 'mysql');
+<?php
+// config/database.php
 define('DB_HOST', 'localhost');
 define('DB_NAME', 'purrr_love');
 define('DB_USER', 'purrr_user');
-define('DB_PASS', 'secure_password');
-define('DB_PORT', 3306);
+define('DB_PASS', 'secure_password_here');
+define('DB_TYPE', 'mysql');
 define('DB_CHARSET', 'utf8mb4');
-
-// PostgreSQL configuration (comment out if not using)
-// define('DB_TYPE', 'postgresql');
-// define('DB_HOST', 'localhost');
-// define('DB_NAME', 'purrr_love');
-// define('DB_USER', 'purrr_user');
-// define('DB_PASS', 'secure_password');
-// define('DB_PORT', 5432);
-
-// SQLite configuration (development only)
-// define('DB_TYPE', 'sqlite');
-// define('DB_PATH', __DIR__ . '/../database/purrr_love.sqlite');
+?>
 ```
 
-### Cryptocurrency Integration
+### 5. Web Server Configuration
 
-Edit `config/crypto.php`:
-
-```php
-// Crypto settings
-define('ENABLE_CRYPTO_PAYMENTS', true);
-define('COINBASE_API_KEY', 'your_coinbase_api_key');
-define('COINBASE_WEBHOOK_SECRET', 'your_webhook_secret');
-define('SUPPORTED_CRYPTOS', [
-    'BTC' => 'Bitcoin',
-    'ETH' => 'Ethereum',
-    'USDC' => 'USD Coin',
-    'SOL' => 'Solana',
-    'XRP' => 'Ripple'
-]);
-
-// Exchange rate source
-define('CRYPTO_PRICE_API', 'coinbase'); // Options: 'coinbase', 'coingecko', 'binance', 'custom'
-define('CRYPTO_PRICE_CACHE_TIME', 300); // 5 minutes
-
-// Withdrawal settings
-define('MIN_WITHDRAWAL_USD', 10.00);
-define('WITHDRAWAL_FEE_PERCENT', 1.5);
-define('REQUIRE_2FA_FOR_WITHDRAWAL', true);
-```
-
-### OAuth2 Setup
-
-Edit `config/oauth2.php`:
-
-```php
-// OAuth2 Server Configuration
-define('OAUTH2_ACCESS_TOKEN_LIFETIME', 3600); // 1 hour
-define('OAUTH2_REFRESH_TOKEN_LIFETIME', 2592000); // 30 days
-define('OAUTH2_AUTHORIZATION_CODE_LIFETIME', 600); // 10 minutes
-
-// OAuth2 Client Configuration
-define('GOOGLE_CLIENT_ID', 'your_google_client_id');
-define('GOOGLE_CLIENT_SECRET', 'your_google_client_secret');
-
-define('FACEBOOK_APP_ID', 'your_facebook_app_id');
-define('FACEBOOK_APP_SECRET', 'your_facebook_app_secret');
-
-define('APPLE_CLIENT_ID', 'your_apple_client_id');
-define('APPLE_CLIENT_SECRET', 'your_apple_client_secret');
-define('APPLE_REDIRECT_URI', 'https://your-domain.com/oauth/apple/callback');
-
-define('TWITTER_CLIENT_ID', 'your_twitter_client_id');
-define('TWITTER_CLIENT_SECRET', 'your_twitter_client_secret');
-```
-
-### AI Services Integration
-
-Edit `config/ai.php`:
-
-```php
-// AI Configuration
-define('ENABLE_AI_GENERATION', true);
-
-// OpenAI Configuration
-define('OPENAI_API_KEY', 'your_openai_api_key');
-define('OPENAI_MODEL', 'gpt-4-vision-preview');
-define('OPENAI_IMAGE_SIZE', '1024x1024');
-
-// Stability AI Configuration
-define('STABILITY_AI_KEY', 'your_stability_ai_key');
-define('STABILITY_AI_MODEL', 'sdxl-1.0');
-define('STABILITY_AI_STEPS', 30);
-define('STABILITY_AI_CFG_SCALE', 7.5);
-
-// AI Generation Limits
-define('AI_GENERATION_DAILY_LIMIT', 10);
-define('AI_GENERATION_COOLDOWN', 300); // 5 minutes between generations
-```
-
-## 🔒 Security Setup
-
-### 🎉 **NEW: Enterprise Security Framework v1.2.0**
-
-**🚀 Your Purrr.love installation now includes enterprise-grade security out of the box!**
-
-Version 1.2.0 introduces a comprehensive security overhaul that makes Purrr.love production-ready with enterprise-grade protection. Here's how to configure the advanced security features:
-
-### 🔧 **Environment Configuration**
-
-1. **Create Environment Configuration**:
-   ```bash
-   # Copy the environment template
-   cp env.example .env
-   
-   # Edit environment variables
-   nano .env
-   ```
-
-2. **Configure Security Environment Variables**:
-   ```bash
-   # .env file configuration
-   # Production Environment
-   APP_ENV=production
-   APP_DEBUG=false
-   
-   # Database Security
-   DB_CONNECTION_POOL_SIZE=10
-   DB_ENABLE_SSL=true
-   DB_SSL_VERIFY_CERT=true
-   
-   # Redis Caching & Rate Limiting
-   REDIS_HOST=127.0.0.1
-   REDIS_PORT=6379
-   REDIS_PASSWORD=secure_redis_password
-   REDIS_DB=0
-   
-   # Security Settings
-   CSRF_TOKEN_LIFETIME=3600
-   SESSION_REGENERATE_INTERVAL=300
-   RATE_LIMIT_ENABLED=true
-   SECURITY_HEADERS_ENABLED=true
-   
-   # Health Monitoring
-   HEALTH_CHECKS_ENABLED=true
-   HEALTH_CHECK_SECRET=secure_health_secret
-   
-   # Logging & Monitoring
-   SECURITY_LOGGING_ENABLED=true
-   LOG_LEVEL=info
-   LOG_CHANNEL=database
-   ```
-
-### 🗄️ **Security Database Schema Setup**
-
-**Import the new security schema that includes logging and monitoring tables:**
-
-```bash
-# Import security schema (MySQL)
-mysql -u purrr_user -p purrr_love < database/security_schema.sql
-
-# OR for PostgreSQL
-psql -U purrr_user -d purrr_love -f database/security_schema.sql
-```
-
-### 🔐 **Authentication & Session Security**
-
-The new authentication system includes:
-
-- **Argon2id Password Hashing**: Industry-standard memory-hard hashing
-- **Session Regeneration**: Automatic session ID regeneration
-- **Secure Cookie Settings**: HttpOnly, Secure, SameSite protection
-- **Login Attempt Monitoring**: Real-time brute force protection
-
-**Configuration in `config/config.php`:**
-```php
-// Enhanced Authentication Settings
-define('AUTH_PASSWORD_ALGORITHM', PASSWORD_ARGON2ID);
-define('AUTH_ARGON2_MEMORY_COST', 65536);    // 64 MB
-define('AUTH_ARGON2_TIME_COST', 4);          // 4 iterations
-define('AUTH_ARGON2_THREADS', 3);            // 3 threads
-
-// Session Security
-define('SESSION_REGENERATE_INTERVAL', 300);   // 5 minutes
-define('SESSION_COOKIE_HTTPONLY', true);
-define('SESSION_COOKIE_SECURE', true);        // HTTPS only
-define('SESSION_COOKIE_SAMESITE', 'Strict');
-```
-
-### 🛡️ **CSRF Protection System**
-
-Advanced CSRF protection with multiple validation methods:
-
-- **Token-Based Protection**: Unique tokens for each form
-- **Header Validation**: X-Requested-With validation
-- **Origin Verification**: Referrer and origin header checks
-- **Automatic Cleanup**: Expired token garbage collection
-
-**Configuration:**
-```php
-// CSRF Protection Settings
-define('CSRF_TOKEN_LIFETIME', 3600);         // 1 hour
-define('CSRF_CLEANUP_PROBABILITY', 100);     // Always cleanup
-define('CSRF_VALIDATE_ORIGIN', true);
-define('CSRF_VALIDATE_REFERRER', true);
-```
-
-### ⚡ **Redis Rate Limiting**
-
-**Install and Configure Redis:**
-
-```bash
-# Install Redis (Ubuntu/Debian)
-sudo apt update
-sudo apt install redis-server
-
-# Install Redis (Rocky Linux/RHEL)
-sudo dnf install redis
-
-# Start Redis
-sudo systemctl start redis
-sudo systemctl enable redis
-
-# Configure Redis password
-sudo nano /etc/redis/redis.conf
-# Uncomment and set: requirepass your_secure_password
-
-# Restart Redis
-sudo systemctl restart redis
-```
-
-**Rate Limiting Configuration:**
-```php
-// Rate Limiting Settings
-define('RATE_LIMIT_ENABLED', true);
-define('RATE_LIMIT_STORE', 'redis');
-define('RATE_LIMIT_FREE_TIER', 100);         // 100 requests/hour
-define('RATE_LIMIT_PREMIUM_TIER', 1000);     // 1000 requests/hour
-define('RATE_LIMIT_ENTERPRISE_TIER', 10000); // 10000 requests/hour
-define('RATE_LIMIT_VIOLATION_THRESHOLD', 5);
-define('RATE_LIMIT_BAN_DURATION', 3600);     // 1 hour ban
-```
-
-### 🌐 **Secure CORS Configuration**
-
-Replace dangerous wildcard CORS with secure origin validation:
-
-```php
-// Secure CORS Settings
-define('CORS_ENABLED', true);
-define('CORS_ALLOWED_ORIGINS', [
-    'https://your-domain.com',
-    'https://api.your-domain.com',
-    'https://admin.your-domain.com'
-]);
-define('CORS_ALLOWED_METHODS', ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']);
-define('CORS_ALLOWED_HEADERS', ['Content-Type', 'Authorization', 'X-Requested-With']);
-define('CORS_EXPOSE_HEADERS', ['X-RateLimit-Remaining', 'X-RateLimit-Limit']);
-define('CORS_MAX_AGE', 86400); // 24 hours
-```
-
-### 📊 **Health Monitoring System**
-
-Comprehensive health checks for production monitoring:
-
-**Access Health Endpoints:**
-```bash
-# Basic health check
-curl https://your-domain.com/api/health
-
-# Detailed health check (authenticated)
-curl -H "Authorization: Bearer YOUR_TOKEN" https://your-domain.com/api/health/detailed
-
-# Security health check
-curl -H "X-Health-Secret: YOUR_SECRET" https://your-domain.com/api/health/security
-```
-
-**Health Check Configuration:**
-```php
-// Health Monitoring Settings
-define('HEALTH_CHECKS_ENABLED', true);
-define('HEALTH_CHECK_SECRET', 'secure_random_string');
-define('HEALTH_MEMORY_THRESHOLD', 80);       // Alert at 80% memory usage
-define('HEALTH_DISK_THRESHOLD', 90);         // Alert at 90% disk usage
-define('HEALTH_RESPONSE_TIME_THRESHOLD', 1000); // Alert at 1s response time
-```
-
-### 🗋 **High-Performance Caching**
-
-Redis-backed caching system with tag-based invalidation:
-
-**Cache Configuration:**
-```php
-// Caching Settings
-define('CACHE_ENABLED', true);
-define('CACHE_DRIVER', 'redis');
-define('CACHE_DEFAULT_TTL', 3600);           // 1 hour
-define('CACHE_TAG_TTL', 86400);              // 24 hours
-define('CACHE_COMPRESSION', true);
-define('CACHE_KEY_PREFIX', 'purrr_');
-```
-
-### 🔍 **Security Event Logging**
-
-Comprehensive security event tracking:
-
-**Logging Configuration:**
-```php
-// Security Logging Settings
-define('SECURITY_LOGGING_ENABLED', true);
-define('LOG_SECURITY_EVENTS', true);
-define('LOG_FAILED_LOGINS', true);
-define('LOG_RATE_LIMIT_VIOLATIONS', true);
-define('LOG_CSRF_FAILURES', true);
-define('LOG_UNAUTHORIZED_ACCESS', true);
-define('LOG_RETENTION_DAYS', 90);            // Keep logs for 90 days
-```
-
-### SSL Configuration
-
-For secure HTTPS connections:
-
-1. **Apache SSL Configuration**:
-   ```apache
-   <VirtualHost *:443>
-       ServerName your-domain.com
-       DocumentRoot /var/www/html/purrr.love
-
-       SSLEngine on
-       SSLCertificateFile /etc/letsencrypt/live/your-domain.com/fullchain.pem
-       SSLCertificateKeyFile /etc/letsencrypt/live/your-domain.com/privkey.pem
-
-       <Directory /var/www/html/purrr.love>
-           Options -Indexes +FollowSymLinks
-           AllowOverride All
-           Require all granted
-       </Directory>
-
-       ErrorLog ${APACHE_LOG_DIR}/purrr.love-error.log
-       CustomLog ${APACHE_LOG_DIR}/purrr.love-access.log combined
-   </VirtualHost>
-   ```
-
-2. **Nginx SSL Configuration**:
-   ```nginx
-   server {
-       listen 443 ssl http2;
-       server_name your-domain.com;
-       root /var/www/purrr.love;
-
-       ssl_certificate /etc/letsencrypt/live/your-domain.com/fullchain.pem;
-       ssl_certificate_key /etc/letsencrypt/live/your-domain.com/privkey.pem;
-       ssl_protocols TLSv1.2 TLSv1.3;
-       ssl_prefer_server_ciphers on;
-       ssl_ciphers ECDHE-RSA-AES256-GCM-SHA512:DHE-RSA-AES256-GCM-SHA512:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-SHA384;
-       ssl_session_timeout 1d;
-       ssl_session_cache shared:SSL:10m;
-       ssl_stapling on;
-       ssl_stapling_verify on;
-
-       index index.php;
-
-       location / {
-           try_files $uri $uri/ /index.php?$args;
-       }
-
-       location ~ \.php$ {
-           include snippets/fastcgi-php.conf;
-           fastcgi_pass unix:/var/run/php/php8.0-fpm.sock;
-       }
-
-       location ~ /\.ht {
-           deny all;
-       }
-   }
-
-   server {
-       listen 80;
-       server_name your-domain.com;
-       return 301 https://$host$request_uri;
-   }
-   ```
-
-### File Permissions
-
-Set correct file permissions:
-
-```bash
-# Standard directories
-find /path/to/purrr.love -type d -exec chmod 755 {} \;
-find /path/to/purrr.love -type f -exec chmod 644 {} \;
-
-# Executable scripts
-chmod +x /path/to/purrr.love/cli/purrr
-chmod +x /path/to/purrr.love/scripts/deploy.sh
-
-# Writable directories
-chmod -R 777 /path/to/purrr.love/uploads
-chmod -R 777 /path/to/purrr.love/cache
-chmod -R 777 /path/to/purrr.love/logs
-```
-
-### Security Headers
-
-Add security headers to your web server configuration:
-
-**Apache** (add to .htaccess or virtual host):
+#### Apache Virtual Host
 ```apache
-<IfModule mod_headers.c>
-    Header set X-Content-Type-Options "nosniff"
-    Header set X-XSS-Protection "1; mode=block"
-    Header set X-Frame-Options "SAMEORIGIN"
-    Header set Referrer-Policy "strict-origin-when-cross-origin"
-    Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'"
-    Header set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
-</IfModule>
+<VirtualHost *:80>
+    ServerName purrr.local
+    DocumentRoot /path/to/purrr.love
+    
+    <Directory /path/to/purrr.love>
+        AllowOverride All
+        Require all granted
+    </Directory>
+    
+    ErrorLog ${APACHE_LOG_DIR}/purrr_error.log
+    CustomLog ${APACHE_LOG_DIR}/purrr_access.log combined
+</VirtualHost>
 ```
 
-**Nginx** (add to server block):
+#### Nginx Configuration
 ```nginx
-add_header X-Content-Type-Options "nosniff" always;
-add_header X-XSS-Protection "1; mode=block" always;
-add_header X-Frame-Options "SAMEORIGIN" always;
-add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'" always;
-add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+server {
+    listen 80;
+    server_name purrr.local;
+    root /path/to/purrr.love;
+    index index.php index.html;
+    
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+    
+    location ~ \.php$ {
+        fastcgi_pass unix:/var/run/php/php8.0-fpm.sock;
+        fastcgi_index index.php;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        include fastcgi_params;
+    }
+}
 ```
-
-## 🚀 Advanced Features Setup
-
-This section covers setup for the advanced capabilities introduced in v2.1.0: blockchain/NFT support, ML-based cat personality models, webhooks, Redis-backed queues, and the Lost Pet Finder system.
-
-### Blockchain and NFT Setup
-
-1. Configure environment variables (recommended via .env):
-   ```bash
-   # Blockchain
-   WEB3_PROVIDER_URL=https://mainnet.infura.io/v3/{{INFURA_PROJECT_ID}}
-   WEB3_NETWORK=ethereum
-   NFT_CONTRACT_ADDRESS=0xYourContract
-   NFT_MINT_WALLET=0xYourMintWallet
-   NFT_MINT_PRIVATE_KEY={{NFT_MINT_PRIVATE_KEY}}
-   
-   # Optional Solana config
-   SOLANA_RPC_URL=https://api.mainnet-beta.solana.com
-   SOLANA_WALLET_PRIVATE_KEY={{SOLANA_WALLET_PRIVATE_KEY}}
-   ```
-2. Add crypto webhook secret and callback URL:
-   ```bash
-   COINBASE_WEBHOOK_SECRET={{COINBASE_WEBHOOK_SECRET}}
-   CRYPTO_WEBHOOK_URL=https://your-domain.com/api/webhooks/crypto
-   ```
-3. Verify contract addresses in config/crypto.php and run a dry-run:
-   ```bash
-   ./cli/purrr crypto:test
-   ```
-4. If you will mint NFTs, test on a testnet first:
-   ```bash
-   WEB3_NETWORK=sepolia
-   WEB3_PROVIDER_URL=https://sepolia.infura.io/v3/{{INFURA_PROJECT_ID}}
-   ./cli/purrr nft:mint --to 0xRecipient --metadata ./metadata/example.json --network sepolia --dry-run
-   ```
-
-### Machine Learning Personality Models
-
-Purrr.love can score cat personalities with an ML service. You can run the service locally or use a remote endpoint.
-
-1. Local service (Python):
-   ```bash
-   # Create virtualenv
-   python3 -m venv ml_env && source ml_env/bin/activate
-   
-   # Install dependencies
-   pip install -r sdk/python/requirements-ml.txt
-   
-   # Download models (example)
-   python sdk/python/tools/download_models.py --dest models/
-   
-   # Start local service
-   python sdk/python/services/personality_service.py --host 127.0.0.1 --port 8088 --model-dir models/
-   ```
-2. Configure the app to use the service:
-   ```bash
-   ML_SERVICE_URL=http://127.0.0.1:8088
-   ML_TIMEOUT_MS=8000
-   ML_ENABLE_CACHE=true
-   ```
-3. Test ML scoring:
-   ```bash
-   ./cli/purrr ml:score --image ./samples/cat.jpg
-   ```
-
-### Redis and Queueing
-
-Redis is used for caching, rate limiting, and background queues. If you followed Security Setup, Redis is already installed. Add queue configuration:
-```bash
-QUEUE_DRIVER=redis
-QUEUE_REDIS_DB=1
-QUEUE_CONCURRENCY=4
-QUEUE_VISIBILITY_TIMEOUT=60
-```
-Run workers (systemd example):
-```bash
-sudo cp systemd/purrr-queue-worker.service /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable --now purrr-queue-worker
-```
-
-### Webhook Integration
-
-1. Enable webhooks in configuration and set secrets:
-   ```bash
-   WEBHOOKS_ENABLED=true
-   WEBHOOK_SIGNING_SECRET={{WEBHOOK_SIGNING_SECRET}}
-   WEBHOOK_RETRY_BACKOFF=2,4,8,16,32
-   WEBHOOK_MAX_RETRIES=5
-   ```
-2. Register outgoing webhooks:
-   ```bash
-   ./cli/purrr webhook:add --event cat.created --url https://example.com/hooks/cat
-   ./cli/purrr webhook:add --event lost_pet.reported --url https://example.com/hooks/lost-pet
-   ./cli/purrr webhook:list
-   ```
-3. Expose inbound webhook endpoints (reverse proxy must forward POSTs):
-   - Crypto: /api/webhooks/crypto
-   - Facebook: /api/webhooks/facebook
-   - General: /api/webhooks/events
-
-### Lost Pet Finder System
-
-The Lost Pet Finder is a standalone module integrated with the main platform.
-
-1. Import schema:
-   ```bash
-   # MySQL
-   mysql -u purrr_user -p purrr_love < database/lost_pet_finder_schema.sql
-   
-   # PostgreSQL
-   psql -U purrr_user -d purrr_love -f database/lost_pet_finder_schema.sql
-   ```
-2. Configure environment:
-   ```bash
-   LOST_PET_FINDER_ENABLED=true
-   MAPS_PROVIDER=mapbox
-   MAPBOX_TOKEN={{MAPBOX_TOKEN}}
-   FACEBOOK_APP_ID={{FACEBOOK_APP_ID}}
-   FACEBOOK_APP_SECRET={{FACEBOOK_APP_SECRET}}
-   LOST_PET_FINDER_DEFAULT_RADIUS_KM=10
-   LOST_PET_FINDER_IMAGE_MAX_MB=8
-   ```
-3. Enable PostGIS (if using PostgreSQL with geospatial search):
-   ```sql
-   CREATE EXTENSION IF NOT EXISTS postgis;
-   ```
-4. Seed data and test CLI:
-   ```bash
-   ./cli/purrr lost-pet:seed --count 10
-   ./cli/purrr lost-pet:search --near "37.7749,-122.4194" --radius 5
-   ```
-5. Configure cron jobs:
-   ```bash
-   # Expire old sightings daily
-   15 1 * * * php /path/to/purrr.love/cli/cron/lost_pet_cleanup.php > /dev/null 2>&1
-   
-   # Rebuild geospatial indexes
-   30 1 * * * php /path/to/purrr.love/cli/cron/lost_pet_reindex.php > /dev/null 2>&1
-   ```
-6. Web interface paths:
-   - User portal: /web/lost_pet_finder.php
-   - Admin: /web/admin/lost_pet_finder_admin.php
-
-## 🔍 Troubleshooting
-
-### Common Issues and Solutions
-
-#### 1. Database Connection Issues
-```
-Error: Could not connect to database
-```
-
-**Solution**:
-- Verify database credentials in `config/database.php`
-- Ensure database server is running
-- Check network connectivity to database server
-- Verify that PHP database extensions are installed and enabled
-
-#### 2. Permission Errors
-```
-Error: Could not write to file/directory
-```
-
-**Solution**:
-- Check permissions on uploads, cache, and logs directories
-- Ensure web server user (www-data, apache, nginx) has write permissions
-- Check SELinux contexts if using RHEL/CentOS/Rocky Linux
-- Verify disk space is not full
-
-#### 3. Missing PHP Extensions
-```
-Error: Required extension mbstring is missing
-```
-
-**Solution**:
-- Install missing PHP extensions:
-  ```bash
-  # For Debian/Ubuntu
-  sudo apt install php8.0-mbstring php8.0-curl php8.0-xml
-
-  # For RHEL/CentOS/Rocky
-  sudo dnf install php-mbstring php-curl php-xml
-  ```
-- Restart PHP-FPM or web server after installing extensions
-
-#### 4. CSRF Token Validation Failures
-```
-Error: CSRF token validation failed
-```
-
-**Solution**:
-- Clear browser cookies and cache
-- Ensure server time is correctly synchronized
-- Check for session handling issues
-- Verify `session.cookie_secure = On` in PHP configuration for HTTPS sites
-
-#### 5. OAuth2 Configuration Issues
-```
-Error: Invalid redirect URI
-```
-
-**Solution**:
-- Verify OAuth2 provider configurations
-- Ensure redirect URIs match exactly with those registered in provider dashboards
-- Check that SSL is properly configured if using HTTPS
-- Verify correct callback URLs are set in OAuth provider settings
-
-#### 6. Debugging Tips
-- Enable development mode in `config/config.php`:
-  ```php
-  define('DEVELOPER_MODE', true);
-  define('DEBUG_MODE', true);
-  define('ERROR_REPORTING', true);
-  ```
-- Check error logs:
-  - Application logs: `/path/to/purrr.love/logs/`
-  - PHP error log: Check php.ini for error_log path
-  - Web server error logs:
-    - Apache: `/var/log/apache2/error.log` or `/var/log/httpd/error.log`
-    - Nginx: `/var/log/nginx/error.log`
-- Run the CLI diagnostics tool:
-  ```bash
-  ./cli/purrr diagnostics
-  ```
-
-## 🎯 Next Steps After Installation
-
-1. **Change Default Credentials**:
-   - First login with default credentials: admin/admin
-   - Immediately change password and set up 2FA
-
-2. **Set Up OAuth2 Providers**:
-   - Register your app with Google, Facebook, etc.
-   - Update OAuth2 configuration with client IDs and secrets
-
-3. **Configure Cryptocurrency Integration**:
-   - Set up Coinbase Commerce account
-   - Update API keys in configuration
-
-4. **Set Up Cron Jobs**:
-   - Create necessary cron jobs for recurring tasks:
-   ```bash
-   # Daily database cleanup (2 AM)
-   0 2 * * * php /path/to/purrr.love/cli/cron/cleanup.php > /dev/null 2>&1
-
-   # Cat stats update (every 15 minutes)
-   */15 * * * * php /path/to/purrr.love/cli/cron/update_cat_stats.php > /dev/null 2>&1
-
-   # Process queued events (every 5 minutes)
-   */5 * * * * php /path/to/purrr.love/cli/cron/process_queue.php > /dev/null 2>&1
-   ```
-
-5. **Test Critical Flows**:
-   - User registration and login
-   - Crypto deposits and withdrawals
-   - Cat uploads and management
-   - Game mechanics
-   - API endpoints
 
 ---
 
-For additional assistance, please refer to the [API Documentation](API_ECOSYSTEM_SUMMARY.md) and [Complete Documentation](DOCUMENTATION.md), or open an issue on the [GitHub repository](https://github.com/straticus1/purrr.love/issues).
+## 🗄️ Database Configuration
 
-**🐱 Purrr.love** - Building the future of feline gaming, one purr at a time! ❤️
+### MariaDB Schema
+
+The database includes these main tables:
+
+#### Users Table
+```sql
+CREATE TABLE users (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    name VARCHAR(100),
+    role ENUM('admin', 'user') DEFAULT 'user',
+    active BOOLEAN DEFAULT TRUE,
+    is_active BOOLEAN DEFAULT TRUE,
+    level INT DEFAULT 1,
+    coins INT DEFAULT 100,
+    experience_points INT DEFAULT 0,
+    avatar_url VARCHAR(500),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+```
+
+#### Cats Table
+```sql
+CREATE TABLE cats (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    owner_id INT NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    breed VARCHAR(50) DEFAULT 'Mixed',
+    age INT DEFAULT 1,
+    color VARCHAR(50) DEFAULT 'Orange',
+    personality_openness DECIMAL(3,2) DEFAULT 3.00,
+    personality_conscientiousness DECIMAL(3,2) DEFAULT 3.00,
+    personality_extraversion DECIMAL(3,2) DEFAULT 3.00,
+    personality_agreeableness DECIMAL(3,2) DEFAULT 3.00,
+    personality_neuroticism DECIMAL(3,2) DEFAULT 3.00,
+    health_status ENUM('excellent', 'good', 'fair', 'poor') DEFAULT 'good',
+    temperature DECIMAL(4,2) DEFAULT 101.50,
+    heart_rate INT DEFAULT 150,
+    weight DECIMAL(5,2) DEFAULT 10.00,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (owner_id) REFERENCES users(id)
+);
+```
+
+### Default Data
+
+The system creates these default users:
+
+1. **Admin User**
+   - Email: admin@purrr.love
+   - Password: admin123456789!
+   - Role: admin
+
+2. **Test User**
+   - Email: testuser@example.com
+   - Password: testpass123
+   - Role: user
+
+Both accounts include sample cats with realistic personality traits and health data.
+
+---
+
+## 🔧 Troubleshooting
+
+### Common Issues
+
+#### 1. Database Connection Errors
+```bash
+# Check MariaDB service status
+sudo systemctl status mariadb
+
+# Check database credentials
+mysql -u purrr_user -p purrr_love
+```
+
+#### 2. PHP Extension Requirements
+```bash
+# Required PHP extensions
+sudo apt install php8.0-mysql php8.0-pdo php8.0-mbstring php8.0-curl php8.0-json php8.0-openssl
+```
+
+#### 3. Permission Issues
+```bash
+# Set correct permissions
+sudo chown -R www-data:www-data /path/to/purrr.love
+sudo chmod -R 755 /path/to/purrr.love
+sudo chmod -R 777 uploads/ logs/
+```
+
+#### 4. SSL/HTTPS Issues (Local)
+```bash
+# Generate self-signed certificate for local development
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+    -keyout /etc/ssl/private/purrr.key \
+    -out /etc/ssl/certs/purrr.crt
+```
+
+### Testing Database Connection
+
+Create a test script to verify database connectivity:
+
+```php
+<?php
+// test-db.php
+require_once 'config/database.php';
+
+try {
+    $dsn = "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4";
+    $pdo = new PDO($dsn, DB_USER, DB_PASS);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    
+    echo "Database connection successful!\n";
+    
+    // Test query
+    $stmt = $pdo->query("SELECT COUNT(*) FROM users");
+    $count = $stmt->fetchColumn();
+    echo "Users in database: " . $count . "\n";
+    
+} catch (PDOException $e) {
+    echo "Database connection failed: " . $e->getMessage() . "\n";
+}
+?>
+```
+
+### Performance Optimization
+
+#### Database Optimization
+```sql
+-- Add indexes for better performance
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_users_username ON users(username);
+CREATE INDEX idx_cats_user_id ON cats(user_id);
+CREATE INDEX idx_cats_owner_id ON cats(owner_id);
+```
+
+#### PHP Configuration
+```ini
+; php.ini optimizations
+memory_limit = 256M
+max_execution_time = 60
+upload_max_filesize = 10M
+post_max_size = 10M
+max_file_uploads = 20
+```
+
+---
+
+## 🆘 Support
+
+### Getting Help
+- **GitHub Issues**: [Report bugs and request features](https://github.com/straticus1/purrr.love/issues)
+- **Documentation**: [Complete documentation](docs/DOCUMENTATION.md)
+- **Changelog**: [Version history](CHANGELOG.md)
+
+### Development Environment
+For development contributions:
+
+1. Fork the repository
+2. Set up local development environment
+3. Create feature branch
+4. Submit pull request
+
+---
+
+**Happy coding! 🐱✨**
