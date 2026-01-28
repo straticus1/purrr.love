@@ -1,4 +1,4 @@
-# Simplified Terraform Configuration for Purrr.love ALB Setup
+# Purrr.love Terraform Configuration - References Shared AfterDark Systems Infrastructure
 
 terraform {
   required_version = ">= 1.0"
@@ -32,81 +32,39 @@ data "aws_route53_zone" "purrr_me" {
   name = "purrr.me"
 }
 
-# Get default VPC and subnets for quick deployment
-data "aws_vpc" "default" {
-  default = true
+# Reference shared AfterDark Systems infrastructure
+data "aws_vpc" "afterdarksys" {
+  id = "vpc-0c1b813880b3982a5"  # afterdarksys-vpc
 }
 
-data "aws_subnets" "default" {
+data "aws_lb" "afterdarksys" {
+  name = "afterdarksys-alb"
+}
+
+data "aws_lb_listener" "afterdarksys_https" {
+  load_balancer_arn = data.aws_lb.afterdarksys.arn
+  port              = 443
+}
+
+# Reference purrr.love subnets in afterdarksys VPC
+data "aws_subnets" "purrr_private" {
   filter {
     name   = "vpc-id"
-    values = [data.aws_vpc.default.id]
+    values = [data.aws_vpc.afterdarksys.id]
+  }
+  filter {
+    name   = "tag:Name"
+    values = ["purrr-private-subnet-*"]
   }
 }
 
-# Security group for ALB
-resource "aws_security_group" "alb" {
-  name_prefix = "purrr-alb-"
-  vpc_id      = data.aws_vpc.default.id
-
-  # HTTP
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "HTTP"
-  }
-
-  # HTTPS
-  ingress {
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "HTTPS"
-  }
-
-  # All outbound traffic
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "All outbound traffic"
-  }
-
-  tags = {
-    Name = "purrr-alb-security-group"
-  }
+# Reference purrr.love security group in afterdarksys VPC
+data "aws_security_group" "purrr_ecs" {
+  id = "sg-0cd1a6d29ed7899fd"  # purrr-ecs-afterdark
 }
 
-# Security group for ECS tasks
-resource "aws_security_group" "ecs" {
-  name_prefix = "purrr-ecs-"
-  vpc_id      = data.aws_vpc.default.id
-
-  # HTTP from ALB
-  ingress {
-    from_port       = 80
-    to_port         = 80
-    protocol        = "tcp"
-    security_groups = [aws_security_group.alb.id]
-    description     = "HTTP from ALB"
-  }
-
-  # All outbound traffic
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-    description = "All outbound traffic"
-  }
-
-  tags = {
-    Name = "purrr-ecs-security-group"
-  }
+data "aws_security_group" "purrr_rds" {
+  id = "sg-0c0dec2e4f117bd37"  # purrr-rds-afterdark
 }
 
 # ACM Certificate for purrr.love
@@ -198,84 +156,7 @@ resource "aws_acm_certificate_validation" "purrr_me" {
   }
 }
 
-# Application Load Balancer
-resource "aws_lb" "main" {
-  name               = "purrr-alb"
-  internal           = false
-  load_balancer_type = "application"
-  security_groups    = [aws_security_group.alb.id]
-  subnets           = data.aws_subnets.default.ids
-
-  enable_deletion_protection = false
-
-  tags = {
-    Name = "purrr-application-load-balancer"
-  }
-}
-
-# Target Group for ECS
-resource "aws_lb_target_group" "app" {
-  name        = "purrr-app-tg"
-  port        = 80
-  protocol    = "HTTP"
-  vpc_id      = data.aws_vpc.default.id
-  target_type = "ip"
-
-  health_check {
-    enabled             = true
-    healthy_threshold   = 2
-    interval            = 30
-    matcher             = "200"
-    path                = "/"
-    port                = "traffic-port"
-    protocol            = "HTTP"
-    timeout             = 5
-    unhealthy_threshold = 3
-  }
-
-  tags = {
-    Name = "purrr-app-target-group"
-  }
-}
-
-# HTTP Listener (redirects to HTTPS)
-resource "aws_lb_listener" "http" {
-  load_balancer_arn = aws_lb.main.arn
-  port              = "80"
-  protocol          = "HTTP"
-
-  default_action {
-    type = "redirect"
-
-    redirect {
-      port        = "443"
-      protocol    = "HTTPS"
-      status_code = "HTTP_301"
-    }
-  }
-}
-
-# HTTPS Listener for purrr.love
-resource "aws_lb_listener" "https" {
-  load_balancer_arn = aws_lb.main.arn
-  port              = "443"
-  protocol          = "HTTPS"
-  ssl_policy        = "ELBSecurityPolicy-TLS13-1-2-2021-06"
-  certificate_arn   = aws_acm_certificate_validation.purrr_love.certificate_arn
-
-  default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.app.arn
-  }
-}
-
-# Additional certificate for purrr.me
-resource "aws_lb_listener_certificate" "purrr_me" {
-  listener_arn    = aws_lb_listener.https.arn
-  certificate_arn = aws_acm_certificate_validation.purrr_me.certificate_arn
-}
-
-# ECS Cluster
+# ECS Cluster (already exists, managed here)
 resource "aws_ecs_cluster" "main" {
   name = "purrr-cluster"
 
@@ -289,106 +170,84 @@ resource "aws_ecs_cluster" "main" {
   }
 }
 
-# ECS Task Definition
-resource "aws_ecs_task_definition" "app" {
-  family                   = "purrr-app"
-  requires_compatibilities = ["FARGATE"]
-  network_mode             = "awsvpc"
-  cpu                      = 256
-  memory                   = 512
-  execution_role_arn       = aws_iam_role.ecs_execution.arn
+# Target Group for purrr.love in shared afterdarksys VPC
+resource "aws_lb_target_group" "purrr_love" {
+  name        = "purrr-love-tg-ip"
+  port        = 80
+  protocol    = "HTTP"
+  vpc_id      = data.aws_vpc.afterdarksys.id
+  target_type = "ip"
 
-  container_definitions = jsonencode([
-    {
-      name  = "app"
-      image = var.container_image
-      portMappings = [
-        {
-          containerPort = 80
-          hostPort      = 80
-        }
-      ]
-      logConfiguration = {
-        logDriver = "awslogs"
-        options = {
-          "awslogs-group"         = aws_cloudwatch_log_group.app.name
-          "awslogs-region"        = "us-east-1"
-          "awslogs-stream-prefix" = "ecs"
-        }
-      }
+  health_check {
+    enabled             = true
+    healthy_threshold   = 2
+    interval            = 30
+    matcher             = "200,301"
+    path                = "/"
+    port                = "traffic-port"
+    protocol            = "HTTP"
+    timeout             = 5
+    unhealthy_threshold = 3
+  }
+
+  tags = {
+    Name = "purrr-love-target-group"
+  }
+}
+
+# Listener rules for purrr.love on shared ALB
+resource "aws_lb_listener_rule" "purrr_love" {
+  listener_arn = data.aws_lb_listener.afterdarksys_https.arn
+  priority     = 20
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.purrr_love.arn
+  }
+
+  condition {
+    host_header {
+      values = ["purrr.love"]
     }
-  ])
+  }
 
   tags = {
-    Name = "purrr-app-task-definition"
+    Name = "purrr-love-listener-rule"
   }
 }
 
-# CloudWatch Log Group
-resource "aws_cloudwatch_log_group" "app" {
-  name              = "/ecs/purrr-app"
-  retention_in_days = 7
+resource "aws_lb_listener_rule" "www_purrr_love" {
+  listener_arn = data.aws_lb_listener.afterdarksys_https.arn
+  priority     = 21
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.purrr_love.arn
+  }
+
+  condition {
+    host_header {
+      values = ["www.purrr.love"]
+    }
+  }
 
   tags = {
-    Name = "purrr-app-logs"
+    Name = "www-purrr-love-listener-rule"
   }
 }
 
-# ECS Execution Role
-resource "aws_iam_role" "ecs_execution" {
-  name = "purrr-ecs-execution-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "ecs-tasks.amazonaws.com"
-        }
-      }
-    ]
-  })
-
-  tags = {
-    Name = "purrr-ecs-execution-role"
-  }
+# Add purrr.love certificate to shared ALB HTTPS listener
+resource "aws_lb_listener_certificate" "purrr_love" {
+  listener_arn    = data.aws_lb_listener.afterdarksys_https.arn
+  certificate_arn = aws_acm_certificate_validation.purrr_love.certificate_arn
 }
 
-resource "aws_iam_role_policy_attachment" "ecs_execution" {
-  role       = aws_iam_role.ecs_execution.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+resource "aws_lb_listener_certificate" "purrr_me" {
+  listener_arn    = data.aws_lb_listener.afterdarksys_https.arn
+  certificate_arn = aws_acm_certificate_validation.purrr_me.certificate_arn
 }
 
-# ECS Service
-resource "aws_ecs_service" "app" {
-  name            = "purrr-app"
-  cluster         = aws_ecs_cluster.main.id
-  task_definition = aws_ecs_task_definition.app.arn
-  desired_count   = 2
-  launch_type     = "FARGATE"
-
-  network_configuration {
-    security_groups = [aws_security_group.ecs.id]
-    subnets         = data.aws_subnets.default.ids
-    assign_public_ip = true
-  }
-
-  load_balancer {
-    target_group_arn = aws_lb_target_group.app.arn
-    container_name   = "app"
-    container_port   = 80
-  }
-
-  depends_on = [aws_lb_listener.https]
-
-  tags = {
-    Name = "purrr-app-service"
-  }
-}
-
-# Update DNS records to point to ALB for purrr.love
+# Update DNS records to point to shared afterdarksys ALB
 resource "aws_route53_record" "purrr_love_domains" {
   for_each = toset([
     "purrr.love",
@@ -406,45 +265,25 @@ resource "aws_route53_record" "purrr_love_domains" {
   type    = "A"
 
   alias {
-    name                   = aws_lb.main.dns_name
-    zone_id               = aws_lb.main.zone_id
+    name                   = data.aws_lb.afterdarksys.dns_name
+    zone_id               = data.aws_lb.afterdarksys.zone_id
     evaluate_target_health = true
   }
 }
 
-# Update DNS records to point to ALB for purrr.me
-resource "aws_route53_record" "purrr_me_domains" {
-  for_each = toset([
-    "purrr.me",
-    "api.purrr.me",
-    "app.purrr.me", 
-    "admin.purrr.me",
-    "webhooks.purrr.me",
-    "cdn.purrr.me",
-    "static.purrr.me",
-    "assets.purrr.me"
-  ])
-
-  zone_id = data.aws_route53_zone.purrr_me.zone_id
-  name    = each.key
-  type    = "A"
-
-  alias {
-    name                   = aws_lb.main.dns_name
-    zone_id               = aws_lb.main.zone_id
-    evaluate_target_health = true
-  }
+# CNAME record for www.purrr.love
+resource "aws_route53_record" "www_purrr_love" {
+  zone_id = data.aws_route53_zone.purrr_love.zone_id
+  name    = "www.purrr.love"
+  type    = "CNAME"
+  ttl     = 300
+  records = ["purrr.love"]
 }
 
 # Outputs
-output "alb_dns_name" {
-  description = "DNS name of the load balancer"
-  value       = aws_lb.main.dns_name
-}
-
-output "alb_zone_id" {
-  description = "Zone ID of the load balancer"
-  value       = aws_lb.main.zone_id
+output "shared_alb_dns_name" {
+  description = "DNS name of the shared AfterDark Systems ALB"
+  value       = data.aws_lb.afterdarksys.dns_name
 }
 
 output "purrr_love_certificate_arn" {
@@ -457,6 +296,11 @@ output "purrr_me_certificate_arn" {
   value       = aws_acm_certificate_validation.purrr_me.certificate_arn
 }
 
+output "purrr_love_target_group_arn" {
+  description = "ARN of the purrr.love target group"
+  value       = aws_lb_target_group.purrr_love.arn
+}
+
 output "test_urls" {
   description = "URLs to test the deployment"
   value = {
@@ -466,5 +310,15 @@ output "test_urls" {
     purrr_me_main   = "https://purrr.me"
     purrr_me_api    = "https://api.purrr.me"
     purrr_me_app    = "https://app.purrr.me"
+  }
+}
+
+output "infrastructure_notes" {
+  description = "Important notes about the infrastructure setup"
+  value = {
+    shared_infrastructure = "This configuration references shared AfterDark Systems infrastructure"
+    vpc_id               = data.aws_vpc.afterdarksys.id
+    alb_shared          = "ALB is managed by afterdarksys.com terraform, not this configuration"
+    target_registration = "ECS tasks must be manually registered with target group until ECS service is added to terraform"
   }
 }
